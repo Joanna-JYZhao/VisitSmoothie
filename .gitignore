@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+node_modules/
+.DS_Store
+*.log
+afterdoc-prototype/.runtime/
+afterdoc-prototype/test-artifacts/
+__pycache__/
