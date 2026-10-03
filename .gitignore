@@ -7,6 +7,4 @@
 node_modules/
 .DS_Store
 *.log
-afterdoc-prototype/.runtime/
-afterdoc-prototype/test-artifacts/
 __pycache__/

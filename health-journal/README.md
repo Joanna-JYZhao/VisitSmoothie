@@ -1,6 +1,6 @@
 # Health Journal
 
-A warm, bilingual, local patient journal for preparing a clearer conversation with a clinician. This is an independent first-generation prototype; the existing AfterDoc project is unchanged.
+A warm, bilingual, local patient journal for preparing a clearer conversation with a clinician. This directory contains the current first-generation website.
 
 ## Run on this computer
 
