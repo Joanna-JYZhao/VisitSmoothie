@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "command": "deliver",
+  "status": "pending",
+  "receiptId": "74e6db75-f7d1-445e-90cd-5bf598adde17",
+  "input": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/candidate.json",
+  "output": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/workflow.html"
+}

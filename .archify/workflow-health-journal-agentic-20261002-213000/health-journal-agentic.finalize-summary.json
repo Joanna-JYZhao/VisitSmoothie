@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "workflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-health-journal-agentic-20261002-213000/candidate.json",
+    "sha256": "ad680ff664ca5a8fd2341e762366163308584feb7a623ec77481ae8434b3aa73",
+    "bytes": 9061
+  },
+  "artifact": {
+    "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-health-journal-agentic-20261002-213000/health-journal-agentic.html"
+  },
+  "gates": {
+    "validate": "fail",
+    "deliver": "not-run",
+    "check": "not-run",
+    "browser-check": "not-run"
+  },
+  "failedStage": "validate",
+  "diagnostics": [
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[10] id \"retry-context\" \"retry\" -> \"context\" shares a 58px corridor with edges[15] id \"safety-planner\" \"safety\" -> \"planner\" at [598, 206] -> [598, 264] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 10,
+        "id": "retry-context",
+        "from": "retry",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 15,
+          "id": "safety-planner",
+          "from": "safety",
+          "to": "planner"
+        },
+        "overlapLengthPx": 58,
+        "minimumPx": 8,
+        "from": [
+          598,
+          206
+        ],
+        "to": [
+          598,
+          264
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[12] id \"route-ask\" \"route\" -> \"ask\" shares a 90.2px corridor with edges[14] id \"route-pause\" \"route\" -> \"pause\" at [924, 498] -> [1014.2, 498] (segments 2 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 12,
+        "id": "route-ask",
+        "from": "route",
+        "to": "ask"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 14,
+          "id": "route-pause",
+          "from": "route",
+          "to": "pause"
+        },
+        "overlapLengthPx": 90.2,
+        "minimumPx": 8,
+        "from": [
+          924,
+          498
+        ],
+        "to": [
+          1014.2,
+          498
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 3
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 2,
+    "shown": 2,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-health-journal-agentic-20261002-213000/health-journal-agentic.finalize.json",
+    "summaryReceipt": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-health-journal-agentic-20261002-213000/health-journal-agentic.finalize-summary.json"
+  },
+  "update": {
+    "status": "unavailable",
+    "installedVersion": null,
+    "availableVersion": null,
+    "releaseNotes": null,
+    "checkedAt": null,
+    "source": null,
+    "noticeRequired": false,
+    "noticeText": null,
+    "reason": "cache-unavailable"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 295,
+  "nextAction": {
+    "action": "edit-in-place",
+    "candidate": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-health-journal-agentic-20261002-213000/candidate.json",
+    "constraint": "Preserve unaffected semantics and geometry; do not replace the whole candidate.",
+    "then": "finalize-once"
+  }
+}

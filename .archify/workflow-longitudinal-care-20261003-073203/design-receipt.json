@@ -1,0 +1,73 @@
+{
+  "title": "诊后持续观察与医生检查决策支持",
+  "status": "design_proposal_not_implemented",
+  "diagram_type": "workflow_with_algorithm_detail",
+  "created_on": "2026-10-03",
+  "scope": "Diagrams only. No application source or patient data changed.",
+  "authored_sources": [
+    "candidate.json",
+    "draw-design.py"
+  ],
+  "automated_archify_validation": {
+    "status": "failed",
+    "receipt": "archify-attempt.json",
+    "reason": "Candidate renderer rejected edge corridor crossings. Final output uses manually composed vector layout; no Archify showcase certification claimed."
+  },
+  "automated_browser_validation": {
+    "status": "not_run",
+    "reason": "Archify finalizer launches Chrome, which the user prohibited."
+  },
+  "manual_validation": {
+    "status": "passed",
+    "checks": [
+      "Inspected both PNGs rendered from PDFs: Chinese glyphs visible, titles/body labels fit, no text overlap.",
+      "Viewed final HTML in Codex in-app browser tab 4 at localhost:4190/care-design.html. Both diagrams and source/download links present.",
+      "Clinical example source links included. Proposed product thresholds explicitly labeled unvalidated.",
+      "Shared context, patient input, question loop, safety exit, timeline, doctor output and renewed report cycle represented."
+    ],
+    "browser": "Codex in-app browser only"
+  },
+  "clinical_status": "Clinical rules, knowledge base and pathways are proposed, not implemented or clinically validated.",
+  "sources": [
+    {
+      "title": "AHA 2021 Chest Pain Guideline: Top Things to Know",
+      "url": "https://professional.heart.org/en/science-news/2021-guideline-for-the-evaluation-and-diagnosis-of-chest-pain/top-things-to-know",
+      "scope": "Supports jaw discomfort as a possible anginal equivalent."
+    },
+    {
+      "title": "RUH NHS After a Heart Attack Book, page 27",
+      "url": "https://www.ruh.nhs.uk/patients/services/clinical_depts/cardiology/documents/After_a_Heart_Attack_Book.pdf",
+      "scope": "Search excerpt supports angina discomfort involving jaw or teeth; full PDF not retrieved."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/01-care-workflow.svg",
+      "sha256": "47bdb579ba69c90df4a12cdc4a3495a43c280e32a1fad01147ef6418b04b6920"
+    },
+    {
+      "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/01-care-workflow.pdf",
+      "sha256": "4841584b5695fa7247e96656f9bf53960ef929fb06c6c35c31fd53fda4465449"
+    },
+    {
+      "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/01-care-workflow.png",
+      "sha256": "3b664dceff4623d2b936d84e37a3367403ccb55c54b42ff4ab236b9cb9c0f633"
+    },
+    {
+      "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/02-care-algorithms.svg",
+      "sha256": "daf4fbaa857a42452c2f68b9ed030695538beb31ad777dd7ed6906e32561c9d1"
+    },
+    {
+      "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/02-care-algorithms.pdf",
+      "sha256": "70aab140ec37864f2e0fc7cdd4461a53c540c99788af416a3f56c9f0dba4549c"
+    },
+    {
+      "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/02-care-algorithms.png",
+      "sha256": "8702aa5168de144c0ede9db223f00ab04ff33727dec7529365911d7478d86c44"
+    },
+    {
+      "path": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/care-design.html",
+      "sha256": "2f5cdd6627ce1d1882d8d77a1f118fa2990179d58f202a2ecc074614ef1572a8"
+    }
+  ]
+}
