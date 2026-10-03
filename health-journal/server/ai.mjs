@@ -144,8 +144,8 @@ const LABELS = {
   zh: { onset: '起病', location: '位置', duration: '持续时间', pattern: '变化规律', intensity: '程度', triggers: '提到的情境', associated: '伴随症状', medications: '提到的药物', impact: '日常影响', other: '其他信息' },
 };
 const PROFILE_LABELS = {
-  en: ['Name', 'Date of birth', 'Sex as entered', 'Conditions', 'Medicines', 'Allergies', 'Surgeries', 'Family history', 'Notes'],
-  zh: ['姓名', '出生日期', '自填性别', '既往疾病', '药物', '过敏', '手术', '家族史', '备注'],
+  en: { name: 'Name', dob: 'Date of birth', sex: 'Sex as entered', conditions: 'Conditions', medications: 'Medicines', allergies: 'Allergies', surgeries: 'Surgeries', familyHistory: 'Family history', notes: 'Notes' },
+  zh: { name: '姓名', dob: '出生日期', sex: '自填性别', conditions: '既往疾病', medications: '药物', allergies: '过敏', surgeries: '手术', familyHistory: '家族史', notes: '备注' },
 };
 
 export function sourceEpisodeSnapshot(state, episode) {
@@ -185,11 +185,10 @@ export function buildBrief(state, episode, facts, locale, timeZone = 'UTC') {
     for (const fact of selectedFacts) lines.push(`• ${LABELS[locale][fact.label]}: “${shorten(fact.quote, 150)}” (${displayDate(patients.find(entry => entry.id === fact.sourceId).at)})`);
   }
   lines.push('', zh ? '患者填写的健康背景' : 'Patient-entered health background');
-  const profileKeys = Object.keys(state.profile);
   for (const key of ['name', 'dob', 'sex', 'medications', 'allergies', 'conditions', 'surgeries', 'familyHistory', 'notes']) {
     const value = state.profile[key];
     if (!value && !['medications', 'allergies'].includes(key)) continue;
-    lines.push(`• ${PROFILE_LABELS[locale][profileKeys.indexOf(key)]}: ${value ? shorten(value, ['medications', 'allergies'].includes(key) ? 350 : 120) : unknown}`);
+    lines.push(`• ${PROFILE_LABELS[locale][key]}: ${value ? shorten(value, ['medications', 'allergies'].includes(key) ? 350 : 120) : unknown}`);
   }
   lines.push(zh ? '其他空白字段为未知，不能理解为“没有”。' : 'Other blank fields are unknown, not a confirmed absence.');
   lines.push('', zh ? '患者希望询问的问题' : 'Patient’s questions', episode.patientQuestions ? shorten(episode.patientQuestions, 350) : unknown);

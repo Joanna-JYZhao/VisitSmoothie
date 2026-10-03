@@ -138,9 +138,22 @@ export function createServer({ dbPath = path.join(ROOT, '.data', 'journal.sqlite
         if (input.confirmation !== 'DELETE') throw new HttpError(400, 'Type DELETE to clear this dataset.');
         return json(res, 200, store.replace(dataset, emptyState(), validate.revision(input.revision)));
       }
+      if (route === 'POST /api/registration') {
+        validate.fields(input, ['profile', 'revision', 'timeZone']);
+        return json(res, 201, store.mutate(dataset, input.revision, state => {
+          if (state.onboarding?.completedAt) throw new HttpError(409, 'Registration is already complete. Update your health profile instead.', 'ALREADY_REGISTERED');
+          const settings = validate.settings({ timeZone: input.timeZone || state.settings.timeZone }, state.settings);
+          state.profile = validate.registration(input.profile, state.profile, { timeZone: settings.timeZone });
+          state.settings = settings;
+          state.onboarding = { completedAt: now() };
+        }));
+      }
       if (route === 'PUT /api/profile') {
         validate.fields(input, ['profile', 'revision']);
-        return json(res, 200, store.mutate(dataset, input.revision, state => { state.profile = validate.profile(input.profile, state.profile); }));
+        return json(res, 200, store.mutate(dataset, input.revision, state => {
+          const validator = state.onboarding?.completedAt ? validate.registration : validate.profile;
+          state.profile = validator(input.profile, state.profile, { timeZone: state.settings.timeZone });
+        }));
       }
       if (route === 'PUT /api/settings') {
         validate.fields(input, ['settings', 'revision']);

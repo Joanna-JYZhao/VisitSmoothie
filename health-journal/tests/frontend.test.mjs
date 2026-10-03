@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import { workflowPanel } from '../public/screens.js';
 
 const source = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8')
-  .replace(/^import .*\n/u, '').replace(/init\(\);\s*$/u, '');
+  .replace(/^import .*\n/gmu, '').replace(/init\(\);\s*$/u, '');
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
 function harness() {
@@ -118,6 +118,30 @@ test('an unsuccessful dataset switch cannot relabel the loaded journal', async (
   await h.respond(0, { error: 'Unavailable' }, 503);
   assert.equal(h.evaluate('dataset'), 'real');
   assert.equal(h.evaluate('state.revision'), 7);
+});
+
+test('registration completion saves before navigating and clears only its own draft', async () => {
+  const h = harness();
+  h.evaluate(`page='register';activeId=null;tab='entries';formDrafts.set(draftKey('registration-form'),{name:'Test'})`);
+  h.submit('registration-form', { name: 'Test', dob: '2008-10-03', sex: 'female', education: 'senior', conditions: '', familyHistory: '', allergies: '' });
+  assert.equal(h.requests[0].path, '/api/registration');
+  assert.equal(h.evaluate('page'), 'register');
+  assert.equal(h.evaluate('busy'), true);
+  await h.respond(0, { state: { revision: 8, profile: { name: 'Test' }, onboarding: { completedAt: '2026-10-03T00:00:00Z' }, episodes: [], settings: { locale: 'zh' } } }, 201);
+  assert.equal(h.evaluate('page'), 'home');
+  assert.equal(h.evaluate('formDrafts.size'), 0);
+  assert.equal(h.evaluate('busy'), false);
+});
+
+test('failed registration retains the form draft and does not navigate', async () => {
+  const h = harness();
+  h.evaluate(`page='register';activeId=null;tab='entries';formDrafts.set(draftKey('registration-form'),{name:'Test'})`);
+  h.submit('registration-form', { name: 'Test' });
+  await h.respond(0, { error: 'Unable to save' }, 500);
+  assert.equal(h.evaluate('page'), 'register');
+  assert.equal(h.evaluate(`formDrafts.get(draftKey('registration-form')).name`), 'Test');
+  assert.equal(h.evaluate('error'), 'Unable to save');
+  assert.equal(h.evaluate('busy'), false);
 });
 
 test('unsaved optional profile fields trigger the unload warning', () => {

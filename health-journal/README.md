@@ -11,7 +11,19 @@ cd "/Users/xinlu/Documents/Stanford Venture Trip/health-journal"
 
 Open <http://127.0.0.1:4187>. Keep the terminal/server running while using the website. Stop with Control-C; saved records survive restarts. The launcher uses this computer's bundled Node 24, with a system `node` fallback. `JOURNAL_NODE` can select another Node 24+ executable.
 
-English is the initial language. Use the language button to switch to Chinese. **Try an example** opens explicitly fictional records stored separately from your own journal. Return with **Back to my journal**.
+New journals start in Chinese. Use the language button to switch between Chinese and English. Existing journals retain their language preference. **Try an example** opens explicitly fictional records stored separately from your own journal. Return with **Back to my journal**.
+
+## First registration — Visit Smoothie
+
+A new journal opens the **Visit Smoothie** welcome screen. **开始我的健康旅程** opens the first-use patient profile:
+
+- Required: nickname, complete date of birth, sex (male/female), and education (primary, middle, high/vocational, associate, bachelor or above).
+- Age is calculated from the birthday and the device's current calendar date; it is never entered or stored as a number. Invalid and future birth dates are rejected.
+- Optional multiline fields: underlying conditions, hereditary family conditions, and allergies. The left guide says **可跳过**. Leave any or all blank and add them later in **健康档案 / Health profile**.
+
+**保存并开始** validates and saves the profile plus a completion marker in one SQLite transaction, then opens the journal. Reloading or restarting does not repeat completed registration. Existing populated journals continue opening normally. Blank health history remains unrecorded, not a confirmed absence. Unsaved form input is retained when going back, changing language or encountering a save error; it is not persisted across a reload before saving.
+
+This is first-use profile registration for the existing local, single-user application. It does not create remote accounts or add password authentication.
 
 ## The five-step flow
 

@@ -11,8 +11,9 @@ export function emptyState(revision = 0) {
   return {
     revision,
     profile: Object.fromEntries(PROFILE_FIELDS.map(key => [key, ''])),
+    onboarding: { completedAt: null },
     episodes: [],
-    settings: { locale: 'en', email: '', timeZone: '', emailContent: 'undecided' },
+    settings: { locale: 'zh', email: '', timeZone: '', emailContent: 'undecided' },
     updatedAt: now(),
   };
 }

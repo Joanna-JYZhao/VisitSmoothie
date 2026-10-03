@@ -1,4 +1,6 @@
 import { profileView, journalView, episodeView, settingsView, visitForm } from './screens.js';
+import { onboardingView } from './onboarding.js';
+import { calculateAge, needsOnboarding } from './profile-model.js';
 const root = document.querySelector('#app');
 let state, capabilities = {}, dataset = new URLSearchParams(location.search).get('demo') === '1' ? 'demo' : 'real';
 let locale = 'en', page = 'home', activeId = null, error = '', busy = false;
@@ -54,13 +56,21 @@ function forgetForm(id,op=operationContext()){formDrafts.delete(draftKey(id,op))
 function restoreForms(){for(const form of root.querySelectorAll('form')){const values=formDrafts.get(draftKey(form.id));if(!values)continue;for(const el of form.elements){if(Object.hasOwn(values,el.name)){if(el.type==='checkbox')el.checked=values[el.name];else el.value=values[el.name]}}}}
 function episodeSnapshot(e){return {title:e.title,category:e.category,startedAt:e.startedAt,patientQuestions:e.patientQuestions,relatedIds:e.relatedIds,visits:e.visits,history:e.relatedIds.map(id=>state.episodes.find(x=>x.id===id)).filter(Boolean).map(x=>({id:x.id,title:x.title,startedAt:x.startedAt,visits:x.visits}))}}
 function briefStale(b,e){return JSON.stringify(b.sourceEntries)!==JSON.stringify(patientEntries(e))||JSON.stringify(b.profileSnapshot)!==JSON.stringify(state.profile)||JSON.stringify(b.sourceEpisode)!==JSON.stringify(episodeSnapshot(e))}
-function context(){return {state,t,esc,icon,fmt,categoryName,patientEntries,localTime,activeId,tab,busy,aiBusy,briefDraft:briefDrafts.get(briefKey(activeId)),selectedBriefId,briefStale,episodeRow,filter,search,dataset,workflowRuns:workflowHistory.get(briefKey(activeId))?.runs,workflowPanelOpen}}
+function context(){return {state,t,esc,icon,fmt,categoryName,patientEntries,localTime,activeId,tab,busy,aiBusy,page,error,briefDraft:briefDrafts.get(briefKey(activeId)),selectedBriefId,briefStale,episodeRow,filter,search,dataset,workflowRuns:workflowHistory.get(briefKey(activeId))?.runs,workflowPanelOpen}}
+function syncProfileFields(){
+ const dob=root.querySelector('#p-dob'),output=root.querySelector('#profile-age'),name=root.querySelector('#p-name');
+ if(dob&&output){const age=calculateAge(dob.value);output.textContent=age===null?t('Select year, month and day. Age is calculated automatically.','选择出生年月日，自动计算年龄。'):t(`${age} years old · calculated automatically`,`${age} 岁 · 根据出生日期自动计算`)}
+ if(name)name.setCustomValidity(name.required&&!name.value.trim()?t('Please enter your nickname.','请填写昵称。'):'');
+}
 function render(){
  if(!state)return;
+ const onboarding=needsOnboarding(state,dataset);
+ if(onboarding&&!['welcome','register'].includes(page)){page='welcome';activeId=null}
+ if(!onboarding&&['welcome','register'].includes(page))page='home';
  const focused=document.activeElement,hadFocus=focused&&root.contains(focused),focusId=focused?.id,focusAction=focused?.dataset?{...focused.dataset}:null;
- document.documentElement.lang=locale==='zh'?'zh-CN':'en';document.title=t('Health Journal · Your story','Health Journal · 你的健康记录');
- const c=context();const content=page==='profile'?profileView(c):page==='journal'?journalView(c):page==='episode'?episodeView(c):page==='settings'?settingsView(c):home();
- root.innerHTML=shell(content);restoreForms();
+ document.documentElement.lang=locale==='zh'?'zh-CN':'en';document.title=onboarding?t('Visit Smoothie · Your profile','Visit Smoothie · 个人档案'):t('Health Journal · Your story','Health Journal · 你的健康记录');
+ const c=context();const content=onboarding?onboardingView(c):page==='profile'?profileView(c):page==='journal'?journalView(c):page==='episode'?episodeView(c):page==='settings'?settingsView(c):home();
+ root.innerHTML=onboarding?content:shell(content);restoreForms();syncProfileFields();
  const target=root.querySelector('#entry-target');if(target)toggleNewFields(target.value==='new');
  syncBusyControls();
  if(hadFocus){const restored=focusId?[...root.querySelectorAll('[id]')].find(el=>el.id===focusId):focusAction?.action?[...root.querySelectorAll('[data-action]')].find(el=>Object.entries(focusAction).every(([key,value])=>el.dataset[key]===value)):null;(restored&&!restored.disabled?restored:document.querySelector('#main'))?.focus({preventScroll:true})}
@@ -81,12 +91,14 @@ async function reflectCurrent(id,op=operationContext()){aiBusy=id;render();try{a
 async function changeDataset(next){let result=await api('/state','GET',undefined,next,false);const nextCapabilities=result.capabilities;if(next==='demo'&&!result.state.episodes.length)result=await api('/demo/reset','POST',{},next,false);dataset=next;state=result.state;capabilities=nextCapabilities||{};locale=state.settings.locale;page='home';activeId=null;tab='entries';selectedBriefId=null}
 
 root.addEventListener('toggle',e=>{if(e.target.id==='workflow-panel')workflowPanelOpen=e.target.open},true);
-root.addEventListener('input',e=>{const form=e.target.closest('form');if(form)rememberForm(form);if(e.target.id==='brief-text'&&briefDrafts.has(briefKey(activeId)))briefDrafts.get(briefKey(activeId)).text=e.target.value});
+root.addEventListener('input',e=>{const form=e.target.closest('form');if(form)rememberForm(form);if(['p-name','p-dob'].includes(e.target.id))syncProfileFields();if(e.target.id==='brief-text'&&briefDrafts.has(briefKey(activeId)))briefDrafts.get(briefKey(activeId)).text=e.target.value});
 document.addEventListener('input',e=>{if(document.querySelector('#dialog').contains(e.target))dialogDirty=true});
-root.addEventListener('change',e=>{const form=e.target.closest('form');if(form)rememberForm(form);if(e.target.id==='entry-target')toggleNewFields(e.target.value==='new');if(e.target.dataset.action==='link-related'){const id=e.target.dataset.id,checked=e.target.checked;run(async op=>{const ids=new Set(state.episodes.find(x=>x.id===op.activeId).relatedIds);if(checked)ids.add(id);else ids.delete(id);await api(`/episodes/${op.activeId}`,'PATCH',{relatedIds:[...ids],revision:op.revision},op.dataset);toast(t('History updated','历史关联已更新'))})}});
+root.addEventListener('change',e=>{const form=e.target.closest('form');if(form)rememberForm(form);if(e.target.id==='p-dob')syncProfileFields();if(e.target.id==='entry-target')toggleNewFields(e.target.value==='new');if(e.target.dataset.action==='link-related'){const id=e.target.dataset.id,checked=e.target.checked;run(async op=>{const ids=new Set(state.episodes.find(x=>x.id===op.activeId).relatedIds);if(checked)ids.add(id);else ids.delete(id);await api(`/episodes/${op.activeId}`,'PATCH',{relatedIds:[...ids],revision:op.revision},op.dataset);toast(t('History updated','历史关联已更新'))})}});
 
 document.addEventListener('click',event=>{
  const b=event.target.closest('[data-action]');if(!b)return;const a=b.dataset.action;
+ if(a==='start-registration'){navigate('register');return}
+ if(a==='registration-back'){if(!busy)navigate('welcome');return}
  if(a==='link-related')return;
  if(busy&&['edit-entry','episode-details','edit-visit','clear'].includes(a))return;
  if(a==='close-dialog'){closeDialog();return}
@@ -161,6 +173,11 @@ document.addEventListener('submit',event=>{
  },op);
  if(form.id==='update-form')run(async()=>{const result=await api(`/episodes/${op.activeId}/entries`,'POST',{text:values.text,at:values.at?new Date(values.at).toISOString():new Date().toISOString(),severity,revision:op.revision},op.dataset);forgetForm('update-form',op);toast(t('Your update is saved','变化已保存'));if(f.get('askAI'))await reflectCurrent(op.activeId,{...op,revision:result.state.revision})},op);
  if(form.id==='profile-form')run(async()=>{await api('/profile','PUT',{profile:values,revision:op.revision},op.dataset);forgetForm('profile-form',op);toast(t('Health profile saved','健康档案已保存'))},op);
+ if(form.id==='registration-form')run(async()=>{
+  await api('/registration','POST',{profile:values,revision:op.revision,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone},op.dataset);
+  forgetForm('registration-form',op);
+  if(dataset===op.dataset){navigate('home');toast(t('Your profile is ready. Welcome!','档案已建立，欢迎你！'))}
+ },op);
  if(form.id==='questions-form')run(async()=>{await api(`/episodes/${op.activeId}`,'PATCH',{patientQuestions:values.patientQuestions,revision:op.revision},op.dataset);forgetForm('questions-form',op);toast(t('Questions saved. Generate an updated brief to include them.','问题已保存，生成更新后的摘要即可包含这些问题。'))},op);
  if(form.id==='edit-entry-form')run(async()=>{await api(`/episodes/${op.activeId}/entries/${op.editingEntryId}`,'PATCH',{text:values.text,at:preserveEntryTime(values.at,op.editingEntryAt),severity,revision:op.revision},op.dataset);closeDialog(op.dialogVersion);toast(t('Correction saved','修改已保存'))},op);
  if(form.id==='episode-details-form')run(async()=>{await api(`/episodes/${op.activeId}`,'PATCH',{title:values.title,category:values.category,startedAt:values.startedAt||null,revision:op.revision},op.dataset);closeDialog(op.dialogVersion);toast(t('Episode details saved','经历细节已保存'))},op);
@@ -170,7 +187,7 @@ document.addEventListener('submit',event=>{
  if(form.id==='clear-form')run(async()=>{await api('/reset','POST',{confirmation:values.confirmation,revision:op.revision},op.dataset);for(const drafts of [formDrafts,briefDrafts,workflowHistory])for(const key of drafts.keys())if(key.startsWith(op.dataset+':'))drafts.delete(key);if(dataset===op.dataset){closeDialog();page='home';activeId=null;tab='entries';selectedBriefId=null;locale=state.settings.locale}toast(t('Journal cleared','记录已清空'))},op);
 });
 window.addEventListener('hashchange',()=>{readHash();if(state)render()});
-function readHash(){const parts=location.hash.slice(1).split('/');if(['home','journal','profile','settings'].includes(parts[0])){page=parts[0];activeId=null;tab='entries';selectedBriefId=null}else if(parts[0]==='episode'&&parts[1]){page='episode';activeId=parts[1];tab=['entries','brief','visits'].includes(parts[2])?parts[2]:'entries';selectedBriefId=null}}
+function readHash(){const parts=location.hash.slice(1).split('/');if(['welcome','register','home','journal','profile','settings'].includes(parts[0])){page=parts[0];activeId=null;tab='entries';selectedBriefId=null}else if(parts[0]==='episode'&&parts[1]){page='episode';activeId=parts[1];tab=['entries','brief','visits'].includes(parts[2])?parts[2]:'entries';selectedBriefId=null}}
 document.querySelector('#dialog').addEventListener('close',()=>{dialogDirty=false});
 window.addEventListener('beforeunload',event=>{const hasDraft=busy||briefDrafts.size||dialogDirty||[...formDrafts.keys()].some(key=>!key.endsWith(':search-form'));if(hasDraft){event.preventDefault();event.returnValue=''}});
 async function init(){try{await api('/state');locale=state.settings.locale;readHash();render()}catch(e){root.innerHTML=`<main class="initial"><h1>Health Journal</h1><p>${esc(e.message)}</p><a href="/">Try again</a></main>`}}

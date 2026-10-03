@@ -1,3 +1,5 @@
+import { SEX_OPTIONS, EDUCATION_OPTIONS, todayLocal } from '../public/profile-model.js';
+
 export class HttpError extends Error {
   constructor(status, message, code = 'INVALID_REQUEST') {
     super(message);
@@ -6,7 +8,7 @@ export class HttpError extends Error {
   }
 }
 
-export const PROFILE_FIELDS = ['name', 'dob', 'sex', 'conditions', 'medications', 'allergies', 'surgeries', 'familyHistory', 'notes'];
+export const PROFILE_FIELDS = ['name', 'dob', 'sex', 'education', 'conditions', 'medications', 'allergies', 'surgeries', 'familyHistory', 'notes'];
 export const VISIT_FIELDS = ['date', 'clinician', 'diagnosis', 'treatment', 'tests', 'followUp', 'notes'];
 export const CATEGORIES = ['general', 'abdomen', 'head', 'chest', 'breathing', 'skin', 'muscle', 'other'];
 export const FACT_LABELS = ['onset', 'location', 'duration', 'pattern', 'intensity', 'triggers', 'associated', 'medications', 'impact', 'other'];
@@ -64,13 +66,25 @@ export function date(value, label, { nullable = false, optional = false, dateOnl
   return value;
 }
 
-export function profile(input, existing) {
+export function profile(input, existing, { timeZone } = {}) {
   fields(input, PROFILE_FIELDS, 'Profile');
   const result = { ...existing };
   for (const [key, value] of Object.entries(input)) {
     result[key] = key === 'dob' ? date(value, 'Date of birth', { optional: true, dateOnly: true }) : string(value, key, key === 'name' ? 120 : 4000);
   }
-  if (result.dob && result.dob > new Date().toISOString().slice(0, 10)) throw new HttpError(400, 'Date of birth cannot be in the future.');
+  if (result.dob && result.dob > todayLocal(new Date(), timeZone)) throw new HttpError(400, 'Date of birth cannot be in the future.');
+  for (const [key, options] of [['sex', SEX_OPTIONS], ['education', EDUCATION_OPTIONS]]) {
+    if (key in input && input[key] !== existing[key]) choice(result[key], ['', ...options.map(([value]) => value)], key);
+  }
+  return result;
+}
+
+export function registration(input, existing, options = {}) {
+  const result = profile(input, existing, options);
+  string(result.name, 'Nickname', 120, true);
+  date(result.dob, 'Date of birth', { dateOnly: true });
+  choice(result.sex, SEX_OPTIONS.map(([value]) => value), 'Sex');
+  choice(result.education, EDUCATION_OPTIONS.map(([value]) => value), 'Education');
   return result;
 }
 

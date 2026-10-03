@@ -1,15 +1,15 @@
-export function todayLocal(date=new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-}
+import { todayLocal } from './profile-model.js';
+import { identityFields, historyFields } from './onboarding.js';
+export { todayLocal };
 
 export function profileView(c) {
   const {state,t,esc,icon}=c;
   const p=state.profile;
   const field=(key,en,zh,placeholder='')=>`<div class="field"><label for="p-${key}">${t(en,zh)}</label><textarea id="p-${key}" name="${key}" maxlength="4000" placeholder="${esc(placeholder)}">${esc(p[key])}</textarea></div>`;
   return `<div class="page-heading"><div><p class="eyebrow">${t('The bigger picture','关于你的健康')}</p><h1>${t('Your health, in context.','把健康背景记下来。')}</h1><p class="subtitle">${t('Keep the details you don’t want to explain from the beginning every time.','那些不想每次从头回忆的细节，先好好记在这里。')}</p></div></div>
-  <form id="profile-form" class="profile-layout"><div class="stack"><section class="card"><div class="card-head"><h2>${t('A little about you','基本信息')}</h2>${icon('person')}</div><div class="field-grid three"><div class="field"><label for="p-name">${t('Preferred name','称呼')}</label><input id="p-name" name="name" value="${esc(p.name)}" maxlength="120" autocomplete="given-name"></div><div class="field"><label for="p-dob">${t('Date of birth','出生日期')}</label><input type="date" id="p-dob" name="dob" value="${esc(p.dob)}" max="${todayLocal()}"></div><div class="field"><label for="p-sex">${t('Sex (if relevant)','性别（如相关）')}</label><input id="p-sex" name="sex" value="${esc(p.sex)}" maxlength="100" placeholder="${t('Optional','选填')}"></div></div></section>
-  <section class="card"><div class="card-head"><h2>${t('What your doctor should know','需要让医生知道的事')}</h2>${icon('heart')}</div><div class="field-grid">${field('conditions','Conditions & past illnesses','既往病史',t('Include dates if you remember them.','记得的话，可以补充发生时间。'))}${field('medications','Medicines & supplements','正在用的药物和补充剂',t('Name, dose and schedule, as prescribed.','药名、剂量及医生要求的服用方式。'))}${field('allergies','Allergies & reactions','过敏及反应',t('What caused it? What happened?','什么引起的？发生了什么反应？'))}${field('surgeries','Surgeries & hospital stays','手术与住院经历')}${field('familyHistory','Family health history','家族健康史')}${field('notes','Anything else to remember','其他需要记住的事')}</div></section></div>
-  <aside class="stack"><div class="card soft-card"><h2>${t('Only what you know.','知道多少，就记多少。')}</h2><p>${t('Every field is optional. A blank means “not recorded”, not “none”. You can return and update this any time.','所有字段均可选填。空白表示“尚未记录”，并不表示“没有”。随时可以回来补充。')}</p><button class="btn primary wide" type="submit">${icon('check')}${t('Save health profile','保存健康档案')}</button></div><div class="info">${t('Your profile is stored on this computer. Relevant details are shared with DeepSeek only when you ask AI to organize an episode.','档案保存在这台电脑。只有请求 AI 整理症状时，相关信息才会发送给 DeepSeek。')}</div></aside></form>`;
+  <form id="profile-form" class="profile-layout"><div class="stack"><section class="card"><div class="card-head"><h2>${t('A little about you','基本信息')}</h2>${icon('person')}</div>${identityFields(c, Boolean(state.onboarding?.completedAt))}</section>
+  <section class="card"><div class="card-head"><h2>${t('What your doctor should know','需要让医生知道的事')}</h2>${icon('heart')}</div><div class="field-grid">${historyFields(c)}${field('medications','Medicines & supplements','正在用的药物和补充剂',t('Name, dose and schedule, as prescribed.','药名、剂量及医生要求的服用方式。'))}${field('surgeries','Surgeries & hospital stays','手术与住院经历')}${field('notes','Anything else to remember','其他需要记住的事')}</div></section></div>
+  <aside class="stack"><div class="card soft-card"><h2>${t('Only what you know.','知道多少，就记多少。')}</h2><p>${t('Health history is optional. A blank means “not recorded”, not “none”. You can return and update it any time.','健康背景可跳过。空白表示“尚未记录”，并不表示“没有”。随时可以回来补充。')}</p><button class="btn primary wide" type="submit">${icon('check')}${t('Save health profile','保存健康档案')}</button></div><div class="info">${t('Your profile is stored on this computer. Relevant details are shared with DeepSeek only when you ask AI to organize an episode.','档案保存在这台电脑。只有请求 AI 整理症状时，相关信息才会发送给 DeepSeek。')}</div></aside></form>`;
 }
 
 export function journalView(c) {
