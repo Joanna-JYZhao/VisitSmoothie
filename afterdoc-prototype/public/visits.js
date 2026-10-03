@@ -11,6 +11,8 @@ export function newVisit(number=1, startedAt=new Date().toISOString(), visitId=i
 // Snapshots deliberately exclude other snapshots and UI/connection state.
 export function clinicalSnapshot(state) {
   const result=Object.fromEntries(fields.filter(key=>state[key]!==undefined).map(key=>[key,clone(state[key])]));
+  // Opening an empty input is UI state, not a new clinical-note revision.
+  if(state.draftCheck&&state.draftCheckTarget)result.draftCheckTarget=clone(state.draftCheckTarget);
   result.questions=(result.questions||[]).map(q=>({...q,sourceDocuments:questionDocuments(q)}));
   result.versions=clone(planVersions(state));
   return result;

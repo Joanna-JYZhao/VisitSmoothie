@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newVisit, saveNoteVersion, nextVisit, clinicalSnapshot, previousVisitContext, hasVisitContent} from '../public/visits.js';
 import {createLocalStore, persistedState, restoreState, STORAGE_KEY} from '../public/storage.js';
+import {openUnderstandingCheck,addPlanVersion} from '../public/journey.js';
 
 const now='2026-10-02T12:00:00.000Z';
 function fresh(){return {visit:newVisit(1,now,'visit-1'),noteVersions:[],visitHistory:[],carryover:null,lang:'zh',view:'prepare',demo:false,intake:{messages:[],records:[],facts:[],unknowns:[],options:[],turn:0,reviewed:false},documents:[],versions:[],plan:null,checks:{},completed:{},questions:[],postMessages:[],reminders:[],activities:[],preference:'brief',draftIntake:'',draftPost:'',draftPlanText:'',draftCheck:'',recordDraft:null,ocrPending:false,ocrReviewed:false,photoPreviews:[],busy:'',calendar:null};}
@@ -21,4 +22,41 @@ test('malformed nested clinical data is rejected without overwriting the stored 
   for(const mutate of [s=>s.checks={item:null},s=>s.plan.warnings={},s=>s.plan.complexity={level:'high',reasons:[null]},s=>s.reminders=[{id:'r',start:null}],s=>s.questions[0].origin={visitNumber:'one'}]){
     const state=persistedState(populated());mutate(state);const storage=memoryStorage();const raw=JSON.stringify({schemaVersion:1,state});storage.setItem(STORAGE_KEY,raw);const store=createLocalStore(storage);assert.equal(store.load(fresh()).error.code,'corrupt');assert.equal(store.save(fresh()).ok,false);assert.equal(storage.getItem(STORAGE_KEY),raw);
   }
+});
+test('understanding draft resumes after storage reload and reopening its matching item',()=>{
+  const state=populated();state.checks={};
+  assert.equal(openUnderstandingCheck(state,'item'),true);
+  state.draftCheck='I would take one tablet in the morning.';
+  const storage=memoryStorage(),store=createLocalStore(storage);store.load(fresh());assert.equal(store.save(state).ok,true);
+  const restored=createLocalStore(storage).load(fresh()).state;
+  assert.equal(restored.checkOpen,'item');
+  restored.checkOpen=null;openUnderstandingCheck(restored,'item');
+  assert.equal(restored.draftCheck,'I would take one tablet in the morning.');
+  assert.deepEqual(restored.draftCheckTarget,{visitId:'visit-1',planVersion:1,itemId:'item'});
+});
+test('an understanding draft cannot attach to a replacement plan even when item IDs are reused',()=>{
+  const state=populated();openUnderstandingCheck(state,'item');state.draftCheck='An answer about the old instructions';
+  const previous=persistedState(state);
+  Object.assign(state,addPlanVersion(state,{items:[{id:'item',title:'Replacement medicine',sourceId:'new',sourceQuote:'Different instructions'}]},[{id:'new',title:'New plan',text:'Different instructions'}],{label:'replacement',time:'14:00'}));
+  assert.equal(state.draftCheck,'');assert.equal(state.draftCheckTarget,null);assert.equal(state.checkOpen,null);
+  // A stale but structurally valid target is never reopened on a newer plan.
+  const restored=restoreState({...persistedState(state),draftCheck:previous.draftCheck,draftCheckTarget:previous.draftCheckTarget},fresh());
+  assert.equal(restored.checkOpen,null);openUnderstandingCheck(restored,'item');assert.equal(restored.draftCheck,'');assert.equal(restored.draftCheckTarget.planVersion,2);
+});
+test('schema-one visits without a draft target still recover their unassociated text',()=>{
+  const saved=persistedState(populated());saved.draftCheck='An older unsubmitted answer';delete saved.draftCheckTarget;
+  const restored=restoreState(saved,fresh());assert.equal(restored.draftCheck,'An older unsubmitted answer');assert.equal(restored.draftCheckTarget,null);assert.equal(restored.checkOpen,null);
+});
+test('opening and closing an empty understanding input does not create a note revision',()=>{
+  const state=populated();Object.assign(state,saveNoteVersion(state,{text:'Saved note',now,id:'saved'}));
+  openUnderstandingCheck(state,'item');assert.equal(saveNoteVersion(state,{text:'Unchanged',now,id:'unused'}).noteVersions.length,1);
+  state.checkOpen=null;assert.equal(saveNoteVersion(state,{text:'Unchanged',now,id:'unused-again'}).noteVersions.length,1);
+});
+test('reloading reviewed and submitted OCR leaves the saved note unchanged; new OCR remains gated',()=>{
+  const state=populated();state.ocrPending=true;state.ocrReviewed=true;state.draftPlanText=state.documents[0].text;
+  Object.assign(state,saveNoteVersion(state,{text:'Reviewed source note',now,id:'ocr-note'}));
+  const restored=restoreState(persistedState(state),fresh());
+  assert.equal(restored.ocrReviewed,true);assert.equal(saveNoteVersion(restored,{text:'Same note after refresh',now,id:'unneeded'}).noteVersions.length,1);
+  state.draftPlanText='Different OCR text not yet submitted';
+  assert.equal(restoreState(persistedState(state),fresh()).ocrReviewed,false);
 });

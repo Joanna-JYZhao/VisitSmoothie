@@ -1,4 +1,5 @@
 import {clinicalSnapshot} from './visits.js';
+import {checkDraftMatches} from './journey.js';
 
 export const STORAGE_KEY='afterdoc.visits.v1';
 const schemaVersion=1;
@@ -11,6 +12,7 @@ const origin=v=>object(v)&&text(v.visitId)&&Number.isInteger(v.visitNumber)&&v.v
 const question=v=>object(v)&&text(v.id)&&text(v.text)&&['saved','sent','replied','answered'].includes(v.status)&&(!v.sourceDocuments||arrayOf(v.sourceDocuments,doc))&&(!v.origin||origin(v.origin));
 const checkMap=v=>object(v)&&Object.values(v).every(c=>object(c)&&['matched','mismatch','uncertain','skipped'].includes(c.status));
 const completedMap=v=>object(v)&&Object.values(v).every(value=>typeof value==='boolean');
+const draftTarget=v=>v===undefined||v===null||(object(v)&&text(v.visitId)&&text(v.itemId)&&Number.isInteger(v.planVersion)&&v.planVersion>0);
 const plan=v=>v===null||(object(v)&&Number.isInteger(v.version)&&arrayOf(v.items,i=>object(i)&&text(i.id)&&text(i.title)&&(!i.missing||arrayOf(i.missing,text)))&&(!v.warnings||arrayOf(v.warnings,text))&&(!v.complexity||(object(v.complexity)&&arrayOf(v.complexity.reasons,text))));
 const reminder=v=>object(v)&&text(v.id)&&text(v.title)&&text(v.start)&&text(v.timeZone)&&Number.isInteger(v.count)&&Number.isInteger(v.version);
 const intake=v=>object(v)&&arrayOf(v.messages,m=>object(m)&&['user','assistant'].includes(m.role)&&text(m.content))&&arrayOf(v.records,doc)&&arrayOf(v.facts,f=>object(f)&&text(f.label)&&text(f.value)&&text(f.quote))&&arrayOf(v.unknowns,text)&&arrayOf(v.options,text);
@@ -18,7 +20,7 @@ function clinical(v) {
   return object(v)&&visit(v.visit)&&intake(v.intake)&&arrayOf(v.documents,doc)&&plan(v.plan)&&checkMap(v.checks)&&completedMap(v.completed)&&
     arrayOf(v.questions,question)&&arrayOf(v.reminders,reminder)&&arrayOf(v.postMessages,m=>object(m)&&text(m.content)&&(!m.citations||arrayOf(m.citations,c=>object(c)&&text(c.sourceId)&&text(c.quote))))&&
     arrayOf(v.versions,p=>object(p)&&Number.isInteger(p.version)&&plan(p.plan)&&arrayOf(p.documents,doc)&&(!p.checks||checkMap(p.checks))&&(!p.completed||completedMap(p.completed)))&&
-    (v.recordDraft===null||doc(v.recordDraft))&&['draftIntake','draftPost','draftPlanText','draftCheck'].every(k=>text(v[k]))&&
+    (v.recordDraft===null||doc(v.recordDraft))&&['draftIntake','draftPost','draftPlanText','draftCheck'].every(k=>text(v[k]))&&draftTarget(v.draftCheckTarget)&&
     (v.carryover===null||(object(v.carryover)&&text(v.carryover.summary)&&text(v.carryover.visitId)&&Number.isInteger(v.carryover.visitNumber)&&text(v.carryover.endedAt)&&arrayOf(v.carryover.questionsAtStart,question)));
 }
 const revision=v=>object(v)&&text(v.id)&&Number.isInteger(v.revision)&&v.revision>0&&text(v.text)&&text(v.savedAt)&&clinical(v.snapshot)&&!('noteVersions' in v.snapshot)&&!('visitHistory' in v.snapshot);
@@ -34,9 +36,13 @@ export function persistedState(state) {
 
 export function restoreState(data,defaults) {
   if(!validState(data))throw new Error('Unrecognized saved visit data.');
-  return {...defaults,...structuredClone(data),photoPreviews:[],busy:'',error:null,calendar:null,
+  const submittedReview=Boolean(data.ocrReviewed&&data.draftPlanText.trim()&&data.documents.some(doc=>doc.text.trim()===data.draftPlanText.trim()));
+  const restored={...defaults,...structuredClone(data),draftCheckTarget:structuredClone(data.draftCheckTarget??null),photoPreviews:[],busy:'',error:null,calendar:null,
     // Original photos are session-only. Unfinished OCR must be reviewed again.
-    ocrPhotoMissing:Boolean(data.ocrPending),ocrReviewed:data.ocrPending?false:Boolean(data.ocrReviewed),checkOpen:null};
+    ocrPhotoMissing:Boolean(data.ocrPending),ocrReviewed:data.ocrPending?submittedReview:Boolean(data.ocrReviewed),checkOpen:null};
+  const itemId=restored.draftCheckTarget?.itemId;
+  if(restored.draftCheck&&checkDraftMatches(restored,itemId)&&!['matched','skipped'].includes(restored.checks[itemId]?.status))restored.checkOpen=itemId;
+  return restored;
 }
 
 // A stale tab stops writing until the user explicitly reloads the stored version.

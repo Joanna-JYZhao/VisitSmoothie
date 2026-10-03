@@ -10,7 +10,21 @@ export function addPlanVersion(current, nextPlan, documents, {label, time, revie
   const plan={...structuredClone(nextPlan),version,reviewed};
   const copiedDocuments=structuredClone(documents);
   const snapshot={version,label,time,plan:structuredClone(plan),documents:structuredClone(copiedDocuments)};
-  return {plan,documents:copiedDocuments,versions:[...planVersions(current),snapshot]};
+  return {plan,documents:copiedDocuments,versions:[...planVersions(current),snapshot],checkOpen:null,draftCheck:'',draftCheckTarget:null};
+}
+
+export function checkDraftMatches(state,itemId) {
+  const target=state.draftCheckTarget;
+  return Boolean(target&&state.visit?.id===target.visitId&&state.plan?.version===target.planVersion&&
+    target.itemId===itemId&&state.plan.items.some(item=>item.id===itemId));
+}
+
+export function openUnderstandingCheck(state,itemId) {
+  if(!state.visit?.id||!state.plan?.items.some(item=>item.id===itemId))return false;
+  if(!checkDraftMatches(state,itemId))state.draftCheck='';
+  state.draftCheckTarget={visitId:state.visit.id,planVersion:state.plan.version,itemId};
+  state.checkOpen=itemId;
+  return true;
 }
 
 export function findDocument(state,id) {
