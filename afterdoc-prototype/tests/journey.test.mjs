@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {addPlanVersion,findDocument,markPatientCorrection,planVersions} from '../public/journey.js';
+import {addPlanVersion,findDocument,markPatientCorrection,planVersions,recordQuestionReply,questionDocuments} from '../public/journey.js';
 
 test('new source plan retains the previous source and immutable plan snapshot',()=>{
   let state={plan:null,documents:[],versions:[]};
@@ -43,4 +43,19 @@ test('replacing a plan archives the understanding and patient markers for the ol
   assert.equal(state.versions[0].plan.reviewed,true);
   assert.equal(planVersions(state)[1].checks.b.status,'skipped');
   assert.equal(planVersions(state)[1].completed.a,undefined);
+});
+
+test('reply recorded before the first plan remains exact source evidence after plan extraction',()=>{
+  const reply={id:'reply-1',title:'Written reply, Oct 2',text:'Please ask the prescriber before changing it.'};
+  const question={id:'q',text:'What should I do?',status:'saved'};
+  const state={plan:null,versions:[],documents:[reply],questions:[question]};
+  recordQuestionReply(question,reply,'answered');
+  Object.assign(state,addPlanVersion(state,{items:[{id:'new'}]},[{id:'plan',title:'Plan',text:'New written instructions'}],{label:'first plan',time:'13:00'}));
+  assert.deepEqual(findDocument(state,'reply-1'),reply);
+  assert.deepEqual(questionDocuments(question),[reply]);
+  const olderSavedQuestion={id:'old-q',sourceId:'older-source',reply:'Original patient-entered words',replySource:'Phone call'};
+  assert.deepEqual(questionDocuments(olderSavedQuestion),[{id:'older-source',title:'Phone call',text:'Original patient-entered words'}]);
+  recordQuestionReply(question,{id:'reply-2',title:'Second reply',text:'Follow-up words'},'replied');
+  assert.deepEqual(findDocument(state,'reply-1'),reply);
+  assert.equal(question.sourceDocuments.length,2);
 });

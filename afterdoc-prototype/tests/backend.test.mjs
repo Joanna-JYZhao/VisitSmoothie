@@ -5,7 +5,7 @@ import {createServer} from '../server.mjs';
 import {AppError, completeJson} from '../server/provider.mjs';
 import {extractDocument} from '../server/extract.mjs';
 import {demoRecords} from '../public/fixtures.js';
-import {validatePlan, validateAnswer, validateCheck, validateIntake, unsafeQuestionRoute} from '../server/agent.mjs';
+import {validatePlan, validateAnswer, validateCheck, validateIntake, unsafeQuestionRoute, validatePreviousVisit} from '../server/agent.mjs';
 
 const documents = [{id:'doc-1',title:'Visit note',text:'Medicine A: 1 tablet twice daily, after breakfast and dinner, for 5 days. Follow up if symptoms persist.'}];
 const item = {id:'item-1',kind:'medication',title:'Medicine A',dose:'1 tablet',frequency:'twice daily',duration:'5 days',timing:'after breakfast and dinner',sourceId:'doc-1',sourceQuote:'Medicine A: 1 tablet twice daily, after breakfast and dinner, for 5 days.',missing:[]};
@@ -61,6 +61,20 @@ test('intake facts require an exact user quote', () => {
   assert.equal(result.facts.length, 1);
   assert.equal(result.facts[0].quote, 'today');
   assert.equal(result.facts[0].sourceId, 'patient');
+});
+
+test('previous visit context is bounded and never becomes current fact evidence',()=>{
+  const previousVisit={visitNumber:1,endedAt:'2026-10-02T12:00:00.000Z',summary:'I felt dizzy last month.',unresolvedQuestions:['Can I stop the medicine?'],documents:[{id:'old-record',text:'I felt dizzy last month.'}]};
+  assert.equal(validatePreviousVisit(previousVisit).documents,undefined);
+  assert.throws(()=>validatePreviousVisit({...previousVisit,summary:'x'.repeat(8001)}),{code:'bad_input'});
+  assert.throws(()=>validatePreviousVisit({...previousVisit,unresolvedQuestions:['x'.repeat(501)]}),{code:'bad_input'});
+  const payload={messages:[{role:'user',content:'I feel well today.'}],records:[],previousVisit,turn:1};
+  const result=validateIntake({reply:'Thanks',question:'What has changed?',facts:[
+    {label:'Now',value:'Well',quote:'I feel well today.',sourceId:'patient'},
+    {label:'History masquerading as current',value:'Dizzy',quote:'I felt dizzy last month.',sourceId:'patient'},
+    {label:'History record',value:'Dizzy',quote:'I felt dizzy last month.',sourceId:'old-record'},
+  ]},payload);
+  assert.deepEqual(result.facts.map(f=>f.value),['Well']);
 });
 
 test('record facts cite their exact record; assistant text and invented IDs are rejected', () => {
@@ -274,5 +288,21 @@ test('exports are downloadable attachments with exact content and no arbitrary f
     const bad=await fetch(base+'/api/download/not-a-token');assert.equal(bad.status,404);
     const calendar=await fetch(base+'/api/exports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'calendar',events:[{id:'synthetic-ics',title:'Fictional medicine',description:'private',start:'2026-10-03T08:00:00',timeZone:'Asia/Shanghai',count:5,minutesBefore:0,kind:'medication'}]})});
     const link=await calendar.json();const ics=await fetch(base+link.url);const text=await ics.text();assert.match(text,/BEGIN:VCALENDAR/);assert.match(text,/COUNT=5/);assert.doesNotMatch(text,/Fictional medicine/);
+  }finally{await new Promise(resolve=>server.close(resolve));}
+});
+
+test('history backup downloads exact large JSON while export and agent body limits remain bounded',async()=>{
+  const server=createServer({config:{key:'test',model:'test'},complete:async()=>{throw new Error('Should not call model');}});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const base=`http://127.0.0.1:${server.address().port}`;
+  const post=(path,body)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  try{
+    const text=JSON.stringify({schemaVersion:1,synthetic:'测试'.repeat(60000)});
+    const prepared=await post('/api/exports',{type:'backup',text});assert.equal(prepared.status,200);
+    const result=await prepared.json();assert.equal(result.filename,'AfterDoc-visit-history.json');
+    const download=await fetch(base+result.url);assert.match(download.headers.get('Content-Type'),/^application\/json/);assert.match(download.headers.get('Content-Disposition'),/attachment/);assert.equal(await download.text(),text);
+    const corrupted='{unreadable original';const recovery=await post('/api/exports',{type:'backup',text:corrupted});assert.equal(await (await fetch(base+(await recovery.json()).url)).text(),corrupted);
+    const tooLarge=await post('/api/exports',{type:'backup',text:'x'.repeat(8*1024*1024)});assert.equal(tooLarge.status,413);
+    const agentTooLarge=await post('/api/agent',{task:'intake',language:'en',payload:{padding:'x'.repeat(256*1024)}});assert.equal(agentTooLarge.status,413);
   }finally{await new Promise(resolve=>server.close(resolve));}
 });

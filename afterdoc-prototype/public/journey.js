@@ -16,6 +16,8 @@ export function addPlanVersion(current, nextPlan, documents, {label, time, revie
 export function findDocument(state,id) {
   const current=(state.documents||[]).find(doc=>doc.id===id);
   if(current)return current;
+  const reply=(state.questions||[]).flatMap(questionDocuments).find(doc=>doc.id===id);
+  if(reply)return reply;
   const intake=(state.intake?.records||[]).find(doc=>doc.id===id);
   if(intake)return intake;
   for(const version of state.versions||[]) {
@@ -23,6 +25,21 @@ export function findDocument(state,id) {
     if(archived)return archived;
   }
   return null;
+}
+
+// Older saved sessions already retain these exact patient-entered reply fields.
+// Recover their source document even when the first plan replaced documents[].
+export function questionDocuments(question) {
+  const documents=structuredClone(question.sourceDocuments||[]);
+  if(typeof question.sourceId==='string'&&typeof question.reply==='string'&&typeof question.replySource==='string'&&
+    !documents.some(doc=>doc.id===question.sourceId))documents.push({id:question.sourceId,title:question.replySource,text:question.reply});
+  return documents;
+}
+
+export function recordQuestionReply(question,document,status) {
+  const sourceDocuments=questionDocuments(question);
+  if(!sourceDocuments.some(doc=>doc.id===document.id))sourceDocuments.push(structuredClone(document));
+  Object.assign(question,{status,reply:document.text,replySource:document.title,sourceId:document.id,sourceDocuments});
 }
 
 export function markPatientCorrection(state) {

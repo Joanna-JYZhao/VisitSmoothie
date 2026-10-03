@@ -6,7 +6,7 @@ import {AppError, completeJson, loadProviderConfig} from './server/provider.mjs'
 import {extractDocument} from './server/extract.mjs';
 import {createCalendarConnector} from './server/calendar.mjs';
 import {calendarFile} from './public/calendar.js';
-import {validateDocuments, validateIntake, validatePlan, validateAnswer, validateCheck, promptFor} from './server/agent.mjs';
+import {validateDocuments, validateIntake, validatePlan, validateAnswer, validateCheck, promptFor, validatePreviousVisit} from './server/agent.mjs';
 
 const APP_DIR = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(APP_DIR, 'public');
@@ -46,10 +46,10 @@ async function readBody(req, limit) {
   return Buffer.concat(chunks);
 }
 
-async function readJson(req) {
+async function readJson(req,limit=256*1024) {
   if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) throw new AppError('bad_input', 'Send JSON data.', 415);
   try {
-    const body = JSON.parse((await readBody(req, 256 * 1024)).toString('utf8'));
+    const body = JSON.parse((await readBody(req,limit)).toString('utf8'));
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('shape');
     return body;
   } catch (error) {
@@ -111,10 +111,12 @@ export function createServer({config = CONFIG, complete = completeJson} = {}) {
       checkHost(req);
       const pathname = new URL(req.url || '/', 'http://localhost').pathname;
       if(pathname==='/api/exports'&&req.method==='POST'){
-        const body=await readJson(req);let content,filename,type;
+        const body=await readJson(req,8*1024*1024);let content,filename,type;
         if(body.type==='calendar'){try{content=calendarFile(body.events,{includeDetails:body.includeDetails===true});}catch(e){throw new AppError('export_input',e.message,400);}filename='AfterDoc-reminders.ics';type='text/calendar; charset=utf-8';}
         else if(body.type==='note'&&typeof body.text==='string'&&body.text.length<=100000){content=body.text;filename='AfterDoc-visit-note.txt';type='text/plain; charset=utf-8';}
-        else throw new AppError('export_input','Choose a valid note or calendar export.',400);
+        // Preserve even unreadable stored JSON exactly so recovery never rewrites it.
+        else if(body.type==='backup'&&typeof body.text==='string'&&Buffer.byteLength(body.text,'utf8')<=8*1024*1024){content=body.text;filename='AfterDoc-visit-history.json';type='application/json; charset=utf-8';}
+        else throw new AppError('export_input','Choose a valid note, history backup or calendar export.',400);
         for(const [id,file] of exports)if(Date.now()>file.expires)exports.delete(id);
         if(exports.size>=10)exports.delete(exports.keys().next().value);
         const id=crypto.randomUUID();exports.set(id,{content,filename,type,expires:Date.now()+600000});
@@ -155,7 +157,7 @@ export function createServer({config = CONFIG, complete = completeJson} = {}) {
           if (!Array.isArray(payload.messages) || payload.messages.length > 30 || payload.messages.some(m => !['user','assistant'].includes(m?.role) || typeof m.content !== 'string' || m.content.length > 5000)) throw new AppError('bad_input', 'Invalid intake messages.', 400);
           const records = validateDocuments(payload.records ?? [], {allowEmpty:true});
           if (records.some(record => record.id === 'patient')) throw new AppError('bad_input', 'Record ID patient is reserved.', 400);
-          input = {...payload, records};
+          input = {...payload, records, previousVisit:validatePreviousVisit(payload.previousVisit)};
         }
         if (task === 'ask_plan' && (!stringPresent(payload.question) || !['brief','detail'].includes(payload.preference) || !payload.plan || typeof payload.plan !== 'object')) throw new AppError('bad_input', 'Invalid plan question.', 400);
         if (task === 'check_understanding' && (!payload.item || typeof payload.item !== 'object' || !stringPresent(payload.question) || typeof payload.answer !== 'string')) throw new AppError('bad_input', 'Invalid understanding check.', 400);
