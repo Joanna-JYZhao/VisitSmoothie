@@ -17,6 +17,7 @@ import {
 import type { RequiredField } from "@/app/me/profile-data";
 import { useToast } from "@/components/Toast";
 import { Button, Card, IconTile, PageTitle } from "@/components/ui";
+import { L } from "@/lib/lang";
 
 /** 修改资料: the same seven items as signing up, then medicines and who to call. */
 export default function EditProfilePage() {
@@ -44,7 +45,7 @@ export default function EditProfilePage() {
       return;
     }
     if (more.contactPhone.trim() && more.contactPhone.replace(/\D/g, "").length < 7) {
-      setError("紧急联系人的电话好像不完整，请再看一眼。");
+      setError(L("紧急联系人的电话好像不完整，请再看一眼。", "The emergency contact's phone number looks incomplete. Please check it."));
       return;
     }
     setProfile(
@@ -56,13 +57,15 @@ export default function EditProfilePage() {
           : null,
       }),
     );
-    toast.show("已保存", "good");
+    toast.show(L("已保存", "Saved"), "good");
     router.push("/me");
   };
 
   return (
     <div className="space-y-6 pb-2">
-      <PageTitle sub="这些内容给医生看的时候会带上（学历除外）。">修改资料</PageTitle>
+      <PageTitle sub={L("这些内容给医生看的时候会带上（学历除外）。", "All of this goes to the doctor along with your records (except education).")}>
+        {L("修改资料", "Edit profile")}
+      </PageTitle>
 
       {/* the card being edited keeps the tile it has on the profile page, so the form reads as the same thing opened up */}
       <Card tone="raised" className="rise-1 overflow-hidden">
@@ -94,12 +97,12 @@ export default function EditProfilePage() {
             <Pill />
           </IconTile>
           <div className="min-w-0 flex-1 pt-1">
-            <h2 className="t-heading text-ink">长期吃的药</h2>
-            <p className="t-body mt-1 text-ink-2">打完按回车，可以写好几样。</p>
+            <h2 className="t-heading text-ink">{L("长期吃的药", "Regular medicines")}</h2>
+            <p className="t-body mt-1 text-ink-2">{L("打完按回车，可以写好几样。", "Press Enter after each one. You can add several.")}</p>
           </div>
         </div>
         <div className="mt-5">
-          <ChipsInput value={more.medications} onChange={(v) => setMore({ ...more, medications: v })} placeholder="比如：降压药" />
+          <ChipsInput value={more.medications} onChange={(v) => setMore({ ...more, medications: v })} placeholder={L("比如：降压药", "e.g. blood pressure pills")} />
         </div>
       </Card>
 
@@ -110,8 +113,8 @@ export default function EditProfilePage() {
               <Phone />
             </IconTile>
             <div className="min-w-0 flex-1 pt-1">
-              <h2 className="t-heading text-ink">紧急联系人</h2>
-              <p className="t-body mt-1 text-ink-2">出了状况时，旁边的人可以打给谁。</p>
+              <h2 className="t-heading text-ink">{L("紧急联系人", "Emergency contact")}</h2>
+              <p className="t-body mt-1 text-ink-2">{L("出了状况时，旁边的人可以打给谁。", "Who people nearby can call if something happens.")}</p>
             </div>
           </div>
           <div className="mt-6">
@@ -131,10 +134,10 @@ export default function EditProfilePage() {
 
       <div className="rise-4 grid grid-cols-2 gap-3">
         <Button variant="outline" size="lg" className="press" onClick={() => router.push("/me")}>
-          不改了
+          {L("不改了", "Cancel")}
         </Button>
         <Button size="lg" className="press" onClick={save}>
-          保存
+          {L("保存", "Save")}
         </Button>
       </div>
     </div>

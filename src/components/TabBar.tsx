@@ -6,6 +6,7 @@ import { Camera, FileText, MessageCircle, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SmoothieMark } from "./Logo";
 import { focusRing } from "./ui";
+import { L } from "@/lib/lang";
 
 /*
  * The bar at the bottom of every signed-in screen: pre and post on the left, report and set on
@@ -52,15 +53,19 @@ export function TabBar() {
   const home = pathname === "/";
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
   return (
-    <nav aria-label="主导航" className="tab-bar phone-fixed no-print">
-      <div className="grid grid-cols-5 items-center px-2" style={{ height: "var(--tab-h)" }}>
+    <nav aria-label={L("主导航", "Main menu")} className="tab-bar phone-fixed no-print">
+      <div className="grid grid-cols-[1fr_1fr_7.25rem_1fr_1fr] items-center px-2" style={{ height: "var(--tab-h)" }}>
         {LEFT.map((t) => (
           <TabItem key={t.href} tab={t} active={isActive(t.href)} />
         ))}
-        {/* the app icon stands up out of the bar */}
+        {/* the app icon stands up out of the bar, its name under it; the middle column is wide enough for the name */}
         <div className="relative h-full">
-          <Link href="/" aria-label="首页" aria-current={home ? "page" : undefined} className={cn("tab-home press", focusRing)}>
+          <Link href="/" aria-label={L("VisitSmoothie 首页", "VisitSmoothie home")} aria-current={home ? "page" : undefined} className={cn("tab-home press", focusRing)}>
             <SmoothieMark className="h-[3.6rem] w-[3.6rem]" />
+            {/* the name under the icon, where the other tabs have their labels */}
+            <span aria-hidden="true" className={cn("tab-home-name text-base leading-tight tracking-tight", home ? "font-semibold text-brand-700" : "font-medium text-ink-2")}>
+              VisitSmoothie
+            </span>
           </Link>
         </div>
         {RIGHT.map((t) => (

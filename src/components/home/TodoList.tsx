@@ -6,11 +6,18 @@ import { IconTile, type IconTone } from "@/components/ui";
 import { storeActions, useStore } from "@/lib/store";
 import { homeTodos, type HomeTodo } from "@/lib/reminders";
 import { cn, fmtISODate } from "@/lib/utils";
+import { L } from "@/lib/lang";
 
 /* The home page's to-do list: medicines and when, the next visit, and anything else the doctor asked for. */
 
 const DONE_KEY = "yiban.doneToday";
-const KIND: Record<HomeTodo["kind"], string> = { medicine: "吃药", care: "要做的", followup: "下次复诊", caution: "注意" };
+const kindLabel = (k: HomeTodo["kind"]): string =>
+  ({
+    medicine: L("吃药", "Medicine"),
+    care: L("要做的", "To do"),
+    followup: L("下次复诊", "Next visit"),
+    caution: L("注意", "Take care"),
+  })[k];
 /* Kind icons supplement, rather than replace, the written labels. One accent; only a caution is amber. */
 const KIND_ICON: Record<HomeTodo["kind"], { Icon: typeof Pill; tone: IconTone }> = {
   medicine: { Icon: Pill, tone: "brand" },
@@ -71,7 +78,9 @@ export function TodoList({ now }: { now: number }) {
         <IconTile tone="brand" size="sm">
           <Sparkles />
         </IconTile>
-        <p className="t-body text-ink">看完医生，在 post 里录音或上传，吃药和复诊会自动放到这里。</p>
+        <p className="t-body text-ink">
+          {L("看完医生，在 post 里录音或上传，吃药和复诊会自动放到这里。", "After a doctor's visit, record or upload in post. Medicines and visits will show up here.")}
+        </p>
       </div>
     );
   }
@@ -90,7 +99,7 @@ export function TodoList({ now }: { now: number }) {
               type="button"
               role="checkbox"
               aria-checked={ticked}
-              aria-label={`今天做了：${t.title}`}
+              aria-label={L(`今天做了：${t.title}`, `Done today: ${t.title}`)}
               onClick={() => tick(t.key)}
               className="press -ml-2.5 flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
@@ -110,7 +119,7 @@ export function TodoList({ now }: { now: number }) {
                   className={cn("mr-1.5 inline-block h-5 w-5 align-[-0.22em]", ticked ? "text-ink-3" : k.tone === "warn" ? "text-warn" : "text-brand-600")}
                   aria-hidden="true"
                 />
-                <span className={cn("font-semibold", ticked ? "text-ink-2" : k.tone === "warn" ? "text-warn" : "text-brand-700")}>{KIND[t.kind]}</span>
+                <span className={cn("font-semibold", ticked ? "text-ink-2" : k.tone === "warn" ? "text-warn" : "text-brand-700")}>{kindLabel(t.kind)}</span>
                 {what && (
                   <>
                     <span className="mx-1.5 text-ink-3" aria-hidden="true">
@@ -160,7 +169,7 @@ export function TodoList({ now }: { now: number }) {
                 type="button"
                 role="switch"
                 aria-checked={r.enabled}
-                aria-label={`提醒：${t.title}`}
+                aria-label={L(`提醒：${t.title}`, `Reminder: ${t.title}`)}
                 onClick={() => storeActions.updateReminder(r.id, (x) => ({ ...x, enabled: !x.enabled }))}
                 className="press mt-1 flex min-h-12 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-base font-medium text-ink-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
@@ -174,7 +183,7 @@ export function TodoList({ now }: { now: number }) {
                     )}
                   />
                 </span>
-                <span className={cn("leading-none", r.enabled && "text-brand-700")}>{r.enabled ? "提醒开" : "提醒关"}</span>
+                <span className={cn("leading-none", r.enabled && "text-brand-700")}>{r.enabled ? L("提醒开", "Remind on") : L("提醒关", "Remind off")}</span>
               </button>
             )}
           </li>

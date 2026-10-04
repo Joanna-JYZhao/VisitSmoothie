@@ -8,6 +8,7 @@ import { toLocalInputValue } from "@/lib/utils";
 import { HintBanner } from "./HintBanner";
 import { useToast } from "./Toast";
 import { Button, Field, IconTile, Input, Modal, Select, TextButton } from "./ui";
+import { L } from "@/lib/lang";
 import { CircleAlert, Clock3 } from "lucide-react";
 
 /* the box a reading is typed into: the number big and tabular, centred, the way a Health entry is */
@@ -48,12 +49,12 @@ export function useRecordMetric() {
 export function parseReading(type: MetricType, raw: string, raw2: string): { value: number; value2: number | null } | string {
   const def = METRICS[type];
   const value = Number(raw);
-  if (!raw.trim() || !Number.isFinite(value)) return "请填一个数";
-  if (value < def.inputMin || value > def.inputMax) return `这个数应该在 ${def.inputMin} 到 ${def.inputMax} 之间，请再看一眼`;
+  if (!raw.trim() || !Number.isFinite(value)) return L("请填一个数", "Please enter a number");
+  if (value < def.inputMin || value > def.inputMax) return L(`这个数应该在 ${def.inputMin} 到 ${def.inputMax} 之间，请再看一眼`, `The number should be between ${def.inputMin} and ${def.inputMax}. Please check it`);
   if (type !== "bp") return { value, value2: null };
   const value2 = Number(raw2);
-  if (!raw2.trim() || !Number.isFinite(value2)) return "请把低压也填上";
-  if (value2 < 30 || value2 > 160 || value2 >= value) return "低压应该比高压小，请再看一眼";
+  if (!raw2.trim() || !Number.isFinite(value2)) return L("请把低压也填上", "Please also enter the lower number");
+  if (value2 < 30 || value2 > 160 || value2 >= value) return L("低压应该比高压小，请再看一眼", "The lower number should be smaller than the upper one. Please check");
   return { value, value2 };
 }
 
@@ -82,8 +83,8 @@ export function ReadingInputs({
         step={def.step}
         value={raw}
         onChange={(e) => onChange(e.target.value, raw2)}
-        placeholder={type === "bp" ? "高压" : def.placeholder}
-        aria-label={type === "bp" ? "高压" : `${def.label}（${def.unit}）`}
+        placeholder={type === "bp" ? L("高压", "Upper") : def.placeholder}
+        aria-label={type === "bp" ? L("高压", "Upper") : `${def.label}（${def.unit}）`}
         autoFocus={autoFocus}
         onKeyDown={(e) => e.key === "Enter" && onEnter?.()}
         className={readingCls}
@@ -98,8 +99,8 @@ export function ReadingInputs({
             inputMode="numeric"
             value={raw2}
             onChange={(e) => onChange(raw, e.target.value)}
-            placeholder="低压"
-            aria-label="低压"
+            placeholder={L("低压", "Lower")}
+            aria-label={L("低压", "Lower")}
             onKeyDown={(e) => e.key === "Enter" && onEnter?.()}
             className={readingCls}
           />
@@ -165,7 +166,7 @@ function RecordMetricForm({
     }
     const when = more ? new Date(at) : new Date();
     if (Number.isNaN(when.getTime()) || when.getTime() > Date.now() + 60_000) {
-      setError("时间不能比现在晚");
+      setError(L("时间不能比现在晚", "The time can't be later than now"));
       return;
     }
     const { saved, hint } = record({ type, ...parsed, at: when.toISOString(), note: note.trim() || undefined });
@@ -173,8 +174,8 @@ function RecordMetricForm({
     if (editing) deleteMeasurement(editing.id);
     if (hint) setResult(hint);
     else {
-      toast.show(`${editing ? "已改成" : "已记下"}${def.label} ${formatValue(saved)}`, "good", {
-        label: "撤销",
+      toast.show(L(`${editing ? "已改成" : "已记下"}${def.label} ${formatValue(saved)}`, `${editing ? "Changed to" : "Saved"}: ${def.label} ${formatValue(saved)}`), "good", {
+        label: L("撤销", "Undo"),
         onClick: () => {
           deleteMeasurement(saved.id);
           if (editing) {
@@ -190,7 +191,10 @@ function RecordMetricForm({
 
   if (result) {
     return (
-      <Modal open title={`已记下${def.label} ${raw}${type === "bp" ? `/${raw2}` : ""}`} onClose={onClose} footer={<Button onClick={onClose}>知道了</Button>}>
+      <Modal open title={L(`已记下${def.label} ${raw}${type === "bp" ? `/${raw2}` : ""}`, `Saved: ${def.label} ${raw}${type === "bp" ? `/${raw2}` : ""}`)}
+        onClose={onClose}
+        footer={<Button onClick={onClose}>{L("知道了", "OK")}</Button>}
+      >
         <HintBanner hint={result} />
       </Modal>
     );
@@ -199,19 +203,19 @@ function RecordMetricForm({
   return (
     <Modal
       open
-      title={editing ? "改这条记录" : "记一个数"}
+      title={editing ? L("改这条记录", "Edit this record") : L("记一个数", "Add a number")}
       onClose={onClose}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            取消
+            {L("取消", "Cancel")}
           </Button>
-          <Button onClick={() => save()}>保存</Button>
+          <Button onClick={() => save()}>{L("保存", "Save")}</Button>
         </>
       }
     >
       <div className="grid gap-5 text-ink">
-        <Field label="记什么">
+        <Field label={L("记什么", "What to record")}>
           <Select
             value={type}
             disabled={Boolean(editing)}
@@ -228,8 +232,8 @@ function RecordMetricForm({
           </Select>
         </Field>
         <Field
-          label={type === "bp" ? "高压 / 低压" : `数值（${def.unit}）`}
-          hint={def.targetText ? `${def.targetText}，你自己的目标听医生的` : undefined}
+          label={type === "bp" ? L("高压 / 低压", "Upper / lower") : L(`数值（${def.unit}）`, `Number (${def.unit})`)}
+          hint={def.targetText ? L(`${def.targetText}，你自己的目标听医生的`, `${def.targetText}. Your own target comes from your doctor`) : undefined}
         >
           <div className="flex">
             <ReadingInputs
@@ -249,17 +253,17 @@ function RecordMetricForm({
         </Field>
         {more ? (
           <>
-            <Field label="什么时候测的">
+            <Field label={L("什么时候测的", "When was it measured")}>
               <Input type="datetime-local" value={at} max={toLocalInputValue(new Date())} onChange={(e) => setAt(e.target.value)} className={dateCls} />
             </Field>
-            <Field label="备注">
-              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="可以不填，比如：聚餐后" />
+            <Field label={L("备注", "Note")}>
+              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder={L("可以不填，比如：聚餐后", "Optional, e.g. after a big dinner")} />
             </Field>
           </>
         ) : (
           <TextButton onClick={() => setMore(true)} className="-my-2 -ml-2 justify-self-start">
             <Clock3 className="mr-1 h-5 w-5" aria-hidden="true" />
-            不是刚测的，或者想加备注
+            {L("不是刚测的，或者想加备注", "Not measured just now, or add a note")}
           </TextButton>
         )}
         {error && (
@@ -276,7 +280,7 @@ function RecordMetricForm({
             <div className="min-w-0 flex-1">
               <p className="t-lead font-medium text-ink">{doubt}</p>
               <Button className="press mt-4 w-full" onClick={() => save(true)}>
-                没错，记下
+                {L("没错，记下", "It's right, save")}
               </Button>
             </div>
           </div>

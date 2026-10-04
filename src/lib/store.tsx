@@ -162,12 +162,33 @@ function storeKey(): string | null {
   return id && isDemoAccountId(id) ? dataKey(id) : null;
 }
 
+/**
+ * The language last chosen in this browser, whoever was logged in. Without it the choice made on
+ * the welcome page would be lost on reload, and logging out would always fall back to Chinese.
+ */
+const DEVICE_LANG_KEY = "yiban.lang";
+function deviceLang(): Lang {
+  try {
+    return localStorage.getItem(DEVICE_LANG_KEY) === "en" ? "en" : "zh";
+  } catch {
+    return "zh";
+  }
+}
+function rememberDeviceLang(lang: Lang) {
+  try {
+    localStorage.setItem(DEVICE_LANG_KEY, lang);
+  } catch {
+    /* no storage: the choice lasts until the page is closed */
+  }
+}
+
 function read(): AppState {
   if (memory) return memory;
   try {
     const key = storeKey();
     const raw = key ? localStorage.getItem(key) : null;
-    memory = raw ? migrate(JSON.parse(raw)) : EMPTY;
+    // nothing saved here yet (logged out, or a server account still loading): use this browser's choice
+    memory = raw ? migrate(JSON.parse(raw)) : { ...EMPTY, settings: { ...EMPTY.settings, lang: deviceLang() } };
   } catch (err) {
     console.warn("无法读取本地数据", err);
     memory = EMPTY;
@@ -248,7 +269,7 @@ function markSessionGone() {
   } catch {
     /* ignore */
   }
-  memory = EMPTY;
+  memory = { ...EMPTY, settings: { ...EMPTY.settings, lang: deviceLang() } };
   listeners.forEach((l) => l());
 }
 
@@ -337,11 +358,10 @@ const serverReady = () => false;
 
 const touch = (e: Episode): Episode => ({ ...e, updatedAt: nowISO() });
 
-/** The demo dataset: 林叔, the teammate's fictional patient. */
+/** The demo dataset: 林叔, the teammate's fictional patient, in the language of the interface. */
 function demoIn(persona: DemoPersona, lang: Lang): AppState {
   void persona;
-  void lang; // 林叔 is in Chinese only
-  return buildLinState();
+  return buildLinState(new Date(), lang);
 }
 
 /**
@@ -539,12 +559,19 @@ const actions: Omit<StoreApi, "state" | "ready"> = {
         ? prev.episodes.map((x) => (x.id === e.id ? e : x))
         : [e, ...prev.episodes],
     })),
-  // Only the language of the interface changes. Records stay exactly as they are, demo or not:
-  // rebuilding a demo here would give every record a new id and strand whoever is looking at one.
-  // (The demo people do not have an English version yet; when they do, it is loaded by opening
-  // the demo link again, not by this switch.)
-  setLanguage: (lang) =>
-    update((prev) => ((prev.settings.lang ?? "zh") === lang ? prev : { ...prev, settings: { ...prev.settings, lang } })),
+  // The interface language changes. Somebody's own records are never touched or translated.
+  // The demo (林叔) is the one exception: it exists in both languages, so it is rebuilt in the new
+  // one. Its ids are fixed and the same in both languages, so a page showing one of its records
+  // keeps working. The settings (the language, the finished tour) are kept as they are. A demo
+  // lives in its own demo account, which is local only, so the rebuild never reaches the server.
+  setLanguage: (lang) => {
+    rememberDeviceLang(lang);
+    update((prev) => {
+      if ((prev.settings.lang ?? "zh") === lang) return prev;
+      const settings = { ...prev.settings, lang };
+      return prev.demo === "lin" ? { ...demoIn(prev.demo, lang), settings } : { ...prev, settings };
+    });
+  },
   loadDemo: (persona = "lin") => {
     forgetWelcome();
     const lang = getLang();

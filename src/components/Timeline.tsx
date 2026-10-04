@@ -4,10 +4,16 @@ import { Trash2 } from "lucide-react";
 import type { Entry, Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn, feelWord, fmtDate, severityTone, sortedEntries } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { useToast } from "./Toast";
 import { focusRing } from "./ui";
 
-const SOURCE_LABEL: Record<Entry["source"], string> = { user: "自己说的", checkin: "回答追问", ai: "对话里记下" };
+const SOURCE_ZH: Record<Entry["source"], string> = { user: "自己说的", checkin: "回答追问", ai: "对话里记下" };
+const SOURCE_EN: Record<Entry["source"], string> = { user: "In my words", checkin: "Check-in answer", ai: "From the chat" };
+const sourceLabel = (s: Entry["source"]) => L(SOURCE_ZH[s], SOURCE_EN[s]);
+/** The patient's own words for how bad it was, as shown (the Chinese is the rule's word). */
+const feelShown = (s: number) =>
+  L(feelWord(s), s === 0 ? "Feeling fine" : s <= 3 ? "A little unwell" : s <= 6 ? "Quite unwell" : "Very unwell");
 const DOT: Record<ReturnType<typeof severityTone>, string> = {
   neutral: "bg-ink-3",
   good: "bg-good",
@@ -25,17 +31,17 @@ export function Timeline({ episode }: { episode: Episode }) {
   const remove = (entry: Entry) => {
     const snapshot = episode;
     updateEpisode(episode.id, (e) => ({ ...e, entries: e.entries.filter((x) => x.id !== entry.id) }));
-    toast.show("已删掉这一条", "neutral", { label: "撤销", onClick: () => restoreEpisode(snapshot) });
+    toast.show(L("已删掉这一条", "Removed"), "neutral", { label: L("撤销", "Undo"), onClick: () => restoreEpisode(snapshot) });
   };
-  if (!entries.length) return <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">还没有记录。</p>;
+  if (!entries.length) return <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">{L("还没有记录。", "No records yet.")}</p>;
   return (
     // a hairline spine down the left; each entry hangs off it by a dot in the colour of how bad it was
     <ol className="relative ml-[7px] space-y-7 border-l border-line-strong pl-7">
       {entries.map((e, i) => {
         const facts = [
-          e.temp != null ? `体温 ${e.temp}℃` : "",
+          e.temp != null ? L(`体温 ${e.temp}℃`, `Temp ${e.temp}℃`) : "",
           // the estimate behind a one-tap answer is for the chart only; the answer already says it
-          e.severity != null && e.source !== "checkin" ? (e.exact ? `自己打的分：${e.severity}/10` : feelWord(e.severity)) : "",
+          e.severity != null && e.source !== "checkin" ? (e.exact ? L(`自己打的分：${e.severity}/10`, `My score: ${e.severity}/10`) : feelShown(e.severity)) : "",
           e.location ?? "",
         ].filter(Boolean);
         return (
@@ -49,7 +55,7 @@ export function Timeline({ episode }: { episode: Episode }) {
                 <p className="text-base font-medium text-ink-2">
                   <span className="tabular">{fmtDate(e.at, { time: true })}</span>
                   <span aria-hidden="true"> · </span>
-                  {SOURCE_LABEL[e.source]}
+                  {sourceLabel(e.source)}
                 </p>
                 <p className="mt-1.5 text-lg leading-relaxed text-ink">{e.note}</p>
                 {facts.length > 0 && (
@@ -66,7 +72,7 @@ export function Timeline({ episode }: { episode: Episode }) {
                 <button
                   type="button"
                   onClick={() => remove(e)}
-                  aria-label={`删掉这一条：${e.note}`}
+                  aria-label={L(`删掉这一条：${e.note}`, `Remove this: ${e.note}`)}
                   className={cn(
                     "press -mt-1.5 -mr-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-ink-3 transition duration-200 hover:bg-danger-bg hover:text-danger",
                     focusRing,

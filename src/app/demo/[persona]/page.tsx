@@ -7,9 +7,10 @@ import { reloadAccount, useStore, type DemoPersona } from "@/lib/store";
 import { enterDemo } from "@/lib/accounts";
 import { LogoMark } from "@/components/Logo";
 import { Card, IconTile, LinkButton, Skeleton, Spinner } from "@/components/ui";
+import { L } from "@/lib/lang";
 
-const PERSONAS: Record<DemoPersona, { name: string }> = {
-  lin: { name: "林叔" },
+const PERSONAS: Record<DemoPersona, { name: () => string }> = {
+  lin: { name: () => L("林叔", "Uncle Lin") },
 };
 
 /**
@@ -40,11 +41,11 @@ export default function DemoLinkPage() {
           <IconTile tone="neutral" size="xl" className="mx-auto mb-5">
             <SearchX />
           </IconTile>
-          <h1 className="t-title text-ink">没有这个演示</h1>
-          <p className="t-body mx-auto mt-2 max-w-sm text-ink-2">可以打开的演示是 /demo/lin。</p>
+          <h1 className="t-title text-ink">{L("没有这个演示", "No such demo")}</h1>
+          <p className="t-body mx-auto mt-2 max-w-sm text-ink-2">{L("可以打开的演示是 /demo/lin。", "The demo you can open is /demo/lin.")}</p>
           <div className="mt-8 flex justify-center">
             <LinkButton href="/welcome" size="lg">
-              回到登录
+              {L("回到登录", "Back to sign in")}
             </LinkButton>
           </div>
         </Card>
@@ -61,7 +62,8 @@ export default function DemoLinkPage() {
             <Spinner className="absolute inset-0 h-28 w-28 border-[3px]" />
             <LogoMark className="h-[4.5rem] w-[4.5rem]" />
           </span>
-          <span className="t-lead font-medium text-ink">正在打开{PERSONAS[persona].name}的演示</span>
+          <span className="text-xl font-semibold tracking-tight text-brand-ink">VisitSmoothie</span>
+          <span className="t-lead font-medium text-ink">{L(`正在打开${PERSONAS[persona].name()}的演示`, `Opening ${PERSONAS[persona].name()}'s demo`)}</span>
         </div>
         {/* the two halves of the home page, still empty */}
         <div className="mt-10 space-y-3" aria-hidden="true">

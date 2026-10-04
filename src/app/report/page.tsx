@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight, ClipboardList, FolderOpen, MessageCircle, Stethoscope, type LucideIcon } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, episodeLine, fmtDate } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { Badge, Card, IconTile, Notice, focusRing } from "@/components/ui";
 
 /** report: every visit record, whole (问诊 + 医嘱) or in part, each with the page for the doctor. */
@@ -14,7 +15,7 @@ export default function ReportPage() {
       key: e.id,
       at: new Date(e.startedAt).getTime(),
       title: e.title,
-      kind: e.visit ? "问诊 + 医嘱" : "问诊",
+      kind: e.visit ? L("问诊 + 医嘱", "Visit + orders") : L("问诊", "Visit"),
       icon: e.visit ? Stethoscope : MessageCircle,
       line: `${fmtDate(e.startedAt, { year: true })} · ${episodeLine(e)}`,
       doctor: `/doctor/${e.id}`,
@@ -24,9 +25,9 @@ export default function ReportPage() {
       key: f.id,
       at: new Date(`${f.date}T12:00:00`).getTime(),
       title: f.reason,
-      kind: "医嘱",
+      kind: L("医嘱", "Doctor's orders"),
       icon: ClipboardList,
-      line: `${f.date} · ${f.findings}；${f.plan}`,
+      line: L(`${f.date} · ${f.findings}；${f.plan}`, `${f.date} · ${f.findings}; ${f.plan}`),
       doctor: null as string | null,
       detail: "/me",
     })),
@@ -35,9 +36,9 @@ export default function ReportPage() {
   return (
     <div className="space-y-5">
       <header className="animate-fade-up pt-1">
-        <h1 className="t-display text-ink">report · 就诊记录</h1>
+        <h1 className="t-display text-ink">{L("report · 就诊记录", "report · Visit records")}</h1>
       </header>
-      {rows.length === 0 && <Notice icon={<FolderOpen className="h-6 w-6" />} title="还没有记录。" />}
+      {rows.length === 0 && <Notice icon={<FolderOpen className="h-6 w-6" />} title={L("还没有记录。", "No records yet.")} />}
       {rows.length > 0 && (
         <ol className="space-y-3">
           {rows.map((r, i) => (
@@ -86,12 +87,12 @@ function RecordCard({
       <div className="flex divide-x divide-line border-t border-line">
         {r.doctor && (
           <Link href={r.doctor} className={actionCls}>
-            给医生看
+            {L("给医生看", "Show the doctor")}
             <ChevronRight className="h-5 w-5" />
           </Link>
         )}
         <Link href={r.detail} className={actionCls}>
-          详情
+          {L("详情", "Details")}
           <ChevronRight className="h-5 w-5" />
         </Link>
       </div>

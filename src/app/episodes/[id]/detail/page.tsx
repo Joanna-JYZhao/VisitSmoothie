@@ -8,6 +8,7 @@ import type { Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { useRelatedEpisodes } from "@/lib/episodeAI";
 import { cn, episodeLine, fmtDate, roughDuration, severitySeries } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { HintBanner } from "@/components/HintBanner";
 import { SeverityChart } from "@/components/SeverityChart";
 import { Timeline } from "@/components/Timeline";
@@ -20,8 +21,8 @@ export default function DetailPage() {
   const episode = state.episodes.find((e) => e.id === id);
   if (!episode) {
     return (
-      <Notice icon={<FileSearch className="h-6 w-6" />} title="找不到这条记录" action={<LinkButton href="/me">回到我的档案</LinkButton>}>
-        它可能已经被删除了。
+      <Notice icon={<FileSearch className="h-6 w-6" />} title={L("找不到这条记录", "Record not found")} action={<LinkButton href="/me">{L("回到我的档案", "Back to My profile")}</LinkButton>}>
+        {L("它可能已经被删除了。", "It may have been deleted.")}
       </Notice>
     );
   }
@@ -59,27 +60,32 @@ function Detail({ episode: e }: { episode: Episode }) {
     const snapshot = e;
     deleteEpisode(e.id);
     router.replace(active ? "/" : "/me");
-    toast.show(`已删除「${e.title}」`, "neutral", { label: "撤销", onClick: () => restoreEpisode(snapshot) });
+    toast.show(L(`已删除「${e.title}」`, `Deleted "${e.title}"`), "neutral", { label: L("撤销", "Undo"), onClick: () => restoreEpisode(snapshot) });
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        back={{ href: active ? "/" : "/me", label: active ? "今天" : "我的档案" }}
+        back={{ href: active ? "/" : "/me", label: active ? L("今天", "Today") : L("我的档案", "My profile") }}
         title={
           <>
             {e.title}{" "}
             <Badge tone={active ? "brand" : "good"} className="ml-1 -translate-y-1 align-middle tracking-normal">
-              {active ? "还在跟踪" : "已经好了"}
+              {active ? L("还在跟踪", "Still tracking") : L("已经好了", "Better now")}
             </Badge>
           </>
         }
         sub={
           e.startedAt === e.createdAt
-            ? `${fmtDate(e.createdAt, { year: true })}第一次记录`
-            : `${fmtDate(e.startedAt, { year: true })}开始，${
-                active ? `到现在${roughDuration(e.startedAt)}` : `持续了${roughDuration(e.startedAt, e.resolvedAt)}`
-              }`
+            ? L(`${fmtDate(e.createdAt, { year: true })}第一次记录`, `First recorded ${fmtDate(e.createdAt, { year: true })}`)
+            : L(
+                `${fmtDate(e.startedAt, { year: true })}开始，${
+                  active ? `到现在${roughDuration(e.startedAt)}` : `持续了${roughDuration(e.startedAt, e.resolvedAt)}`
+                }`,
+                `Started ${fmtDate(e.startedAt, { year: true })}, ${
+                  active ? `${roughDuration(e.startedAt)} so far` : `lasted ${roughDuration(e.startedAt, e.resolvedAt)}`
+                }`,
+              )
         }
       />
 
@@ -87,17 +93,17 @@ function Detail({ episode: e }: { episode: Episode }) {
 
       <div className="grid animate-rise grid-cols-2 gap-2.5 rise-1">
         <LinkButton href={`/doctor/${e.id}`} size="lg" className="press">
-          给医生看
+          {L("给医生看", "Show the doctor")}
         </LinkButton>
         <LinkButton href={`/episodes/${e.id}`} variant="outline" size="lg" className="press">
-          看对话
+          {L("看对话", "See the chat")}
         </LinkButton>
       </div>
 
       {v && (
         // what the doctor said is the record that matters most here: the raised card
         <Card tone="raised" className="animate-rise px-4 pt-4 pb-1 rise-2">
-          <CardTitle icon={<Stethoscope />}>看医生的结果</CardTitle>
+          <CardTitle icon={<Stethoscope />}>{L("看医生的结果", "What the doctor said")}</CardTitle>
           <dl className="divide-y divide-line text-lg leading-relaxed [&>div]:py-4 [&>div:first-child]:pt-1">
             <div>
               <dt className="text-base font-medium text-ink-2 tabular">
@@ -108,32 +114,32 @@ function Detail({ episode: e }: { episode: Episode }) {
             </div>
             {v.findings && v.findings.length > 0 && (
               <div>
-                <dt className="text-base font-medium text-ink-2">检查结果</dt>
+                <dt className="text-base font-medium text-ink-2">{L("检查结果", "Test results")}</dt>
                 <dd className="mt-1 text-ink">{v.findings.join("；")}</dd>
               </div>
             )}
             <div>
-              <dt className="text-base font-medium text-ink-2">开的药和处理</dt>
+              <dt className="text-base font-medium text-ink-2">{L("开的药和处理", "Medicines and treatment")}</dt>
               <dd className="mt-1 text-ink">{v.treatment}</dd>
             </div>
             {v.advice && (
               <div>
-                <dt className="text-base font-medium text-ink-2">医生的叮嘱</dt>
+                <dt className="text-base font-medium text-ink-2">{L("医生的叮嘱", "The doctor's advice")}</dt>
                 <dd className="mt-1 text-ink">{v.advice}</dd>
               </div>
             )}
             {v.followUp && (
               <div>
-                <dt className="text-base font-medium text-ink-2">复查</dt>
+                <dt className="text-base font-medium text-ink-2">{L("复查", "Follow-up visit")}</dt>
                 <dd className="mt-1 text-ink">
                   {v.followUp}
-                  {v.followUpAt ? `（${fmtDate(v.followUpAt)}提醒你）` : ""}
+                  {v.followUpAt ? L(`（${fmtDate(v.followUpAt)}提醒你）`, ` (reminder on ${fmtDate(v.followUpAt)})`) : ""}
                 </dd>
               </div>
             )}
             {v.archiveSummary && (
               <div>
-                <dt className="text-base font-medium text-ink-2">存档摘要</dt>
+                <dt className="text-base font-medium text-ink-2">{L("存档摘要", "Saved summary")}</dt>
                 <dd className="mt-1 text-ink">{v.archiveSummary}</dd>
               </div>
             )}
@@ -143,13 +149,13 @@ function Detail({ episode: e }: { episode: Episode }) {
 
       {severitySeries(e).length >= 2 && (
         <Card className="animate-rise p-4 rise-3">
-          <CardTitle icon={<ChartLine />}>难受程度的变化</CardTitle>
+          <CardTitle icon={<ChartLine />}>{L("难受程度的变化", "How bad it has been")}</CardTitle>
           <SeverityChart entries={e.entries} />
         </Card>
       )}
 
       <Card className="animate-rise p-4 rise-4">
-        <CardTitle icon={<ListOrdered />}>全部记录</CardTitle>
+        <CardTitle icon={<ListOrdered />}>{L("全部记录", "All records")}</CardTitle>
         <div className="pt-1">
           <Timeline episode={e} />
         </div>
@@ -159,7 +165,7 @@ function Detail({ episode: e }: { episode: Episode }) {
         <Card className="animate-rise overflow-hidden rise-4">
           <div className="px-4 pt-4">
             <CardTitle icon={<History />} tone="neutral">
-              以前类似的情况
+              {L("以前类似的情况", "Similar times before")}
             </CardTitle>
           </div>
           <div className="divide-y divide-line border-t border-line">
@@ -180,7 +186,7 @@ function Detail({ episode: e }: { episode: Episode }) {
         {active ? (
           <>
             <Link href={`/after?episode=${e.id}`} className={cn(rowAction, "text-brand-700")}>
-              {v ? "又看了医生，记一下" : "看完医生了，记一下"}
+              {v ? L("又看了医生，记一下", "Saw a doctor again? Record it") : L("看完医生了，记一下", "Seen the doctor? Record it")}
             </Link>
             <button
               type="button"
@@ -188,40 +194,40 @@ function Detail({ episode: e }: { episode: Episode }) {
               onClick={() => {
                 const snapshot = e;
                 setStatus(e.id, "resolved");
-                toast.show(`「${e.title}」已存档`, "good", { label: "撤销", onClick: () => restoreEpisode(snapshot) });
+                toast.show(L(`「${e.title}」已存档`, `"${e.title}" is saved`), "good", { label: L("撤销", "Undo"), onClick: () => restoreEpisode(snapshot) });
               }}
             >
-              我好了，结束跟踪
+              {L("我好了，结束跟踪", "I'm better, stop tracking")}
             </button>
           </>
         ) : (
           <button type="button" className={cn(rowAction, "text-brand-700")} onClick={() => setStatus(e.id, "active")}>
-            又不舒服了，接着跟踪
+            {L("又不舒服了，接着跟踪", "Unwell again, keep tracking")}
           </button>
         )}
       </Card>
       <Card className="overflow-hidden">
         <button type="button" className={cn(rowAction, "text-danger")} onClick={() => setConfirming(true)}>
-          删除这条记录
+          {L("删除这条记录", "Delete this record")}
         </button>
       </Card>
 
       <Modal
         open={confirming}
-        title={`删除「${e.title}」？`}
+        title={L(`删除「${e.title}」？`, `Delete "${e.title}"?`)}
         onClose={() => setConfirming(false)}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirming(false)}>
-              不删了
+              {L("不删了", "Keep it")}
             </Button>
             <Button variant="danger" onClick={remove}>
-              删除
+              {L("删除", "Delete")}
             </Button>
           </>
         }
       >
-        这次的全部记录、对话和看医生的结果都会删掉。
+        {L("这次的全部记录、对话和看医生的结果都会删掉。", "All records, the chat and the doctor's results for this will be deleted.")}
       </Modal>
     </div>
   );

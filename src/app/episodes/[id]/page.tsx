@@ -7,6 +7,7 @@ import type { ChatMessage, Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { requestReply, sendMessage, useRelatedEpisodes, useReplyPending } from "@/lib/episodeAI";
 import { cn, episodeLine, fmtDate, fmtTime, textOverlap } from "@/lib/utils";
+import { L, getLang } from "@/lib/lang";
 import { HintBanner } from "@/components/HintBanner";
 import { SpeakInput } from "@/components/SpeakInput";
 import { useToast } from "@/components/Toast";
@@ -18,8 +19,8 @@ export default function ConversationPage() {
   const episode = state.episodes.find((e) => e.id === id);
   if (!episode) {
     return (
-      <Notice icon={<FileSearch className="h-6 w-6" />} title="找不到这条记录" action={<LinkButton href="/">回到今天</LinkButton>}>
-        它可能已经被删除了。
+      <Notice icon={<FileSearch className="h-6 w-6" />} title={L("找不到这条记录", "Record not found")} action={<LinkButton href="/">{L("回到今天", "Back to today")}</LinkButton>}>
+        {L("它可能已经被删除了。", "It may have been deleted.")}
       </Notice>
     );
   }
@@ -48,7 +49,7 @@ function Bubble({ m }: { m: ChatMessage }) {
       >
         {text}
         <span className={cn("mt-1 block text-base tabular", mine ? "text-white/90" : "text-ink-2")}>
-          {checkin ? "回答追问 · " : ""}
+          {checkin ? L("回答追问 · ", "Check-in answer · ") : ""}
           {fmtTime(m.at)}
         </span>
       </div>
@@ -98,14 +99,14 @@ function Conversation({ episode: e }: { episode: Episode }) {
     const snapshot = e;
     deleteEpisode(e.id);
     router.replace("/");
-    toast.show(`没有记「${e.title}」`, "neutral", { label: "撤销", onClick: () => restoreEpisode(snapshot) });
+    toast.show(L(`没有记「${e.title}」`, `Not kept: "${e.title}"`), "neutral", { label: L("撤销", "Undo"), onClick: () => restoreEpisode(snapshot) });
   };
 
   const well = () => {
     const snapshot = e;
     setStatus(e.id, "resolved");
-    toast.show(`「${e.title}」已存档。以后再犯，我会把这次的记录找出来`, "good", {
-      label: "撤销",
+    toast.show(L(`「${e.title}」已存档。以后再犯，我会把这次的记录找出来`, `"${e.title}" is saved. If it comes back, I'll find this record for you.`), "good", {
+      label: L("撤销", "Undo"),
       onClick: () => restoreEpisode(snapshot),
     });
     router.push("/");
@@ -118,7 +119,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
         back={{ href: "/" }}
         action={
           <TextLink href={`/episodes/${e.id}/detail`} className="-mr-2">
-            详情
+            {L("详情", "Details")}
             <ChevronRight className="h-5 w-5" />
           </TextLink>
         }
@@ -126,7 +127,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
         aside={
           justStarted && (
             <TextButton tone="muted" className="-mr-2" onClick={discard}>
-              点错了，不记这条
+              {L("点错了，不记这条", "Tapped by mistake, don't keep this")}
             </TextButton>
           )
         }
@@ -142,12 +143,16 @@ function Conversation({ episode: e }: { episode: Episode }) {
             <History />
           </IconTile>
           <span className="min-w-0 flex-1 pt-1 text-base leading-relaxed font-normal">
-            你以前有过类似的情况：{fmtDate(prior.startedAt, { year: true })}「{prior.title}」，{episodeLine(prior)}。
+            {L(
+              `你以前有过类似的情况：${fmtDate(prior.startedAt, { year: true })}「${prior.title}」，${episodeLine(prior)}。`,
+              `You had something similar before: "${prior.title}", ${fmtDate(prior.startedAt, { year: true })}, ${episodeLine(prior)}.`,
+            )}
           </span>
           <ChevronRight className="mt-2 h-5 w-5 shrink-0 text-ink-3" />
         </TextLink>
       )}
 
+      {getLang() === "en" && <p className="t-body mb-4 text-ink-2">AI replies are in Chinese for now.</p>}
       <div className="space-y-3.5" aria-live="polite">
         {e.messages.map((m, i) => (
           <Fragment key={m.id}>
@@ -169,7 +174,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
       {showHint && e.lastHint && <HintBanner hint={e.lastHint} className="mt-5" />}
 
       {quick.length > 0 && (
-        <div className="mt-5 grid grid-cols-2 gap-2.5" aria-label="可以直接点的回答">
+        <div className="mt-5 grid grid-cols-2 gap-2.5" aria-label={L("可以直接点的回答", "Answers you can tap")}>
           {quick.map((q, i) => (
             <Button key={q} variant="outline" size="tile" className={cn("animate-rise", `rise-${Math.min(i + 1, 4)}`)} onClick={() => void sendMessage(e.id, q)}>
               {q}
@@ -181,13 +186,13 @@ function Conversation({ episode: e }: { episode: Episode }) {
       {finished && (
         <div className="mt-5 grid animate-fade-up grid-cols-2 gap-2.5">
           <LinkButton href={`/doctor/${e.id}`} variant={serious ? "primary" : "outline"} size="lg" className="press">
-            给医生看
+            {L("给医生看", "Show the doctor")}
           </LinkButton>
           <LinkButton href="/" variant={serious ? "outline" : "primary"} size="lg" className="press">
-            回到首页
+            {L("回到首页", "Home")}
           </LinkButton>
           <div className="col-span-2 flex justify-center">
-            <TextButton onClick={well}>已经好了，结束这次记录</TextButton>
+            <TextButton onClick={well}>{L("已经好了，结束这次记录", "I'm better, end this record")}</TextButton>
           </div>
         </div>
       )}
@@ -202,8 +207,8 @@ function Conversation({ episode: e }: { episode: Episode }) {
           <div className="no-print sticky z-20 mt-6" style={{ bottom: "calc(var(--tab-bar) + 2.25rem)" }}>
             <div className="glass mx-auto w-full max-w-[36rem] rounded-[30px] border border-white/70 p-1.5 shadow-float">
               <SpeakInput
-                placeholder={finished ? "还想补充什么，说或者打字" : "说一句或打一句"}
-                ariaLabel="对医伴说"
+                placeholder={finished ? L("还想补充什么，说或者打字", "Anything to add? Say it or type it") : L("说一句或打一句", "Say or type a line")}
+                ariaLabel={L("对医伴说", "Say it to VisitSmoothie")}
                 onSubmit={(t) => void sendMessage(e.id, t)}
                 disabled={pending}
               />
@@ -218,13 +223,13 @@ function Conversation({ episode: e }: { episode: Episode }) {
             </IconTile>
             <div className="min-w-0 flex-1 pt-0.5">
               <p className="t-heading text-ink">
-                这次已经好了{e.resolvedAt ? `（${fmtDate(e.resolvedAt)}）` : ""}。
+                {L(`这次已经好了${e.resolvedAt ? `（${fmtDate(e.resolvedAt)}）` : ""}。`, `This one is over${e.resolvedAt ? ` (${fmtDate(e.resolvedAt)})` : ""}.`)}
               </p>
-              <p className="t-body mt-1.5 text-ink-2">又不舒服了？可以接着这次的记录继续。</p>
+              <p className="t-body mt-1.5 text-ink-2">{L("又不舒服了？可以接着这次的记录继续。", "Feeling unwell again? You can carry on with this record.")}</p>
             </div>
           </div>
           <Button variant="secondary" className="press mt-5 w-full" onClick={() => setStatus(e.id, "active")}>
-            又不舒服了，接着记
+            {L("又不舒服了，接着记", "Unwell again, keep recording")}
           </Button>
         </Card>
       )}

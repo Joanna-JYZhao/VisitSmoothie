@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, Copy, PencilLine, Phone, Pill, Printer, Siren, UserRound } from "lucide-react";
 import { useStore } from "@/lib/store";
@@ -37,6 +38,20 @@ export default function SosPage() {
   const lead = blocks.findIndex((b) => b.key === COLLAPSE.key);
   // a demo's contact number is made up: it is shown, never dialled
   const demo = state.demo != null;
+  // the tab's name follows the language too. The layout's title is fixed, in Chinese, and Next writes
+  // it in after the page has rendered, so it is put right again whenever it changes.
+  const lang = getLang();
+  useEffect(() => {
+    const name = lang === "en" ? "Emergency guide" : "应急手册";
+    const fix = () => {
+      // only while this page is the one showing: on the way out the next page's name is left alone
+      if (location.pathname.startsWith("/sos") && document.title !== name) document.title = name;
+    };
+    fix();
+    const watch = new MutationObserver(fix);
+    watch.observe(document.head, { subtree: true, childList: true, characterData: true });
+    return () => watch.disconnect();
+  }, [lang]);
 
   const copy = async () => {
     const ok = await copyText(sosToText(plan));
@@ -52,12 +67,16 @@ export default function SosPage() {
             <IconTile tone="danger" size="lg" className="print:hidden">
               <Siren aria-hidden="true" />
             </IconTile>
-            {/* the English name is twice as long: a size smaller keeps "Emergency" whole beside the 120 button on a phone */}
-            <h1 className={cn("min-w-0 flex-1 leading-tight font-semibold tracking-[-0.025em] text-ink", L("text-[1.65rem]", "text-2xl"))}>{L("应急手册", "Emergency guide")}</h1>
+            {/* the English name is twice as long: a size smaller (and a slimmer 120 button) keeps "Emergency" whole on a phone */}
+            <h1 className={cn("min-w-0 flex-1 leading-tight font-semibold tracking-[-0.025em] text-ink", L("text-[1.65rem]", "text-[1.375rem] [overflow-wrap:normal]"))}>{L("应急手册", "Emergency guide")}</h1>
             {/* the one red action on the page: glossy, big, always in the corner */}
             <a
               href="tel:120"
-              className="tile-danger press no-print inline-flex min-h-14 shrink-0 items-center gap-2 rounded-full px-6 text-xl font-semibold text-white transition duration-200 hover:brightness-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-danger/30"
+              className={cn(
+                "tile-danger press no-print inline-flex min-h-14 shrink-0 items-center gap-2 rounded-full text-xl",
+                L("px-6", "px-5"),
+                "font-semibold text-white transition duration-200 hover:brightness-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-danger/30",
+              )}
             >
               <Phone className="h-6 w-6" aria-hidden="true" />
               {L("拨打 120", "Call 120")}
@@ -235,7 +254,7 @@ export default function SosPage() {
             </TextLink>
             <TextLink href="/" tone="plain">
               <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-              {L("回到医伴", "Back to Yiban")}
+              {L("回到医伴", "Back to VisitSmoothie")}
             </TextLink>
           </div>
         </div>

@@ -5,6 +5,11 @@ import { ChartLine, Table2 } from "lucide-react";
 import type { Entry } from "@/lib/types";
 import { cn, feelWord, fmtDate, severitySeries } from "@/lib/utils";
 import { segmentCls } from "./ui";
+import { L } from "@/lib/lang";
+
+/** The patient's own words for how bad it was, as shown (the Chinese is the rule's word). */
+const feelShown = (s: number) =>
+  L(feelWord(s), s === 0 ? "Feeling fine" : s <= 3 ? "A little unwell" : s <= 6 ? "Quite unwell" : "Very unwell");
 
 /* one hue on the plot, thin marks, quiet hairline guides; every label 17px */
 const PAD = { l: 14, r: 16, t: 20, b: 40 };
@@ -110,12 +115,12 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
   return (
     <div className={className}>
       <div className="mb-5 flex items-center justify-between gap-3">
-        <p className="text-base text-ink-2">线越高越难受</p>
-        <div className="inline-flex gap-1 rounded-[18px] bg-surface-3/80 p-1" role="radiogroup" aria-label="显示方式">
+        <p className="text-base text-ink-2">{L("线越高越难受", "Higher means worse")}</p>
+        <div className="inline-flex gap-1 rounded-[18px] bg-surface-3/80 p-1" role="radiogroup" aria-label={L("显示方式", "Show as")}>
           {(
             [
-              { v: "chart", label: "图", Icon: ChartLine },
-              { v: "table", label: "表", Icon: Table2 },
+              { v: "chart", label: L("图", "Chart"), Icon: ChartLine },
+              { v: "table", label: L("表", "Table"), Icon: Table2 },
             ] as const
           ).map(({ v, label, Icon }) => (
             <button
@@ -134,22 +139,22 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
       </div>
 
       {!points.length ? (
-        <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">还没有可以画成线的记录。</p>
+        <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">{L("还没有可以画成线的记录。", "Nothing to chart yet.")}</p>
       ) : view === "table" ? (
         <div className="overflow-x-auto">
           <table className="w-full text-base">
             <thead>
               <tr className="border-b border-line-strong text-left text-ink-2">
-                <th className="pt-1 pb-3 pr-4 font-medium">时间</th>
-                <th className="pt-1 pb-3 pr-4 font-medium">多难受</th>
-                <th className="pt-1 pb-3 font-medium">记录</th>
+                <th className="pt-1 pb-3 pr-4 font-medium">{L("时间", "Time")}</th>
+                <th className="pt-1 pb-3 pr-4 font-medium">{L("多难受", "How bad")}</th>
+                <th className="pt-1 pb-3 font-medium">{L("记录", "Note")}</th>
               </tr>
             </thead>
             <tbody>
               {[...points].reverse().map((p) => (
                 <tr key={p.id} className="border-b border-line align-top last:border-0">
                   <td className="py-3.5 pr-4 whitespace-nowrap text-ink-2 tabular">{fmtDate(p.at, { time: true })}</td>
-                  <td className="py-3.5 pr-4 font-semibold whitespace-nowrap text-ink">{feelWord(p.v)}</td>
+                  <td className="py-3.5 pr-4 font-semibold whitespace-nowrap text-ink">{feelShown(p.v)}</td>
                   <td className="py-3.5 leading-relaxed text-ink">{p.note}</td>
                 </tr>
               ))}
@@ -163,10 +168,10 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
           tabIndex={0}
           onKeyDown={onKey}
           onBlur={() => setActive(null)}
-          aria-label="难受程度变化图，用左右方向键逐条查看"
+          aria-label={L("难受程度变化图，用左右方向键逐条查看", "Chart of how bad it has been. Use the left and right arrow keys to go through it.")}
         >
           {width > 0 && (
-            <svg width={width} height={H} role="img" aria-label={`共 ${points.length} 条记录，最近一次：${feelWord(last.v)}`}>
+            <svg width={width} height={H} role="img" aria-label={L(`共 ${points.length} 条记录，最近一次：${feelWord(last.v)}`, `${points.length} records, latest: ${feelShown(last.v)}`)}>
               <defs>
                 <linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0%" stopColor="var(--color-brand-600)" stopOpacity={0.14} />
@@ -249,7 +254,7 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
                 top: Math.max(y(act.v) - 120, 0),
               }}
             >
-              <div className="text-lg font-semibold text-ink">{feelWord(act.v)}</div>
+              <div className="text-lg font-semibold text-ink">{feelShown(act.v)}</div>
               <div className="mt-0.5 text-base text-ink-2 tabular">{fmtDate(act.at, { time: true })}</div>
               <div className="mt-1 line-clamp-3 text-base leading-snug text-ink">{act.note}</div>
             </div>

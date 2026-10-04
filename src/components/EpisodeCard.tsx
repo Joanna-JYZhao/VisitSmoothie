@@ -167,7 +167,7 @@ export function EpisodeCard({ episode: e, now, quiet = false }: { episode: Episo
       <div className="mt-6 border-t border-line pt-6">
         {pending ? (
           <p className="flex min-h-12 items-center gap-3 text-lg text-ink-2">
-            <TypingDots /> {L("医伴正在想", "Yiban is thinking")}
+            <TypingDots /> {L("医伴正在想", "VisitSmoothie is thinking")}
           </p>
         ) : unfinished ? (
           <>
@@ -222,7 +222,7 @@ export function EpisodeCard({ episode: e, now, quiet = false }: { episode: Episo
           <>
             <p className="flex items-center gap-2 text-base font-semibold text-brand-700">
               <LogoMark className="h-6 w-6 animate-breathe" />
-              {L("医伴问你", "Yiban asks")}
+              {L("VisitSmoothie 问你", "VisitSmoothie asks")}
             </p>
             <p className="t-lead mt-1.5 font-semibold text-ink">{checkInQuestion(e, now)}</p>
             <div className="mt-4 grid grid-cols-3 gap-2.5">

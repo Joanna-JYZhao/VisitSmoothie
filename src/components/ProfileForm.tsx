@@ -5,6 +5,7 @@ import { cn, nowISO } from "@/lib/utils";
 import {
   EDUCATION_OPTIONS,
   ageFromBirthDate,
+  educationLabel,
   isoDay,
   type RegisterDraft,
   type RequiredField,
@@ -12,6 +13,7 @@ import {
 import { CircleAlert } from "lucide-react";
 import { ChipsInput } from "./ChipsInput";
 import { Field, Input, Segmented, Select, Textarea } from "./ui";
+import { L, pick } from "@/lib/lang";
 
 /* the browser's own calendar button inside a date box: quiet until the hand reaches it */
 const dateCls =
@@ -249,36 +251,40 @@ export function HistoryFields({ draft, onChange }: { draft: ProfileDraft; onChan
 }
 
 const RELATIONS = ["爱人", "女儿", "儿子", "父母", "兄弟姐妹", "朋友"];
+const RELATIONS_EN = ["Wife", "Husband", "Daughter", "Son", "Parent", "Brother", "Sister", "Friend"];
 
 /** Who to call when something happens. Optional, but the emergency page is much more useful with it. */
 export function ContactFields({ draft, onChange }: { draft: ProfileDraft; onChange: (d: ProfileDraft) => void }) {
   const set = <K extends keyof ProfileDraft>(k: K, v: ProfileDraft[K]) => onChange({ ...draft, [k]: v });
   return (
     <div className="grid gap-5">
-      <Field label="电话" hint="应急手册第一屏会显示这个号码，旁边的人一点就能拨。">
+      <Field
+        label={L("电话", "Phone")}
+        hint={L("应急手册第一屏会显示这个号码，旁边的人一点就能拨。", "This number is on the first screen of the emergency guide, so people nearby can call it with one tap.")}
+      >
         <Input
           type="tel"
           inputMode="tel"
           autoComplete="off"
           value={draft.contactPhone}
           onChange={(e) => set("contactPhone", e.target.value)}
-          placeholder="可以不填"
+          placeholder={L("可以不填", "Optional")}
         />
       </Field>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="叫什么">
-          <Input value={draft.contactName} onChange={(e) => set("contactName", e.target.value)} placeholder="姓名" autoComplete="off" />
+        <Field label={L("叫什么", "Name")}>
+          <Input value={draft.contactName} onChange={(e) => set("contactName", e.target.value)} placeholder={L("姓名", "Name")} autoComplete="off" />
         </Field>
-        <Field label="是你的">
+        <Field label={L("是你的", "Relation to you")}>
           <Input
             value={draft.contactRelation}
             onChange={(e) => set("contactRelation", e.target.value)}
-            placeholder="比如：女儿"
+            placeholder={L("比如：女儿", "Daughter")}
             list="relation-options"
             autoComplete="off"
           />
           <datalist id="relation-options">
-            {RELATIONS.map((r) => (
+            {pick(RELATIONS, RELATIONS_EN).map((r) => (
               <option key={r} value={r} />
             ))}
           </datalist>
@@ -311,16 +317,16 @@ function Item({
     <div>
       <label htmlFor={htmlFor} className="mb-2 flex flex-wrap items-center gap-2 text-lg font-semibold tracking-[-0.01em] text-ink">
         {skippable && (
-          <span className="rounded-full bg-brand-50 px-3 py-0.5 text-base font-semibold text-brand-800 ring-1 ring-brand-200 ring-inset">可跳过</span>
+          <span className="rounded-full bg-brand-50 px-3 py-0.5 text-base font-semibold text-brand-800 ring-1 ring-brand-200 ring-inset">{L("可跳过", "Can skip")}</span>
         )}
         {label}
-        {required ? <span className="text-danger">*</span> : !skippable && <span className="text-base font-normal text-ink-2">（选填）</span>}
+        {required ? <span className="text-danger">*</span> : !skippable && <span className="text-base font-normal text-ink-2">{L("（选填）", "(optional)")}</span>}
       </label>
       {children}
       {missing && (
         <p role="alert" className="mt-2 flex animate-fade-up items-center gap-1.5 text-base font-medium text-danger">
           <CircleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
-          请填写{label}
+          {L(`请填写${label}`, `Please fill in: ${label}`)}
         </p>
       )}
       {hint && <p className="t-body mt-2 text-ink-2">{hint}</p>}
@@ -358,29 +364,37 @@ export function RegisterFields({
   return (
     <div className="grid gap-6">
       <Item
-        label="姓名"
+        label={L("姓名", "Name")}
         required
         missing={has("name")}
         htmlFor="reg-name"
-        hint={nameLocked ? "姓名是登录用户名，暂不支持修改。" : "姓名就是登录用户名，请用能和别人区分开的姓名。"}
+        hint={
+          nameLocked
+            ? L("姓名是登录用户名，暂不支持修改。", "Your name is your sign-in name and can't be changed for now.")
+            : L("姓名就是登录用户名，请用能和别人区分开的姓名。", "Your name is also your sign-in name. Use one that tells you apart from others.")
+        }
       >
         <Input
           id="reg-name"
           value={draft.name}
           readOnly={nameLocked}
           onChange={(e) => set("name", e.target.value)}
-          placeholder="请输入姓名"
+          placeholder={L("请输入姓名", "Your name")}
           autoComplete="username"
           className={cn(bad(has("name")), nameLocked && "bg-surface-2 text-ink-2")}
         />
       </Item>
 
       <Item
-        label="出生日期"
+        label={L("出生日期", "Date of birth")}
         required
         missing={has("birthDate")}
         htmlFor="reg-birth"
-        hint={birthYearHint && !draft.birthDate ? `体检报告上写的是 ${birthYearHint} 年出生，请选一下具体哪天。` : undefined}
+        hint={
+          birthYearHint && !draft.birthDate
+            ? L(`体检报告上写的是 ${birthYearHint} 年出生，请选一下具体哪天。`, `The check-up report says you were born in ${birthYearHint}. Please pick the exact day.`)
+            : undefined
+        }
       >
         <Input
           id="reg-birth"
@@ -396,75 +410,89 @@ export function RegisterFields({
             {age != null && age <= 120 ? (
               <span className="inline-flex items-baseline gap-1.5 rounded-2xl bg-brand-50 px-4 py-2 text-brand-800">
                 <span className="t-title tabular-nums">{age}</span>
-                <span className="text-lg font-medium">岁</span>
+                <span className="text-lg font-medium">{L("岁", "years old")}</span>
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 text-lg font-medium text-danger">
                 <CircleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
-                这个日期不对，请再选一下
+                {L("这个日期不对，请再选一下", "This date isn't right. Please pick again.")}
               </span>
             )}
           </p>
         )}
       </Item>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Item label="性别" required missing={has("gender")} htmlFor="reg-gender">
+      {/* English school names are longer than 男 / 女: the education box gets the wider half */}
+      <div className={cn("grid gap-4", L("grid-cols-2", "grid-cols-[2fr_3fr]"))}>
+        <Item label={L("性别", "Gender")} required missing={has("gender")} htmlFor="reg-gender">
           <Select
             id="reg-gender"
             value={draft.gender}
             onChange={(e) => set("gender", e.target.value as RegisterDraft["gender"])}
             className={bad(has("gender"))}
           >
-            <option value="">请选择</option>
-            <option value="男">男</option>
-            <option value="女">女</option>
+            <option value="">{L("请选择", "Choose")}</option>
+            <option value="男">{L("男", "Male")}</option>
+            <option value="女">{L("女", "Female")}</option>
           </Select>
         </Item>
-        <Item label="学历" required missing={has("education")} htmlFor="reg-edu">
+        <Item label={L("学历", "Education")} required missing={has("education")} htmlFor="reg-edu">
           <Select id="reg-edu" value={draft.education} onChange={(e) => set("education", e.target.value)} className={bad(has("education"))}>
-            <option value="">请选择</option>
+            <option value="">{L("请选择", "Choose")}</option>
             {EDUCATION_OPTIONS.map((x) => (
               <option key={x} value={x}>
-                {x}
+                {educationLabel(x)}
               </option>
             ))}
           </Select>
         </Item>
       </div>
-      <p className="t-body -mt-3 text-ink-2">学历只用来决定我解释时说得多细，不会给医生看。</p>
+      <p className="t-body -mt-3 text-ink-2">
+        {L("学历只用来决定我解释时说得多细，不会给医生看。", "Education only decides how much detail I use when I explain things. The doctor won't see it.")}
+      </p>
 
       <Item
-        label="基础病"
+        label={L("基础病", "Health conditions")}
         skippable
         htmlFor="reg-cond"
-        hint="不清楚可以先空着，以后在「我的资料」里补。有几样就写几样，一行一个或用顿号隔开。"
+        hint={L(
+          "不清楚可以先空着，以后在「我的资料」里补。有几样就写几样，一行一个或用顿号隔开。",
+          "Not sure? Leave it empty and add it later in your profile. Write as many as you have, one per line or separated by commas.",
+        )}
       >
         <Textarea
           id="reg-cond"
           value={draft.conditions}
           onChange={(e) => set("conditions", e.target.value)}
-          placeholder="比如：高血压、糖尿病"
+          placeholder={L("比如：高血压、糖尿病", "e.g. high blood pressure, diabetes")}
           className="min-h-24"
         />
       </Item>
 
-      <Item label="家族遗传病" htmlFor="reg-family" hint="父母、兄弟姐妹有过的。没有可以不填。">
+      <Item
+        label={L("家族遗传病", "Family history")}
+        htmlFor="reg-family"
+        hint={L("父母、兄弟姐妹有过的。没有可以不填。", "Illnesses your parents, brothers or sisters had. Leave empty if none.")}
+      >
         <Textarea
           id="reg-family"
           value={draft.familyHistory}
           onChange={(e) => set("familyHistory", e.target.value)}
-          placeholder="比如：父亲 高血压"
+          placeholder={L("比如：父亲 高血压", "e.g. father: high blood pressure")}
           className="min-h-24"
         />
       </Item>
 
-      <Item label="过敏史" htmlFor="reg-allergy" hint="药物或食物过敏都写上，医生开药时要看。没有可以不填。">
+      <Item
+        label={L("过敏史", "Allergies")}
+        htmlFor="reg-allergy"
+        hint={L("药物或食物过敏都写上，医生开药时要看。没有可以不填。", "Medicines or foods. The doctor checks these before prescribing. Leave empty if none.")}
+      >
         <Textarea
           id="reg-allergy"
           value={draft.allergies}
           onChange={(e) => set("allergies", e.target.value)}
-          placeholder="比如：青霉素、海鲜"
+          placeholder={L("比如：青霉素、海鲜", "e.g. penicillin, seafood")}
           className={cn("min-h-24")}
         />
       </Item>

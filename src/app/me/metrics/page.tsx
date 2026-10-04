@@ -11,12 +11,13 @@ import { RecordMetricModal } from "@/components/RecordMetricModal";
 import { useToast } from "@/components/Toast";
 import { TrendChart, type TrendPoint } from "@/components/TrendChart";
 import { Badge, Button, Card, IconTile, PageHeader, SectionTitle, Segmented, Stat, focusRing, type IconTone } from "@/components/ui";
+import { L } from "@/lib/lang";
 
 type RangeKey = "30d" | "90d" | "1y";
-const RANGES: { value: RangeKey; label: string }[] = [
-  { value: "30d", label: "30 天" },
-  { value: "90d", label: "3 个月" },
-  { value: "1y", label: "一年" },
+const ranges = (): { value: RangeKey; label: string }[] => [
+  { value: "30d", label: L("30 天", "30 days") },
+  { value: "90d", label: L("3 个月", "3 months") },
+  { value: "1y", label: L("一年", "1 year") },
 ];
 const DAY = 86_400_000;
 
@@ -74,7 +75,7 @@ function MetricCard({
     const { id: _id, ...rest } = m;
     void _id;
     deleteMeasurement(m.id);
-    toast.show(`已删除 ${formatValue(m)}`, "neutral", { label: "撤销", onClick: () => addMeasurement(rest) });
+    toast.show(L(`已删除 ${formatValue(m)}`, `Deleted ${formatValue(m)}`), "neutral", { label: L("撤销", "Undo"), onClick: () => addMeasurement(rest) });
   };
 
   const { icon, tone } = METRIC_ICON[type];
@@ -103,23 +104,23 @@ function MetricCard({
                   <span key={i} className="w-1.5 rounded-full bg-line-strong" style={{ height: h }} />
                 ))}
               </span>
-              <p className="text-lg text-ink-2">还没有记录。</p>
+              <p className="text-lg text-ink-2">{L("还没有记录。", "No records yet.")}</p>
             </div>
           )}
           <Button size="sm" variant="soft" className="press shrink-0" onClick={onRecord}>
             <Plus className="h-5 w-5" />
-            记一个
+            {L("记一个", "Add one")}
           </Button>
         </div>
         {latest && (
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {def.target &&
               (out ? (
-                <Badge tone={out === "low" ? "danger" : "warn"}>{out === "low" ? "低于一般范围" : "高于一般范围"}</Badge>
+                <Badge tone={out === "low" ? "danger" : "warn"}>{out === "low" ? L("低于一般范围", "Below the usual range") : L("高于一般范围", "Above the usual range")}</Badge>
               ) : (
                 <Badge tone="good">
                   <Check className="h-4 w-4" aria-hidden="true" />
-                  在一般范围内
+                  {L("在一般范围内", "In the usual range")}
                 </Badge>
               ))}
             <span className="text-base text-ink-2">{relativeTime(latest.at, now)}</span>
@@ -130,7 +131,7 @@ function MetricCard({
       {all.length > 0 && (
         <div className="border-t border-line p-4">
           {inRange.length === 0 ? (
-            <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">这段时间没有记录，把上面的时间调长一点看看。</p>
+            <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">{L("这段时间没有记录，把上面的时间调长一点看看。", "No records in this period. Try a longer time above.")}</p>
           ) : view === "chart" ? (
             <div className="animate-fade-up">
               <TrendChart
@@ -140,9 +141,9 @@ function MetricCard({
                 start={start}
                 end={end}
                 band={def.target}
-                dual={type === "bp" ? { first: "高压", second: "低压" } : undefined}
+                dual={type === "bp" ? { first: L("高压", "Upper"), second: L("低压", "Lower") } : undefined}
                 showTime={type === "ppg"}
-                ariaLabel={`${def.label}的变化，共 ${inRange.length} 条记录`}
+                ariaLabel={L(`${def.label}的变化，共 ${inRange.length} 条记录`, `${def.label} over time, ${inRange.length} records`)}
               />
             </div>
           ) : (
@@ -157,7 +158,7 @@ function MetricCard({
                   <button
                     type="button"
                     onClick={() => onEdit(m)}
-                    aria-label={`改 ${fmtDate(m.at)} 的 ${formatValue(m)}`}
+                    aria-label={L(`改 ${fmtDate(m.at)} 的 ${formatValue(m)}`, `Edit ${formatValue(m)} on ${fmtDate(m.at)}`)}
                     className={cn(
                       "press flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-2 transition hover:bg-brand-50 hover:text-brand-700",
                       focusRing,
@@ -168,7 +169,7 @@ function MetricCard({
                   <button
                     type="button"
                     onClick={() => remove(m)}
-                    aria-label={`删除 ${fmtDate(m.at)} 的 ${formatValue(m)}`}
+                    aria-label={L(`删除 ${fmtDate(m.at)} 的 ${formatValue(m)}`, `Delete ${formatValue(m)} on ${fmtDate(m.at)}`)}
                     className={cn(
                       "press flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-2 transition hover:bg-danger-bg hover:text-danger",
                       focusRing,
@@ -182,13 +183,13 @@ function MetricCard({
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <span className="text-base whitespace-nowrap text-ink-2 tabular-nums">
-              这段时间 {inRange.length} 条，一共 {all.length} 条
+              {L(`这段时间 ${inRange.length} 条，一共 ${all.length} 条`, `${inRange.length} in this period, ${all.length} in all`)}
             </span>
-            <div className="ml-auto inline-flex shrink-0 gap-1 rounded-[18px] bg-surface-3/80 p-1" role="radiogroup" aria-label="显示方式">
+            <div className="ml-auto inline-flex shrink-0 gap-1 rounded-[18px] bg-surface-3/80 p-1" role="radiogroup" aria-label={L("显示方式", "View")}>
               {(
                 [
-                  { v: "chart", label: "图", Icon: ChartLine },
-                  { v: "table", label: "改 / 删", Icon: Table2 },
+                  { v: "chart", label: L("图", "Chart"), Icon: ChartLine },
+                  { v: "table", label: L("改 / 删", "Edit / delete"), Icon: Table2 },
                 ] as const
               ).map(({ v, label, Icon }) => (
                 <button
@@ -246,8 +247,8 @@ export default function MetricsPage() {
           <Activity />
         </IconTile>
       )}
-      <h2 className="t-heading text-ink">要记哪些</h2>
-      <p className={cn("t-body mt-1 mb-5 text-ink-2", hero && "mx-auto mb-6 max-w-sm")}>点亮的会出现在首页，每天只问你一个数。</p>
+      <h2 className="t-heading text-ink">{L("要记哪些", "What to track")}</h2>
+      <p className={cn("t-body mt-1 mb-5 text-ink-2", hero && "mx-auto mb-6 max-w-sm")}>{L("点亮的会出现在首页，每天只问你一个数。", "The ones you turn on show up on the home page. I ask for just one number a day.")}</p>
       <div className={cn("flex flex-wrap gap-2.5", hero && "justify-center")}>
         {METRIC_ORDER.map((t) => {
           const on = tracked.includes(t);
@@ -277,9 +278,9 @@ export default function MetricsPage() {
   return (
     <div className="space-y-6 pb-2">
       <PageHeader
-        back={{ href: "/me", label: "我的档案" }}
-        title="健康指标"
-        sub={conclusion || "血糖、血压、体重都记在这里，复诊时一起给医生看。"}
+        back={{ href: "/me", label: L("我的档案", "My profile") }}
+        title={L("健康指标", "Health numbers")}
+        sub={conclusion || L("血糖、血压、体重都记在这里，复诊时一起给医生看。", "Blood sugar, blood pressure and weight are all kept here, to show the doctor at your follow-up visit.")}
       />
 
       {hero ? (
@@ -289,14 +290,14 @@ export default function MetricsPage() {
           <div className="rise-1 space-y-4">
             <Button size="lg" onClick={() => setRecording({})} className="press w-full">
               <Plus className="h-6 w-6" />
-              记一个数
+              {L("记一个数", "Add a number")}
             </Button>
-            <Segmented options={RANGES} value={range} onChange={setRange} label="看多长时间" className="flex w-full" />
+            <Segmented options={ranges()} value={range} onChange={setRange} label={L("看多长时间", "How far back")} className="flex w-full" />
           </div>
 
           {insights.length > 0 && (
             <Card className="rise-2 p-4">
-              <SectionTitle>医伴看到的</SectionTitle>
+              <SectionTitle>{L("医伴看到的", "What VisitSmoothie noticed")}</SectionTitle>
               <InsightList insights={insights} />
             </Card>
           )}
@@ -318,7 +319,9 @@ export default function MetricsPage() {
           </div>
 
           {chooser}
-          <p className="t-body text-center text-ink-2">这里说的范围是一般的标准，你自己的目标听医生的。</p>
+          <p className="t-body text-center text-ink-2">
+            {L("这里说的范围是一般的标准，你自己的目标听医生的。", "These ranges are general. Your own targets come from your doctor.")}
+          </p>
         </>
       )}
 

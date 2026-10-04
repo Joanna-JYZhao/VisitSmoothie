@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { IconTile } from "@/components/ui";
 
 /*
@@ -75,6 +76,62 @@ const BACK: Zone[] = [
   { name: "右脚跟", x: 102, y: 368, w: 34, h: 28, r: 10 },
 ];
 
+/*
+ * English names, for what is shown only. What is picked (and sent on) is always the Chinese name
+ * above, so the record and the assistant see the same words in either language.
+ */
+const NAME_EN: Record<string, string> = {
+  头: "Head", 颈部: "Neck", 右肩: "Right shoulder", 左肩: "Left shoulder", 胸部: "Chest", 上腹: "Upper belly", 下腹: "Lower belly",
+  右上臂: "Right upper arm", 左上臂: "Left upper arm", 右肘: "Right elbow", 左肘: "Left elbow",
+  右前臂和手: "Right forearm and hand", 左前臂和手: "Left forearm and hand", 右大腿: "Right thigh", 左大腿: "Left thigh",
+  右膝: "Right knee", 左膝: "Left knee", 右小腿: "Right lower leg", 左小腿: "Left lower leg",
+  右脚踝和脚: "Right ankle and foot", 左脚踝和脚: "Left ankle and foot",
+  后脑: "Back of head", 后颈: "Back of neck", 上背: "Upper back", 腰: "Lower back", 臀部: "Buttocks",
+  左上臂后侧: "Back of left upper arm", 右上臂后侧: "Back of right upper arm", 左肘后面: "Back of left elbow", 右肘后面: "Back of right elbow",
+  左手背和前臂: "Back of left hand and forearm", 右手背和前臂: "Back of right hand and forearm",
+  左大腿后侧: "Back of left thigh", 右大腿后侧: "Back of right thigh", 左小腿肚: "Left calf", 右小腿肚: "Right calf", 左脚跟: "Left heel", 右脚跟: "Right heel",
+  右上腹: "Upper right belly", "上腹正中（心窝）": "Upper middle (pit of the stomach)", 左上腹: "Upper left belly", 右侧腹: "Right side of belly",
+  肚脐周围: "Around the belly button", 左侧腹: "Left side of belly", 右下腹: "Lower right belly", "下腹正中（小腹）": "Lower middle belly", 左下腹: "Lower left belly",
+  整个肚子: "The whole belly", 左上背: "Upper left back", 上背正中: "Upper back, middle", 右上背: "Upper right back", 左腰: "Left lower back",
+  腰正中: "Lower back, middle", 右腰: "Right lower back", 左侧臀部: "Left buttock", 尾骨附近: "Near the tailbone", 右侧臀部: "Right buttock", 整个后背: "The whole back",
+};
+const PART_EN: Record<string, string> = {
+  "前面（膝盖骨）": "front (kneecap)", 外侧: "outer side", 内侧: "inner side", 正中: "middle", "后面（腘窝）": "back (behind the knee)",
+  顶: "top", 前面: "front", 关节: "joint", 后面: "back",
+};
+/** The name to show: the Chinese name itself, or its English. */
+function shownName(name: string): string {
+  const m = /^(右|左)(膝|肩)(.+)$/.exec(name);
+  const en = m ? `${m[1] === "右" ? "Right" : "Left"} ${m[2] === "膝" ? "knee" : "shoulder"}, ${PART_EN[m[3]] ?? m[3]}` : (NAME_EN[name] ?? name);
+  return L(name, en);
+}
+/** The blocks of a close-up grid are narrow: short English names there (the full name is shown once picked). */
+const TILE_EN: Record<string, string> = {
+  "前面（膝盖骨）": "Kneecap", 外侧: "Outer side", 内侧: "Inner side", 正中: "Middle", "后面（腘窝）": "Back of knee",
+  顶: "Top", 前面: "Front", 关节: "Joint", 后面: "Back",
+  右上腹: "Upper right", "上腹正中（心窝）": "Upper middle", 左上腹: "Upper left", 右侧腹: "Right side", 肚脐周围: "Belly button",
+  左侧腹: "Left side", 右下腹: "Lower right", "下腹正中（小腹）": "Lower middle", 左下腹: "Lower left",
+  左上背: "Upper left", 上背正中: "Upper middle", 右上背: "Upper right", 左腰: "Left waist", 腰正中: "Middle waist", 右腰: "Right waist",
+  左侧臀部: "Left buttock", 尾骨附近: "Tailbone", 右侧臀部: "Right buttock",
+};
+/** A block of the close-up grid: the part without the joint in front of it. */
+function tileName(name: string): string {
+  const part = name.replace(/^(右膝|左膝|右肩|左肩)/, "");
+  return L(part, TILE_EN[part.replace(/^[膝肩]/, "")] ?? TILE_EN[part] ?? shownName(name));
+}
+function detailTitle(d: Detail): string {
+  switch (d.kind) {
+    case "knee":
+      return L(`${d.side}膝，从正面看`, `${d.side === "右" ? "Right" : "Left"} knee, seen from the front`);
+    case "shoulder":
+      return L(`${d.side}肩`, `${d.side === "右" ? "Right" : "Left"} shoulder`);
+    case "belly":
+      return L("肚子，从正面看", "Belly, seen from the front");
+    case "back":
+      return L("后背和腰，从背后看", "Back, seen from behind");
+  }
+}
+
 /** 细分图：一块块大格子，按身上的位置排 */
 function detailOf(d: Detail): { title: string; cols: number; zones: (string | null)[]; whole: string } {
   switch (d.kind) {
@@ -124,7 +181,7 @@ function zoneHas(z: Zone, picked: string[]): boolean {
 function Figure({ zones, onZone, picked }: { zones: Zone[]; onZone: (z: Zone) => void; picked: string[] }) {
   const id = useId();
   return (
-    <svg viewBox="0 0 200 400" className="mx-auto block h-auto w-full max-w-[280px]" role="group" aria-label="身体图">
+    <svg viewBox="0 0 200 400" className="mx-auto block h-auto w-full max-w-[280px]" role="group" aria-label={L("身体图", "Body map")}>
       <defs>
         <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
           {/* the theme's own tints (a CSS variable only works in style, not in the attribute) */}
@@ -142,7 +199,7 @@ function Figure({ zones, onZone, picked }: { zones: Zone[]; onZone: (z: Zone) =>
           key={z.name + z.x}
           role="button"
           tabIndex={0}
-          aria-label={z.name}
+          aria-label={shownName(z.name)}
           aria-pressed={z.detail ? undefined : on}
           className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-brand-600 [&:focus-visible>rect]:stroke-[2.5] [&:hover>rect]:fill-brand-200 [&:hover>rect]:stroke-brand-500 [&:active>rect]:fill-brand-300"
           onClick={() => onZone(z)}
@@ -164,7 +221,7 @@ function Figure({ zones, onZone, picked }: { zones: Zone[]; onZone: (z: Zone) =>
             className={cn("transition-[fill,stroke] duration-200", on ? "fill-brand-400 stroke-brand-700" : "stroke-brand-300/80")}
             strokeWidth={on ? 2 : 1}
           />
-          <title>{z.name}</title>
+          <title>{shownName(z.name)}</title>
         </g>
         );
       })}
@@ -184,22 +241,22 @@ function Picked({ picked, onRemove, onDone }: { picked: string[]; onRemove: (nam
   return (
     <div className="mt-5 border-t border-line pt-4">
       {picked.length > 0 ? (
-        <div className="flex flex-wrap gap-2" aria-label="已经选的地方">
+        <div className="flex flex-wrap gap-2" aria-label={L("已经选的地方", "Places picked")}>
           {picked.map((name) => (
             <button
               key={name}
               type="button"
               onClick={() => onRemove(name)}
-              aria-label={`去掉${name}`}
+              aria-label={L(`去掉${name}`, `Remove ${shownName(name)}`)}
               className="press inline-flex min-h-11 items-center gap-1.5 rounded-full bg-brand-50 pr-3 pl-4 text-lg font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
-              {name}
+              {shownName(name)}
               <X className="h-4 w-4 text-brand-600" />
             </button>
           ))}
         </div>
       ) : (
-        <p className="text-base text-ink-2">可以点好几个地方，点错了再点一下就去掉。</p>
+        <p className="text-base text-ink-2">{L("可以点好几个地方，点错了再点一下就去掉。", "You can tap several places. Tap again to take one off.")}</p>
       )}
       <button
         type="button"
@@ -207,13 +264,13 @@ function Picked({ picked, onRemove, onDone }: { picked: string[]; onRemove: (nam
         onClick={onDone}
         className="press mt-4 min-h-14 w-full rounded-full bg-linear-to-b from-brand-600 to-brand-700 px-6 text-xl font-semibold text-white shadow-btn transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {picked.length ? `选好了（${picked.length} 处）` : "选好了"}
+        {picked.length ? L(`选好了（${picked.length} 处）`, `Done (${picked.length})`) : L("选好了", "Done")}
       </button>
     </div>
   );
 }
 
-export function BodyMap({ onPick, prompt = "点一下不舒服的地方" }: { onPick: (areas: string[]) => void; prompt?: string }) {
+export function BodyMap({ onPick, prompt = L("点一下不舒服的地方", "Tap where it feels unwell") }: { onPick: (areas: string[]) => void; prompt?: string }) {
   const [view, setView] = useState<"front" | "back">("front");
   const [detail, setDetail] = useState<Detail | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
@@ -234,7 +291,7 @@ export function BodyMap({ onPick, prompt = "点一下不舒服的地方" }: { on
           <Check />
         </IconTile>
         <span>
-          你选的是：<span className="font-semibold text-brand-700">{picked.join("、")}</span>
+          {L("你选的是：", "You picked: ")}<span className="font-semibold text-brand-700">{picked.map(shownName).join(L("、", ", "))}</span>
         </span>
       </div>
     );
@@ -244,7 +301,7 @@ export function BodyMap({ onPick, prompt = "点一下不舒服的地方" }: { on
     const d = detailOf(detail);
     return (
       <div className={panel}>
-        <p className="t-heading text-ink">{d.title}：具体是哪一块？可以选几块。</p>
+        <p className="t-heading text-ink">{L(`${d.title}：具体是哪一块？可以选几块。`, `${detailTitle(detail)}: which part exactly? You can pick more than one.`)}</p>
         <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: `repeat(${d.cols}, minmax(0, 1fr))` }}>
           {d.zones.map((name, i) =>
             name ? (
@@ -255,7 +312,7 @@ export function BodyMap({ onPick, prompt = "点一下不舒服的地方" }: { on
                 onClick={() => toggle(name)}
                 className={cn(tile, picked.includes(name) && tileOn)}
               >
-                {name.replace(/^(右膝|左膝|右肩|左肩)/, "")}
+                {tileName(name)}
               </button>
             ) : (
               <span key={i} aria-hidden />
@@ -272,14 +329,14 @@ export function BodyMap({ onPick, prompt = "点一下不舒服的地方" }: { on
               picked.includes(d.whole) && "bg-brand-100",
             )}
           >
-            说不清，就是{d.whole}
+            {L(`说不清，就是${d.whole}`, "Not sure, all of it")}
           </button>
           <button
             type="button"
             onClick={() => setDetail(null)}
             className="press min-h-13 rounded-full px-3 text-lg font-medium text-ink-2 transition duration-200 hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
           >
-            返回全身图
+            {L("返回全身图", "Back to the whole body")}
           </button>
         </div>
         <Picked picked={picked} onRemove={toggle} onDone={done} />
@@ -289,7 +346,7 @@ export function BodyMap({ onPick, prompt = "点一下不舒服的地方" }: { on
 
   return (
     <div className={panel}>
-      <div className="grid grid-cols-2 gap-1 rounded-[18px] bg-surface-3/80 p-1" role="tablist" aria-label="正面或背面">
+      <div className="grid grid-cols-2 gap-1 rounded-[18px] bg-surface-3/80 p-1" role="tablist" aria-label={L("正面或背面", "Front or back")}>
         {(["front", "back"] as const).map((v) => (
           <button
             key={v}
@@ -302,15 +359,15 @@ export function BodyMap({ onPick, prompt = "点一下不舒服的地方" }: { on
               view === v ? "bg-surface text-ink shadow-pill" : "text-ink-2 hover:text-ink",
             )}
           >
-            {v === "front" ? "正面" : "背面"}
+            {v === "front" ? L("正面", "Front") : L("背面", "Back")}
           </button>
         ))}
       </div>
       <p className="t-heading mt-5 text-center text-ink">{prompt}</p>
       <div className="relative mt-3">
         <div className="pointer-events-none absolute inset-x-0 top-1/3 flex justify-between px-1 text-lg font-semibold text-ink-3" aria-hidden>
-          <span>{view === "front" ? "右" : "左"}</span>
-          <span>{view === "front" ? "左" : "右"}</span>
+          <span>{view === "front" ? L("右", "Right") : L("左", "Left")}</span>
+          <span>{view === "front" ? L("左", "Left") : L("右", "Right")}</span>
         </div>
         <Figure zones={view === "front" ? FRONT : BACK} onZone={zone} picked={picked} />
       </div>

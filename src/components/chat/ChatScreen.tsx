@@ -22,6 +22,7 @@ import { useToast } from "@/components/Toast";
 import { IconTile, LinkButton } from "@/components/ui";
 import { ArrowRight, ChevronRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { L, getLang } from "@/lib/lang";
 
 const MAX_PHOTOS = 4;
 
@@ -93,6 +94,12 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
     askAboutDraft();
   }, [state.profile]);
 
+  // the conversation was emptied while open (the demo is rebuilt when the language is switched): greet again
+  const empty = state.thread.length === 0;
+  useEffect(() => {
+    if (asked.current && empty && state.profile) greet();
+  }, [empty, state.profile]);
+
   // closing or reloading the page with an unsaved card: the browser's own "leave this page?" prompt
   const unsaved = unsavedCards(state.thread, state.episodes).length > 0;
   useEffect(() => {
@@ -120,10 +127,10 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   const photos = async (files: File[]) => {
     try {
       const images = await Promise.all(files.slice(0, MAX_PHOTOS).map((f) => compressImage(f)));
-      if (files.length > MAX_PHOTOS) toast.show(`一次最多 ${MAX_PHOTOS} 张，先看前 ${MAX_PHOTOS} 张`);
+      if (files.length > MAX_PHOTOS) toast.show(L(`一次最多 ${MAX_PHOTOS} 张，先看前 ${MAX_PHOTOS} 张`, `Up to ${MAX_PHOTOS} photos at a time. Looking at the first ${MAX_PHOTOS}.`));
       void sendTurn("", images);
     } catch {
-      toast.show("这张照片打不开，换一张试试", "danger");
+      toast.show(L("这张照片打不开，换一张试试", "This photo won't open. Try another one."), "danger");
     }
   };
 
@@ -141,15 +148,16 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   return (
     <div className="-mb-9 flex min-w-0 flex-1 flex-col">
       {/* while the page is an invitation the name of the page steps back and the question is the headline */}
-      <div className="relative">
-        <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-center text-ink-2" : "t-title mb-4 text-ink")}>看医生之前</h1>
+      {/* the page name and the shortcut to post share one row, so they can never overlap on a narrow phone */}
+      <div className={cn("flex items-center justify-between gap-3", !opening && "mb-4")}>
+        <h1 className={cn("min-w-0 animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-ink-2" : "t-title text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
         {/* 看完医生直接跳到 post；回主页还是底部栏中间那个图标（或左上角 logo） */}
         <LinkButton
           href="/post"
           variant="soft"
           size="sm"
-          aria-label="看完医生了？去 post 整理"
-          className="press absolute top-1/2 right-0 -translate-y-1/2 gap-1 rounded-full"
+          aria-label={L("看完医生了？去 post 整理", "Seen the doctor? Go to post")}
+          className="press shrink-0 gap-1 rounded-full"
         >
           next · post
           <ArrowRight className="h-4.5 w-4.5" aria-hidden="true" />
@@ -172,10 +180,12 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
             <IconTile size="sm" tone="solid">
               <FileText />
             </IconTile>
-            <span className="min-w-0 flex-1 truncate">给医生看的报告（{reportTitle}）</span>
+            <span className="min-w-0 flex-1 truncate">{L(`给医生看的报告（${reportTitle}）`, `Report for the doctor (${reportTitle})`)}</span>
             <ChevronRight className="h-5 w-5 shrink-0 text-brand-700" />
           </button>
         )}
+        {/* the assistant still answers in Chinese: said once, quietly, where its replies arrive */}
+        {getLang() === "en" && <p className="text-center text-base leading-snug text-ink-2">AI replies are in Chinese for now.</p>}
         <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
       </div>
     </div>

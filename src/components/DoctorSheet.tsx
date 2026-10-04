@@ -417,7 +417,7 @@ export function SheetFootnote() {
   return (
     // on paper it closes the sheet: set off from the last section by a rule, like a footer
     <p className="mx-auto max-w-[30rem] px-4 pt-2 pb-4 text-center text-base leading-relaxed text-ink-2 print:mt-5 print:max-w-none print:border-t print:border-line print:px-0! print:pt-3 print:text-black">
-      {L("以上是患者自己记录、由医伴整理的内容，不是诊断。", "Recorded by the patient and organised by Yiban. Not a diagnosis.")}
+      {L("以上是患者自己记录、由医伴整理的内容，不是诊断。", "Recorded by the patient and organized by VisitSmoothie. Not a diagnosis.")}
     </p>
   );
 }

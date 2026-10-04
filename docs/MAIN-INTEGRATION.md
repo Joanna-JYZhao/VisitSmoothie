@@ -50,3 +50,24 @@
 TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音类型声明；ESLint 排除独立 PhysicianBench 检出目录与旧实现快照。原先全目录扫描会将独立研究网站的别名按主应用解释，导致错误。
 
 浏览器 Clinical Plan 检查将照片整理接口替换为虚构响应，解释接口则实际调用本地无 Key 规则；验证的是页面与待办持久化流程。接口测试和模块测试也使用虚构数据。真实供应商账号、实际语音准确率、照片识别质量及公网部署不属于本次验证。
+
+## 2026-10-04 整合：手机版美化、绿色、logo 名、中英双语、登录页（integrate-into-main）
+
+从当时的 `origin/main`（394a16f）开分支 `integrate-into-main`，合入主管会话在 `yiban-mobile` 上的本地提交：蓝改青瓷绿和 logo 配名字（65b870e）、界面中英双语和林叔英文版、欢迎登录页换回网页版的样子（f689927）、合入 Nancy 的 ad717c2（b078f94）。
+
+冲突只有两个文件，一律以 main 的功能为准，只带过去样子和英文：
+
+- `src/app/post/page.tsx`：保留 main 的 Clinical Plan 结果页，标题和说明加英文。
+- `src/components/chat/BodyMap.tsx`：保留 main 的多选身体图（aria-pressed、可选几块、`prompt` 参数），提示、选中条和按钮加英文；存下和发出去的仍是中文部位名。
+
+合并后补的英文：Clinical Plan 页（`src/components/post/ClinicalPlan.tsx`）的固定文字、对话里「描述改过了」卡片和身体图提示。发给 AI 的问题、存进待办的「问/答」仍是中文。AI 一侧（回答、追问、规则生成的文字）按 CLAUDE.md 仍是中文，英文界面注明「AI replies are in Chinese for now.」。
+
+| 检查 | 本次结果 |
+| --- | --- |
+| `npm test` | 患者应用 1530 项断言、账号模块、语音模块 19 个测试全部通过 |
+| `npm run lint`、`npx tsc --noEmit` | 通过 |
+| 生产构建 | 通过（在临时副本里构建） |
+| `BASE=http://127.0.0.1:4310 npm run test:rules` | 本地无 Key 生产服务，63 项通过 |
+| 浏览器（390 像素手机宽度，中英文各一遍） | 欢迎、登录、注册（服务端账号、错密码、开发者开关下空表单）、林叔中英文、首页 to do、问 AI 展开收起、pre（身体图多选、next·post）、post、report、给医生看、set、我的资料、设置、应急；截图在 `docs/手机版截图/` 和 `docs/手机版截图-英文/` |
+
+没验证到的：真实的照片整理和 Clinical Plan 实际结果（AI Key 现在被拒，照片整理走不通）；真实麦克风。

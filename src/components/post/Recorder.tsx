@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, Square, TriangleAlert } from "lucide-react";
 import { VISIT_MAX_SECONDS, canRecord, clockText, progressText, startRecording, transcribeLong, type ActiveRecording, type LongTranscript } from "@/lib/audio";
 import { cn } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { IconTile, Spinner } from "@/components/ui";
 
 type Phase = { kind: "idle" } | { kind: "recording"; seconds: number } | { kind: "working"; done: number; total: number };
@@ -57,10 +58,14 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
     try {
       const blob = await r.stop();
       const result = await transcribeLong(blob, (done, total) => setPhase({ kind: "working", done, total }));
-      if (!result.text) setProblem(result.total ? "录音里没听出说话的内容。可以再录一次，或者拍医嘱上传。" : "录音太短了，再录一次试试。");
+      if (!result.text) setProblem(
+          result.total
+            ? L("录音里没听出说话的内容。可以再录一次，或者拍医嘱上传。", "No speech was heard in the recording. Record again, or upload a photo of the doctor's orders.")
+            : L("录音太短了，再录一次试试。", "The recording is too short. Please record again."),
+        );
       else onText(result);
     } catch {
-      setProblem("这段录音没处理成，可以再录一次，或者拍医嘱上传。");
+      setProblem(L("这段录音没处理成，可以再录一次，或者拍医嘱上传。", "This recording didn't work. Record again, or upload a photo of the doctor's orders."));
     } finally {
       setPhase({ kind: "idle" });
       onBusy?.(false);
@@ -69,11 +74,11 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
 
   const start = async () => {
     setProblem(null);
-    if (!canRecord()) return setProblem("这台设备上录不了音。可以拍医嘱上传。");
+    if (!canRecord()) return setProblem(L("这台设备上录不了音。可以拍医嘱上传。", "This device can't record. You can upload a photo of the doctor's orders."));
     try {
       rec.current = await startRecording();
     } catch {
-      return setProblem("没拿到麦克风。请在浏览器里允许使用麦克风，或者拍医嘱上传。");
+      return setProblem(L("没拿到麦克风。请在浏览器里允许使用麦克风，或者拍医嘱上传。", "Can't use the microphone. Allow it in your browser, or upload a photo of the doctor's orders."));
     }
     onBusy?.(true);
     startedAt.current = Date.now();
@@ -120,21 +125,26 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
         </span>
 
         {working ? (
-          <span className="t-heading text-brand-800 tabular-nums">{progressText(phase.done, phase.total)}</span>
+          <span className="t-heading text-brand-800 tabular-nums">{L(progressText(phase.done, phase.total), phase.total > 0 ? `Writing it down ${Math.min(phase.done, phase.total)}/${phase.total}` : "Getting the recording ready")}</span>
         ) : recording ? (
           <span className="flex min-w-0 flex-col items-start gap-1">
-            <span className="text-base leading-snug font-medium text-danger">录音中</span>
+            <span className="text-base leading-snug font-medium text-danger">{L("录音中", "Recording")}</span>
             <span className="flex items-center gap-3">
               <span className="t-number text-danger">{clockText(phase.seconds)}</span>
               <SoundBars />
             </span>
-            <span className="text-lg leading-snug font-medium text-ink">点一下停止</span>
+            <span className="text-lg leading-snug font-medium text-ink">{L("点一下停止", "Tap to stop")}</span>
           </span>
         ) : (
-          <span className="t-title">录音</span>
+          <span className="t-title">{L("录音", "Record")}</span>
         )}
       </button>
-      <p className="mt-2.5 px-1 text-base leading-relaxed text-ink-2">录医生说话前，请先征得医生同意。最长 60 分钟，录音不保存，只留整理出的文字。</p>
+      <p className="mt-2.5 px-1 text-base leading-relaxed text-ink-2">
+        {L(
+          "录医生说话前，请先征得医生同意。最长 60 分钟，录音不保存，只留整理出的文字。",
+          "Ask the doctor before you record. Up to 60 minutes. The recording is not kept, only the text taken from it.",
+        )}
+      </p>
       {problem && (
         <div role="alert" className="mt-3 flex animate-fade-up items-start gap-3.5 rounded-card border border-warn/20 bg-warn-bg px-5 py-4">
           <IconTile tone="warn" size="sm" className="mt-0.5 bg-surface shadow-edge">

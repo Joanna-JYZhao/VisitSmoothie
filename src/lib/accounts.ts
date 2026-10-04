@@ -7,6 +7,7 @@
 
 import type { Profile } from "./types";
 import { isDev } from "./dev";
+import { L } from "./lang";
 
 export interface Account {
   id: string;
@@ -48,10 +49,10 @@ export function passwordProblem(password: string, confirm: string): string | nul
   // 开发者开关开着：密码可以不设
   if (isDev()) return null;
   const n = [...password].length;
-  if (!n) return "还差：密码。";
-  if (n < PASSWORD_MIN) return `密码至少 ${PASSWORD_MIN} 个字，可以用一句好记的话。`;
-  if (n > PASSWORD_MAX) return `密码最多 ${PASSWORD_MAX} 个字。`;
-  if (password !== confirm) return "两次输入的密码不一样，请再输一次。";
+  if (!n) return L("还差：密码。", "Still missing: password.");
+  if (n < PASSWORD_MIN) return L(`密码至少 ${PASSWORD_MIN} 个字，可以用一句好记的话。`, `The password needs at least ${PASSWORD_MIN} characters. A sentence you can remember works well.`);
+  if (n > PASSWORD_MAX) return L(`密码最多 ${PASSWORD_MAX} 个字。`, `The password can have at most ${PASSWORD_MAX} characters.`);
+  if (password !== confirm) return L("两次输入的密码不一样，请再输一次。", "The two passwords don't match. Please type them again.");
   return null;
 }
 
@@ -79,8 +80,13 @@ export async function createAccount(
   confirm: string,
 ): Promise<{ account: Account } | { error: string }> {
   const key = nameKey(name);
-  if (!key) return { error: "还差：姓名。" };
-  if (list.some((a) => a.key === key)) return { error: "这个姓名已经注册过了。是你的话请直接登录；不是的话，换一个能区分的姓名。" };
+  if (!key) return { error: L("还差：姓名。", "Still missing: name.") };
+  if (list.some((a) => a.key === key)) return {
+      error: L(
+        "这个姓名已经注册过了。是你的话请直接登录；不是的话，换一个能区分的姓名。",
+        "This name is already signed up. If it's you, please sign in; if not, use a name that tells you apart.",
+      ),
+    };
   const bad = passwordProblem(password, confirm);
   if (bad) return { error: bad };
   const salt = newSalt();
@@ -195,7 +201,7 @@ async function authFetch(path: string, body: unknown): Promise<{ ok: boolean; st
     const data = (await res.json().catch(() => ({}))) as { account?: { id: string; name: string }; error?: string };
     return { ok: res.ok, status: res.status, data };
   } catch {
-    return { ok: false, status: 0, data: { error: "连不上本机服务，请确认服务在运行。" } };
+    return { ok: false, status: 0, data: { error: L("连不上本机服务，请确认服务在运行。", "Can't reach the local service. Please make sure it is running.") } };
   }
 }
 
@@ -209,7 +215,7 @@ export async function registerHere(name: string, password: string, confirm: stri
   const actual = isDev() && !password ? devPassword(name, true)! : password;
   const res = await authFetch("/api/auth/register", { name, password: actual });
   if (!res.ok || !res.data.account) {
-    authError = res.data.error ?? "注册失败，请再试一次。";
+    authError = res.data.error ?? L("注册失败，请再试一次。", "Sign-up failed. Please try again.");
     return authError;
   }
   authError = null;
@@ -241,14 +247,14 @@ export async function loginHere(name: string, password: string): Promise<boolean
   if (isDev() && !password) {
     const found = devPassword(name, false);
     if (!found) {
-      authError = "开发者模式：这台浏览器没存这个账号的钥匙，请用密码登录，或重新注册。";
+      authError = L("开发者模式：这台浏览器没存这个账号的钥匙，请用密码登录，或重新注册。", "Developer mode: this browser has no key for this account. Sign in with the password, or sign up again.");
       return false;
     }
     actual = found;
   }
   const res = await authFetch("/api/auth/login", { name, password: actual });
   if (!res.ok || !res.data.account) {
-    authError = res.data.error ?? "姓名或密码不对，请再试一次。";
+    authError = res.data.error ?? L("姓名或密码不对，请再试一次。", "Name or password is wrong. Please try again.");
     return false;
   }
   authError = null;
