@@ -7,6 +7,6 @@
   "engines": { "node": ">=24" },
   "exports": { ".": { "types": "./index.d.mts", "import": "./index.mjs" } },
   "types": "./index.d.mts",
-  "files": ["index.mjs", "index.d.mts", "cli.mjs", "README.md", "VERIFICATION.md"],
+  "files": ["index.mjs", "index.d.mts", "cli.mjs", "README.md", "VERIFICATION.md", ".env.example"],
   "scripts": { "test": "node --test tests/*.test.mjs", "dictate": "node cli.mjs" }
 }

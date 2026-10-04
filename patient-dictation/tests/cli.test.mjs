@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -12,7 +13,10 @@ function run(args = [], extraEnv = {}) {
   return new Promise((resolve, reject) => {
     const env = { ...process.env };
     for (const name of Object.keys(env)) if (/^(DICTATION_|OPENAI_)/u.test(name)) delete env[name];
-    const child = spawn(process.execPath, [CLI, ...args], { env: { ...env, ...extraEnv }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [CLI, ...args], {
+      env: { ...env, ...extraEnv }, stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 2000, killSignal: 'SIGKILL',
+    });
     let stdout = '', stderr = '';
     child.stdout.on('data', data => { stdout += data; });
     child.stderr.on('data', data => { stderr += data; });
@@ -35,6 +39,17 @@ test('CLI reports missing key without treating the analysis key as a dictation k
   const result = await run(['audio.wav'], { DEEPSEEK_API_KEY: 'fictional-analysis-key' });
   assert.equal(result.code, 1); assert.equal(result.stdout, '');
   assert.match(result.stderr, /^INVALID_CONFIG:/u); assert.ok(!result.stderr.includes('fictional-analysis-key'));
+});
+
+test('CLI rejects a FIFO without waiting for a writer', { skip: process.platform === 'win32' }, async t => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'dictation-fifo-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const fifo = path.join(dir, 'recording.wav');
+  await promisify(execFile)('mkfifo', [fifo]);
+  const result = await run([fifo], { DICTATION_API_KEY: 'fictional-test-key' });
+  assert.equal(result.code, 1, 'The CLI must reject special files rather than hang until killed.');
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /^FILE_READ_ERROR:/u);
 });
 
 test('CLI transcribes a file through real local HTTP and outputs plain text or JSON', async t => {

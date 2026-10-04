@@ -85,7 +85,8 @@ test('accepts File, recorder Blob with codec MIME, ArrayBuffer and byte subarray
 
 test('validates configuration without echoing secrets', () => {
   for (const config of [
-    {}, { apiKey: '' }, { apiKey: key, model: '' },
+    null, [], {}, { apiKey: '' }, { apiKey: key, model: '' },
+    { apiKey: key, model: { startsWith: 1 } },
     { apiKey: key, timeoutMs: 0 }, { apiKey: key, timeoutMs: 2 ** 32 },
     { apiKey: key, maxAudioBytes: 0 }, { apiKey: key, maxAudioBytes: 25_000_001 },
     { apiKey: key, baseURL: 'http://example.com/v1' },

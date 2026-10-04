@@ -1,4 +1,5 @@
 import { open } from 'node:fs/promises';
+import { constants } from 'node:fs';
 
 const MAX_AUDIO_BYTES = 25_000_000;
 const MIME = Object.freeze({
@@ -90,17 +91,22 @@ function providerError(status) {
 }
 
 /** Create once on the server, then call independently for each dictation. */
-export function createDictationClient({
-  apiKey,
-  baseURL = 'https://api.openai.com/v1',
-  model = 'gpt-transcribe',
-  timeoutMs = 120_000,
-  maxAudioBytes = MAX_AUDIO_BYTES,
-  languageField = model?.startsWith?.('gpt-transcribe') ? 'languages' : 'language',
-  fetchImpl = globalThis.fetch,
-} = {}) {
+export function createDictationClient(config = {}) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) throw configError('Provide a configuration object.');
+  const {
+    apiKey,
+    baseURL = 'https://api.openai.com/v1',
+    model = 'gpt-transcribe',
+    timeoutMs = 120_000,
+    maxAudioBytes = MAX_AUDIO_BYTES,
+    languageField: configuredLanguageField,
+    fetchImpl = globalThis.fetch,
+  } = config;
   if (typeof apiKey !== 'string' || !apiKey || /[\s\x00-\x1f\x7f]/u.test(apiKey)) throw configError('Provide a server-side transcription API key.');
   if (typeof model !== 'string' || !model.trim()) throw configError('Provide a transcription model name.');
+  const languageField = configuredLanguageField === undefined
+    ? (model.startsWith('gpt-transcribe') ? 'languages' : 'language')
+    : configuredLanguageField;
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2_147_483_647) throw configError('Timeout must be a positive timer-safe integer in milliseconds.');
   if (!Number.isInteger(maxAudioBytes) || maxAudioBytes < 1 || maxAudioBytes > MAX_AUDIO_BYTES) throw configError('Audio limit must be between 1 and 25,000,000 bytes.');
   if (!['language', 'languages'].includes(languageField)) throw configError('Language field must be language or languages.');
@@ -161,7 +167,8 @@ export function createDictationClient({
     let audio;
     let filename;
     try {
-      handle = await open(filePath, 'r');
+      // A FIFO must not block open() before we can reject nonregular files.
+      handle = await open(filePath, constants.O_RDONLY | constants.O_NONBLOCK);
       const stat = await handle.stat();
       if (!stat.isFile()) throw new DictationError('FILE_READ_ERROR', 'Audio path must refer to a regular file.');
       checkSize(stat.size, maxAudioBytes);
