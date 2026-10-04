@@ -52,7 +52,7 @@
 
 ```bash
 npm install
-cp .env.example .env.local   # 填入智谱 GLM 的 API Key（可以不填）
+cp .env.example .env.local   # 填入 Anthropic 的 API Key（可以不填）
 npm run dev
 ```
 
@@ -60,9 +60,9 @@ npm run dev
 
 | 变量 | 说明 | 默认 |
 |---|---|---|
-| `GLM_API_KEY` | 智谱开放平台的 API Key。留空时用内置规则引擎回答，语音和拍照不可用 | 空 |
-| `GLM_MODEL` | 对话和整理用的模型 | `glm-5` |
-| `GLM_VISION_MODEL` | 识别照片用的模型 | `glm-4.6v` |
+| `ANTHROPIC_API_KEY` | Anthropic 的 API Key，对话、整理和识别照片都用它。留空时用内置规则引擎回答，拍照不可用 | 空 |
+| `CLAUDE_MODEL` | 对话、整理和识别照片用的模型 | `claude-opus-5-5` |
+| `GLM_API_KEY` | 智谱开放平台的 API Key，只用于语音转文字。留空时语音不可用 | 空 |
 | `GLM_ASR_MODEL` | 语音转文字用的模型 | `glm-asr-2512` |
 | `GLM_BASE_URL` | OpenAI 兼容接口地址 | `https://open.bigmodel.cn/api/paas/v4` |
 
