@@ -4,22 +4,21 @@ import Link from "next/link";
 import { ChevronRight, ClipboardList, FolderOpen, MessageCircle, Stethoscope, type LucideIcon } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, episodeLine, fmtDate } from "@/lib/utils";
-import { recordById } from "@/lib/records";
+import { allRecords } from "@/lib/records";
 import { L } from "@/lib/lang";
 import { Badge, Card, IconTile, Notice, focusRing } from "@/components/ui";
 
 /** report: every visit record, whole (问诊 + 医嘱) or in part, each with the page for the doctor. */
 export default function ReportPage() {
   const { state } = useStore();
-  // 复诊: the title of the earlier record a record follows up
-  const followUpTitle = (of: string | null | undefined) => recordById(state, of)?.title ?? null;
+  // the main complaint in a phrase, with 复诊 · in front for a follow-up
+  const titles = new Map(allRecords(state).map((r) => [r.id, r.title]));
   const rows = [
     ...state.episodes.map((e) => ({
       key: e.id,
       at: new Date(e.startedAt).getTime(),
-      title: e.title,
+      title: titles.get(e.id) ?? e.title,
       kind: e.visit ? L("问诊 + 医嘱", "Visit + orders") : L("问诊", "Visit"),
-      followUp: followUpTitle(e.followUpOf),
       icon: e.visit ? Stethoscope : MessageCircle,
       line: `${fmtDate(e.startedAt, { year: true })} · ${episodeLine(e)}`,
       doctor: `/doctor/${e.id}`,
@@ -28,9 +27,8 @@ export default function ReportPage() {
     ...state.followUps.map((f) => ({
       key: f.id,
       at: new Date(`${f.date}T12:00:00`).getTime(),
-      title: f.reason,
+      title: titles.get(f.id) ?? f.reason,
       kind: L("医嘱", "Doctor's orders"),
-      followUp: followUpTitle(f.followUpOf),
       icon: ClipboardList,
       line: L(`${f.date} · ${f.findings}；${f.plan}`, `${f.date} · ${f.findings}; ${f.plan}`),
       doctor: null as string | null,
@@ -71,7 +69,7 @@ function RecordCard({
   row: r,
   first,
 }: {
-  row: { title: string; kind: string; icon: LucideIcon; line: string; doctor: string | null; detail: string; followUp: string | null };
+  row: { title: string; kind: string; icon: LucideIcon; line: string; doctor: string | null; detail: string };
   first: boolean;
 }) {
   const Icon = r.icon;
@@ -85,7 +83,7 @@ function RecordCard({
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <h2 className="min-w-0 text-[1.25rem] leading-snug font-semibold tracking-[-0.015em] text-ink">{r.title}</h2>
             <Badge tone="brand">{r.kind}</Badge>
-            {r.followUp && <Badge>{L(`复诊 · ${r.followUp}`, `Follow-up · ${r.followUp}`)}</Badge>}
+
           </div>
           <p className="t-body mt-1 text-ink-2">{r.line}</p>
         </div>

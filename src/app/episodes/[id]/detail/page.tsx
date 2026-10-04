@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { FileSearch, FileText, MessageCircle, Stethoscope } from "lucide-react";
+import { ChevronDown, ChevronRight, FileSearch, FileText, MessageCircle, Stethoscope } from "lucide-react";
 import type { Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn, fmtDate, roughDuration } from "@/lib/utils";
 import { L } from "@/lib/lang";
-import { EpisodeSheet } from "@/components/EpisodeSheet";
+import { recordById, recordNarrative } from "@/lib/records";
+import { instantSummary, refreshSummary, summaryBusy, summaryIsStale } from "@/lib/summaries";
+import { useReplyPending } from "@/lib/episodeAI";
 import { RecordLinks, VisitPlanView } from "@/components/VisitPlanView";
 import { useToast } from "@/components/Toast";
 import { Badge, Button, Card, IconTile, LinkButton, Modal, Notice, PageHeader, SectionTitle, focusRing } from "@/components/ui";
@@ -49,12 +51,14 @@ function CardTitle({ icon, tone = "brand", children }: { icon: React.ReactNode; 
  * the conversation, and what post put on the record. Nothing else.
  */
 function Detail({ episode: e }: { episode: Episode }) {
-  const { setStatus, deleteEpisode, restoreEpisode } = useStore();
+  const { state, setStatus, deleteEpisode, restoreEpisode } = useStore();
   const router = useRouter();
   const toast = useToast();
   const [confirming, setConfirming] = useState(false);
   const active = e.status === "active";
   const v = e.visit;
+  // the main complaint in a phrase, with 复诊 · in front for a follow-up
+  const title = recordById(state, e.id)?.title ?? e.title;
 
   const remove = () => {
     const snapshot = e;
@@ -69,7 +73,7 @@ function Detail({ episode: e }: { episode: Episode }) {
         back={{ href: active ? "/" : "/me", label: active ? L("今天", "Today") : L("我的档案", "My profile") }}
         title={
           <>
-            {e.title}{" "}
+            {title}{" "}
             <Badge tone={active ? "brand" : "good"} className="ml-1 -translate-y-1 align-middle tracking-normal">
               {active ? L("还在跟踪", "Still tracking") : L("已经好了", "Better now")}
             </Badge>
@@ -91,22 +95,16 @@ function Detail({ episode: e }: { episode: Episode }) {
 
       <RecordLinks id={e.id} />
 
-      {/* 1. what pre wrote up for the doctor: the same as the PDF */}
+      {/* what pre kept: the description, the history that may matter, the page for the doctor, the conversation */}
       <section className="space-y-3">
-        <CardTitle icon={<FileText />}>{L("给医生看", "For the doctor")}</CardTitle>
-        <EpisodeSheet episode={e} embedded />
+        <CardTitle icon={<MessageCircle />}>{L("看医生之前存的", "Saved before the doctor")}</CardTitle>
+        <PreSaved episode={e} />
       </section>
 
-      {/* 2. how pre got there: the conversation */}
-      <Card className="no-print animate-rise px-4 pt-4 pb-2">
-        <CardTitle icon={<MessageCircle />}>{L("对话过程", "The conversation")}</CardTitle>
-        <Transcript episode={e} />
-      </Card>
-
-      {/* 3. what post put on the record: the plan and where it stands, the next visit, what was asked */}
+      {/* what post kept: the plan and where it stands, the next visit, what was asked */}
       {v && (
         <section className="space-y-3">
-          <CardTitle icon={<Stethoscope />}>{L("看医生之后", "After the doctor")}</CardTitle>
+          <CardTitle icon={<Stethoscope />}>{L("看医生之后存的", "Saved after the doctor")}</CardTitle>
           <VisitPlanView id={e.id} />
         </section>
       )}
@@ -159,6 +157,65 @@ function Detail({ episode: e }: { episode: Episode }) {
         {L("这次的全部记录、对话和看医生的结果都会删掉。", "All records, the chat and the doctor's results for this will be deleted.")}
       </Modal>
     </div>
+  );
+}
+
+/**
+ * What pre kept, in short: the description in the patient's words (without what the profile already
+ * says), the history that may matter for this complaint (not all of it), a way to the full page for the
+ * doctor and its PDF, and the conversation folded away.
+ */
+function PreSaved({ episode: e }: { episode: Episode }) {
+  const { state } = useStore();
+  const busy = summaryBusy.use(e.id);
+  const stale = summaryIsStale(e);
+  const reading = useReplyPending(e.id);
+  useEffect(() => {
+    if (stale && !busy && !reading) void refreshSummary(e.id);
+  }, [e.id, stale, busy, reading]);
+  const view = !stale && e.summary ? e.summary : instantSummary(e, state);
+  const narrative = view?.narrative ? recordNarrative(view.narrative) : "";
+  const history = [...(view?.relevantHistory ?? []), ...(view?.priorSimilar ?? [])].filter((x, i, a) => x.trim() && a.indexOf(x) === i);
+
+  return (
+    <Card className="divide-y divide-line overflow-hidden">
+      <div className="px-4 py-4">
+        <p className="text-base font-semibold text-brand-700">{L("我的描述", "In my words")}</p>
+        {narrative ? (
+          <p className="t-body mt-1.5 text-ink">{narrative}</p>
+        ) : (
+          <p className="t-body mt-1.5 text-ink-2">{busy || reading ? L("正在整理…", "Organising…") : L("这次没有描述。", "No description this time.")}</p>
+        )}
+      </div>
+      {history.length > 0 && (
+        <div className="px-4 py-4">
+          <p className="text-base font-semibold text-brand-700">{L("可能有关的病史", "History that may matter")}</p>
+          <ul className="mt-1.5 space-y-1.5">
+            {history.map((h, i) => (
+              <li key={i} className="flex gap-3 text-lg leading-snug text-ink">
+                <span aria-hidden="true" className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600" />
+                <span className="min-w-0">{h}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <Link href={`/doctor/${e.id}`} className={cn("press flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2/70", focusRing, "focus-visible:ring-inset")}>
+        <FileText aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
+        <span className="min-w-0 flex-1 text-lg font-medium text-brand-800">{L("给医生看的完整页 · 导出 PDF", "Full page for the doctor · PDF")}</span>
+        <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-3" />
+      </Link>
+      <details className="group no-print">
+        <summary className={cn("press flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden", focusRing, "focus-visible:ring-inset")}>
+          <MessageCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
+          <span className="min-w-0 flex-1 text-lg font-medium text-ink">{L("对话过程", "The conversation")}</span>
+          <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-200 group-open:rotate-180" />
+        </summary>
+        <div className="px-4 pb-2">
+          <Transcript episode={e} />
+        </div>
+      </details>
+    </Card>
   );
 }
 

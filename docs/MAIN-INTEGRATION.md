@@ -155,3 +155,13 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 - 人体图所有部位都保留，高度压到原来的 0.78，最高不超过屏幕高度的 46%，手机上一屏能看到整个人。
 
 验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1570 项全部通过；`npm run build` 通过。
+
+## 2026-10-04 改动：Record 标题是主要症状、复诊加「复诊 · 」并能跳到上一次和上上次，记录里 pre / post 分块更简明（Yueran，推 main）
+
+- `src/lib/records.ts`：`allRecords` 的标题是主要症状一个短语（pre 记录的标题；只用 post 的复诊沿用上一次的症状，否则用诊断），复诊前面加「复诊 · 」；`followUpChain` 给出上一次、上上次；`recordNarrative` 去掉描述里档案已有的（开头年龄、结尾「（补充：…）」/「(Also: …)」）。
+- `src/components/VisitPlanView.tsx`：复诊记录顶部「上一次：…」「上上次：…」两个跳转按钮，被复诊的记录显示「它的复诊：…」。
+- `src/app/episodes/[id]/detail/page.tsx`：分成「看医生之前存的」（我的描述、可能有关的病史、给医生看的完整页 · 导出 PDF、折叠的对话过程）和「看医生之后存的」（治疗计划和状态、下次复诊、问过的问题）。给医生看的页面和 PDF 本身不变。
+- `src/app/report/page.tsx`、`src/app/report/visit/[id]/page.tsx`：列表和只用 post 的记录页用新标题，加「看医生之后存的」小标题。
+- 测试：`post-link.test.ts` 加复诊标题、两级跳转、描述去掉档案信息。
+
+验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1573 项全部通过；`npm run build` 通过。

@@ -1,12 +1,12 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { FileSearch } from "lucide-react";
+import { FileSearch, Stethoscope } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { recordById } from "@/lib/records";
 import { L } from "@/lib/lang";
 import { fmtDate } from "@/lib/utils";
-import { LinkButton, Notice, PageHeader } from "@/components/ui";
+import { IconTile, LinkButton, Notice, PageHeader } from "@/components/ui";
 import { RecordLinks, VisitPlanView } from "@/components/VisitPlanView";
 
 /**
@@ -38,6 +38,12 @@ export default function VisitRecordPage() {
         sub={`${fmtDate(`${visit.date}T12:00:00`, { year: true })}${where ? ` · ${where}` : ""}`}
       />
       <RecordLinks id={id} />
+      <h2 className="t-heading flex items-center gap-3 text-ink">
+        <IconTile tone="brand">
+          <Stethoscope />
+        </IconTile>
+        {L("看医生之后存的", "Saved after the doctor")}
+      </h2>
       <VisitPlanView id={id} />
     </div>
   );

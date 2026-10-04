@@ -12,7 +12,10 @@ import { DAY, fmtDate, uid } from "./utils";
 export interface RecordRef {
   id: string;
   kind: "episode" | "visit";
+  /** what is shown: the main complaint in a phrase, with 复诊 · in front when it follows up an earlier record */
   title: string;
+  /** the main complaint alone, without 复诊 · */
+  base: string;
   /** when it happened: the start of the complaint, or the day of the visit */
   at: string;
   /** a visit (post) is filed in it */
@@ -22,12 +25,57 @@ export interface RecordRef {
 
 const visitTitle = (f: FollowUp) => f.reason.replace(/^复诊（(.+)）$/, "$1").replace(/^Follow-up \((.+)\)$/, "$1");
 
-/** Every record, newest first. */
+/**
+ * Every record, newest first. The title is the main complaint in a phrase (the pre record's title; a
+ * visit filed on its own has no description, so a follow-up of that kind takes the complaint of the
+ * record it follows up, and otherwise the diagnosis), with 复诊 · in front for a follow-up.
+ */
 export function allRecords(state: Pick<AppState, "episodes" | "followUps">): RecordRef[] {
-  return [
-    ...state.episodes.map((e) => ({ id: e.id, kind: "episode" as const, title: e.title, at: e.startedAt, hasVisit: Boolean(e.visit), followUpOf: e.followUpOf ?? null })),
-    ...state.followUps.map((f) => ({ id: f.id, kind: "visit" as const, title: visitTitle(f), at: `${f.date}T12:00:00`, hasVisit: true, followUpOf: f.followUpOf ?? null })),
-  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  const refs = [
+    ...state.episodes.map((e) => ({ id: e.id, kind: "episode" as const, title: e.title, base: e.title, own: true, at: e.startedAt, hasVisit: Boolean(e.visit), followUpOf: e.followUpOf ?? null })),
+    ...state.followUps.map((f) => ({ id: f.id, kind: "visit" as const, title: visitTitle(f), base: visitTitle(f), own: false, at: `${f.date}T12:00:00`, hasVisit: true, followUpOf: f.followUpOf ?? null })),
+  ];
+  const byId = new Map(refs.map((r) => [r.id, r]));
+  // the complaint a visit on its own follows up, looked up along the chain (never round in a circle)
+  const complaint = (r: (typeof refs)[number], seen = new Set<string>()): string => {
+    if (r.own || !r.followUpOf || seen.has(r.id)) return r.base;
+    seen.add(r.id);
+    const of = byId.get(r.followUpOf);
+    return of ? complaint(of, seen) : r.base;
+  };
+  return refs
+    .map((r): RecordRef => {
+      const base = complaint(r);
+      return { id: r.id, kind: r.kind, base, title: r.followUpOf ? L(`复诊 · ${base}`, `Follow-up · ${base}`) : base, at: r.at, hasVisit: r.hasVisit, followUpOf: r.followUpOf };
+    })
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+}
+
+/** The records this one follows up, nearest first: 上一次, 上上次 (at most `n`). */
+export function followUpChain(state: Pick<AppState, "episodes" | "followUps">, id: string, n = 2): RecordRef[] {
+  const all = allRecords(state);
+  const out: RecordRef[] = [];
+  let cur = all.find((r) => r.id === id);
+  while (cur?.followUpOf && out.length < n) {
+    const of = all.find((r) => r.id === cur!.followUpOf);
+    if (!of || of.id === id || out.some((r) => r.id === of.id)) break;
+    out.push(of);
+    cur = of;
+  }
+  return out;
+}
+
+/**
+ * The patient's description as kept in the record: what is already in the profile is left out — the
+ * age at the start ("我46岁，") and the bracket of unrelated history, regular medicines and allergies
+ * at the end ("（补充：…）" / "(Also: …)").
+ */
+export function recordNarrative(narrative: string): string {
+  let t = narrative.trim().replace(/^[“"]|[”"]$/g, "");
+  t = t.replace(/[（(](补充|Also)[:：][^（）()]*[）)]\s*/g, "");
+  t = t.replace(/^我\s*\d+\s*岁[，,、]\s*/, "");
+  t = t.replace(/^I(?:'m| am)\s+\d+(?:\s+years?\s+old)?[,.]\s*(\w)/, (_m, c: string) => c.toUpperCase());
+  return t.trim();
 }
 
 export function recordById(state: Pick<AppState, "episodes" | "followUps">, id: string | null | undefined): RecordRef | null {
@@ -126,7 +174,7 @@ export function previousContext(state: Pick<AppState, "episodes" | "followUps">,
   const lines: string[] = [];
   const e: Episode | undefined = state.episodes.find((x) => x.id === ref.id);
   const f: FollowUp | undefined = state.followUps.find((x) => x.id === ref.id);
-  lines.push(L(`上一次：${ref.title}（${fmtDate(ref.at, { year: true })}）`, `Last time: ${ref.title} (${fmtDate(ref.at, { year: true })})`));
+  lines.push(L(`上一次：${ref.base}（${fmtDate(ref.at, { year: true })}）`, `Last time: ${ref.base} (${fmtDate(ref.at, { year: true })})`));
   if (e?.summary?.narrative) lines.push(L(`当时的描述：${e.summary.narrative}`, `What the patient said then: ${e.summary.narrative}`));
   const visit = e?.visit;
   if (visit) {

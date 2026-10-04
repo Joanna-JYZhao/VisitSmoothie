@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CalendarClock, ChevronDown, ChevronRight, ClipboardList, Link2, MessageCircleQuestion } from "lucide-react";
 import type { PlanItem, Todo } from "@/lib/types";
 import { storeActions, useNow, useStore } from "@/lib/store";
-import { allRecords, planStatus, recordById, recordHref, recordLabel, visitPartsOf } from "@/lib/records";
+import { allRecords, followUpChain, planStatus, recordHref, recordLabel, visitPartsOf, type RecordRef } from "@/lib/records";
 import { followUpNote } from "@/lib/reminders";
 import { L } from "@/lib/lang";
 import { cn, fmtDate } from "@/lib/utils";
@@ -58,36 +58,31 @@ function PlanRow({ recordId, item, now }: { recordId: string; item: PlanItem; no
   );
 }
 
-/** The record this one follows up (复诊), and the records that follow it up. */
+/**
+ * 复诊: a button to the record this one follows up (上一次) and to the one before that (上上次); further
+ * back is one more tap from there. Below, the records that follow this one up.
+ */
 export function RecordLinks({ id }: { id: string }) {
   const { state } = useStore();
-  const self = recordById(state, id);
-  const of = recordById(state, self?.followUpOf);
+  const chain = followUpChain(state, id, 2);
   const later = allRecords(state).filter((r) => r.followUpOf === id);
-  if (!of && !later.length) return null;
+  if (!chain.length && !later.length) return null;
+  const row = (r: RecordRef, label: string) => (
+    <Link key={r.id} href={recordHref(r)} className={cn("press flex min-h-13 items-center gap-3 rounded-2xl bg-brand-50 px-3.5 py-2 text-left transition-colors hover:bg-brand-100", focusRing)}>
+      <Link2 aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
+      <span className="min-w-0 flex-1 text-base leading-snug text-ink">
+        <span className="font-semibold text-brand-800">{label}</span> {recordLabel(r)}
+      </span>
+      <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
+    </Link>
+  );
   return (
-    <Card className="px-4 py-2">
-      {of && (
-        <Link href={recordHref(of)} className={cn("press flex min-h-12 items-center gap-3 py-2", focusRing)}>
-          <Link2 aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
-          <span className="min-w-0 flex-1 text-base text-ink">
-            <Badge className="mr-2">{L("复诊", "Follow-up")}</Badge>
-            {L(`关联到「${recordLabel(of)}」`, `of “${recordLabel(of)}”`)}
-          </span>
-          <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-3" />
-        </Link>
-      )}
-      {later.map((r) => (
-        <Link key={r.id} href={recordHref(r)} className={cn("press flex min-h-12 items-center gap-3 border-t border-line py-2 first:border-0", focusRing)}>
-          <Link2 aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
-          <span className="min-w-0 flex-1 text-base text-ink">{L(`它的复诊：${recordLabel(r)}`, `Its follow-up: ${recordLabel(r)}`)}</span>
-          <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-3" />
-        </Link>
-      ))}
-    </Card>
+    <div className="no-print space-y-2">
+      {chain.map((r, i) => row(r, i === 0 ? L("上一次：", "Last time:") : L("上上次：", "The time before:")))}
+      {later.map((r) => row(r, L("它的复诊：", "Its follow-up:")))}
+    </div>
   );
 }
-
 export function VisitPlanView({ id }: { id: string }) {
   const { state } = useStore();
   const now = useNow(60_000);

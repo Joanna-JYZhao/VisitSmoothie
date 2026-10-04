@@ -4,7 +4,7 @@ import type { AfterResult, PostDraft } from "../../src/lib/types";
 import { getState, storeActions } from "../../src/lib/store";
 import { saveAfter } from "../../src/lib/after";
 import { learnedOf, newPostDraft } from "../../src/components/post/ClinicalPlan";
-import { allRecords, courseDays, nextVisitFrom, planFrom, planStatus, previousContext } from "../../src/lib/records";
+import { allRecords, courseDays, followUpChain, nextVisitFrom, planFrom, planStatus, previousContext, recordNarrative } from "../../src/lib/records";
 
 const result: AfterResult = {
   date: "2026-10-04",
@@ -85,5 +85,19 @@ storeActions.endPlanItem(fu!.id, fu!.planItems![1].id);
 check("手动结束存下来了", getState().followUps.at(-1)?.planItems?.[1].endedAt != null);
 const ctx = previousContext(getState(), pre.id) ?? "";
 check("给 AI 的上一次记录：诊断、问过的问题", ctx.includes("膝骨关节炎") && ctx.includes("上次问过、已经讲过的") && ctx.includes("塞来昔布"), ctx);
+
+// 标题：主要症状一个短语，复诊前面加「复诊 · 」；复诊里能跳到上一次、上上次
+saveAfter(result, null, "glm", "", [], { followUpOf: fu!.id });
+const fu2 = getState().followUps.at(-1)!;
+const titled = allRecords(getState());
+check("复诊标题：复诊 · 主要症状", titled.find((r) => r.id === fu!.id)?.title === "复诊 · 左膝内侧酸痛" && titled.find((r) => r.id === pre.id)?.title === "左膝内侧酸痛", titled.map((r) => r.title));
+const chain = followUpChain(getState(), fu2.id);
+check("上一次、上上次两个按钮", chain.length === 2 && chain[0].id === fu!.id && chain[1].id === pre.id, chain);
+check(
+  "记录里的描述去掉档案里有的",
+  recordNarrative("我46岁，左膝内侧酸痛。（补充：高血压病史；吃虾过敏）想请医生看看。") === "左膝内侧酸痛。想请医生看看。" &&
+    recordNarrative("I'm 46, my left knee hurts. (Also: high blood pressure.) Please check.") === "My left knee hurts. Please check.",
+  recordNarrative("I'm 46, my left knee hurts. (Also: high blood pressure.) Please check."),
+);
 
 finish("post-link");
