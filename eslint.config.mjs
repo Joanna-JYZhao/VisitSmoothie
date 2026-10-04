@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Independent research checkouts and archived implementation snapshots.
+    "physicianbench-feasibility-*/**",
+    ".superpowers/**",
   ]),
 ]);
 

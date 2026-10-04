@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit && npm run test:accounts && npm run test:dictation",
+    "test:accounts": "node --test visit-smoothie/tests/*.test.mjs",
+    "test:dictation": "node --test patient-dictation/tests/*.test.mjs",
     "test:rules": "node scripts/rules.test.mjs",
     "test:unit": "tsx scripts/metrics.test.ts && for f in scripts/tests/*.test.ts; do [ -e \"$f\" ] || continue; tsx \"$f\" || exit 1; done"
   },

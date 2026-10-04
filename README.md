@@ -4,6 +4,8 @@
 
 医伴帮患者把病情记下来，看病时把整理好的内容直接给医生看。它只做记录、整理和提醒，不做诊断，不给用药剂量；遇到危险情况直接建议就医。
 
+`main` 是整合入口，包含患者主应用、最新版手机 UI、身体图问诊、Clinical Plan 及逐条追问、AI 提供商切换、新手引导、加密存储，以及独立账号和语音转写模块。来源分支、冲突处理和本次验证见 [docs/MAIN-INTEGRATION.md](docs/MAIN-INTEGRATION.md)。
+
 ## 接手的队友先看这里
 
 完整的交接说明在 [docs/交接说明.md](docs/交接说明.md)：怎么运行、目前有什么、还缺什么、设计规范在哪、产品上的规矩。最快的看法：
@@ -20,10 +22,12 @@
 | 欢迎页 | Visit Smoothie 欢迎页（照队友 `codex/visit-smoothie-onboarding` 的界面）：「开始我的健康旅程」或「已有账号？登录」 | `/welcome` |
 | 注册 | 七项资料（姓名、出生日期、性别、学历必填；基础病、家族遗传病、过敏史选填）加登录密码。也可以拍体检报告自动填 | `/onboarding` |
 | 登录 | 姓名和密码 | `/login` |
-| 首页 | pre（看医生之前）、post（看完医生）两个入口，下面是 to do & tips 和随时可问的问题框。右侧栏：我的档案、就诊记录、应急、退出登录 | `/` |
+| 首页 | to do & tips 与问 AI；底栏进入 pre、post、report、set，顶部进入应急 | `/` |
 | 看医生之前 | 说或打一句哪里不舒服，AI 一次问一个问题，问完生成给医生看的描述和就医建议 | `/pre` |
-| 看完医生 | 录音或拍病历、处方，AI 整理成诊断、药、注意事项、复诊，存档并放进首页提醒 | `/post` |
+| 看完医生 | 录音或拍病历、处方，生成 Clinical Plan；勾选待办、逐条解释和追问，再确认保存 | `/post` |
 | 给医生看 | 第一屏是大字一眼版，细节折叠，可打印、复制文字 | `/doctor/[id]` |
+| 就诊记录 | 查看历史就诊、摘要和诊后记录 | `/report` |
+| 个人中心 | 个人资料、设置、开发者开关与退出登录 | `/set` |
 
 ## 账号与安全存储
 
@@ -48,7 +52,7 @@
 
 ## 快速开始
 
-需要 Node.js 22.5 以上（服务端用了 `node:sqlite`）。
+整合版需要 Node.js 24 以上（服务端用了 `node:sqlite`，独立模块也以 Node.js 24 为运行环境）。
 
 ```bash
 npm install
@@ -65,11 +69,11 @@ npm run dev
 | `GLM_MODEL` | `glm` 时对话和整理用的模型 | `glm-5` |
 | `GLM_VISION_MODEL` | `glm` 时识别照片用的模型 | `glm-4.6v` |
 | `GLM_ASR_MODEL` | 语音转文字用的模型 | `glm-asr-2512` |
+| `GLM_BASE_URL` | OpenAI 兼容接口地址 | `https://open.bigmodel.cn/api/paas/v4` |
 | `ANTHROPIC_API_KEY` | Anthropic 的 API Key，`claude` 时用 | 空 |
 | `CLAUDE_MODEL` | `claude` 时对话、整理和识别照片用的模型 | `claude-opus-5-5` |
 
 两家都没有 Key 时用内置规则引擎回答，拍照不可用。
-| `GLM_BASE_URL` | OpenAI 兼容接口地址 | `https://open.bigmodel.cn/api/paas/v4` |
 
 Key 只在服务端的 `/api` 路由里使用，不会进入浏览器，也不在仓库里。没有 Key 或接口出错时自动改用内置规则。
 
@@ -77,9 +81,19 @@ Key 只在服务端的 `/api` 路由里使用，不会进入浏览器，也不�
 
 ```bash
 npm run lint
-npx tsc --noEmit
-npm run test:unit   # 数据层、规则引擎、账号、林叔剧本的单元检查（1485 项）
+npm run typecheck
+npm test            # 患者应用、独立账号模块、独立语音模块
+npm run build
 ```
+
+`npm run test:rules` 通过实际 HTTP 接口检查无 Key 的规则流程；先启动没有 `GLM_API_KEY` 和 `ANTHROPIC_API_KEY` 的服务，再用 `BASE=http://127.0.0.1:端口 npm run test:rules` 指向它。
+
+## 独立模块
+
+- [visit-smoothie/README.md](visit-smoothie/README.md)：账号、昵称、资料、登录与退出，默认 `http://127.0.0.1:4190`，使用自己的 SQLite 数据库。
+- [patient-dictation/README.md](patient-dictation/README.md)：可复用的音频转文字函数和 CLI；调用方传入音频及供应商配置，返回文字供原有分析接口使用。
+
+主应用从根目录运行，默认端口为 3000。两个独立模块保留各自的调用方式及数据约定。
 
 `scripts/fixtures/` 里的两套旧演示数据只给单元检查用，App 里已经没有。
 

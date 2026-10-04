@@ -86,7 +86,7 @@ r = await talk([
 ]);
 check("after a low reading, 'I re-tested' is followed by asking for the number", /多少/.test(r.reply) && !/隐痛|绞痛/.test(r.reply), r.reply);
 
-/* ---------- the conversation: one sentence in, at most four questions back ---------- */
+/* ---------- the conversation: one question at a time, until missing information is covered ---------- */
 const sore = { title: "喉咙痛", tags: [], status: "active", startedAt: iso(0), entries: [] };
 r = await talk([{ role: "user", content: "喉咙痛，昨晚开始的，吞口水疼" }], "intake", sore);
 check("the first turn names the symptom and when it began", r.title === "喉咙痛" && r.onsetHoursAgo >= 2 && r.onsetHoursAgo <= 27, { title: r.title, onset: r.onsetHoursAgo });
@@ -103,20 +103,31 @@ r = await talk(
   sore,
 );
 check("a question that was already asked is not asked again", !r.reply.includes(ASSOCIATED), r.reply);
-check("a bare 'nothing else' adds nothing to the timeline", r.entry === null, r.entry);
+check("'nothing else' is retained as the patient's answer without invented readings", r.entry?.note === "其他不舒服：没有别的" && r.entry.severity == null && r.entry.temperature == null && r.entry.location == null, r.entry);
 
 r = await talk(
   [
-    { role: "user", content: "喉咙痛，昨晚开始的，有点难受，没有别的不舒服，没吃药。" },
+    { role: "user", content: "右膝内侧胀痛三天了，比较难受，上下楼的时候更疼，休息一下会好一点，没有肿也没有别的不舒服，贴了膏药，以前没这样过" },
   ],
   "intake",
-  sore,
+  { ...sore, title: "膝盖疼" },
 );
 check("when everything was said in one sentence, nothing more is asked", r.done === true && !/[?？]/.test(r.reply), r.reply);
 
 const four = [1, 2, 3, 4].flatMap((i) => [{ role: "assistant", content: `问题 ${i}？` }, { role: "user", content: "嗯" }]);
 r = await talk([{ role: "user", content: "头晕" }, ...four], "followup", sore);
-check("after four questions the conversation is closed", r.done === true && !/[?？]/.test(r.reply), r.reply);
+check("missing information is still asked after four questions", r.done === false && (r.reply.match(/[?？]/g) ?? []).length === 1, r.reply);
+
+const uncertain = [{ role: "user", content: "膝盖疼" }];
+const knee = { ...sore, title: "膝盖疼" };
+const asked = [];
+for (let turn = 0; turn < 12; turn++) {
+  r = await talk(uncertain, turn === 0 ? "intake" : "followup", knee);
+  if (r.done) break;
+  asked.push(r.reply);
+  uncertain.push({ role: "assistant", content: r.reply }, { role: "user", content: "不清楚" });
+}
+check("uncertain answers reach a completed account without repeating a question", r.done === true && asked.length >= 7 && new Set(asked).size === asked.length, { done: r.done, asked });
 
 const seen = { ...episode, visit: { date: "2026-10-01", department: "消化内科", diagnosis: "急性胃炎", treatment: "奥美拉唑" } };
 r = await talk([{ role: "user", content: "肚子痛" }, { role: "assistant", content: "记下了。" }, { role: "user", content: "更严重了" }], "followup", seen);
