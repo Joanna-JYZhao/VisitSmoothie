@@ -247,13 +247,13 @@ check("zh: a recorded answer is shown as it is", showAnswer("好多了") === "�
 check("zh: status", statusLabel("active") === "跟踪中" && statusLabel("resolved") === "已好了");
 check("zh: one line per record", episodeLine(seen) === "看过医生：急性胃炎" && episodeLine(fresh) === "还在跟踪" && episodeLine(resolved) === "自己好了，没有看医生" && episodeLine(checkup) === "看过医生：没有新的诊断", [episodeLine(seen), episodeLine(fresh), episodeLine(resolved), episodeLine(checkup)]);
 check("zh: how an earlier record ended", outcomeLine(seen) === "诊断：急性胃炎；处理：奥美拉唑（每日一次）" && outcomeLine(resolved) === "当时没有就医，自行好转" && outcomeLine(fresh) === "还在跟踪中" && outcomeLine(checkup) === "诊断：没有新的诊断；处理：没有开药", [outcomeLine(seen), outcomeLine(resolved), outcomeLine(fresh), outcomeLine(checkup)]);
-check("zh: who the patient is", profileLine(profile) === `李明 · 男 · ${ageOf(1990)} 岁 · 175cm · 70kg · A 型` && profileLine(bare) === `王秀兰 · 女 · ${ageOf(1962)} 岁`, [profileLine(profile), profileLine(bare)]);
+check("zh: who the patient is", profileLine(profile) === `李明 · 男 · ${ageOf(1990)} 岁 · 175 厘米 · 70 公斤 · A 型` && profileLine(bare) === `王秀兰 · 女 · ${ageOf(1962)} 岁`, [profileLine(profile), profileLine(bare)]);
 check("zh: a diagnosis and a treatment are shown as stored", showDiagnosis(NO_DIAGNOSIS) === "没有新的诊断" && showDiagnosis("急性胃炎") === "急性胃炎" && showTreatment("没有开药") === "没有开药" && showTreatment("奥美拉唑") === "奥美拉唑");
 const zhAnswers = answersIn();
 const zhKept = keptChinese();
 const zhWorse = answerCheckIn(fresh, "worse", now);
 check("zh: 更严重了 is stored and answered in Chinese", zhWorse.episode.entries.at(-1)?.note === "更严重了" && zhWorse.episode.messages.at(-2)?.content === "【定时记录】更严重了" && zhWorse.reply === "比上次重了，建议今天去看医生。去之前点「给医生看」，我把记录整理好。", zhWorse.reply);
-check("zh: the text for the doctor names the patient in Chinese", zhKept.summaryText.includes(`患者：李明 · 男 · ${ageOf(1990)} 岁 · 175cm · 70kg · A 型`) && zhKept.summaryText.startsWith("【医伴 · 就医摘要】") && zhKept.annualText.startsWith("【医伴 · 年度摘要】"), zhKept.summaryText.slice(0, 80));
+check("zh: the text for the doctor names the patient in Chinese", zhKept.summaryText.includes(`患者：李明 · 男 · ${ageOf(1990)} 岁 · 175 厘米 · 70 公斤 · A 型`) && zhKept.summaryText.startsWith("【医伴 · 就医摘要】") && zhKept.annualText.startsWith("【医伴 · 年度摘要】"), zhKept.summaryText.slice(0, 80));
 const zhRules = ruleEngine();
 check("zh: the first screen for the doctor", JSON.stringify(zhRules.summary.glance) === '["肚子痛约 2 天，目前比较难受","起初（10月1日）：晚饭后隐痛"]', zhRules.summary.glance);
 check("zh: the history of this illness quotes the record with its date", zhRules.summary.presentIllness === "患者于 2026年10月1日前后出现肚子痛。10月1日记录：“晚饭后隐痛”。", zhRules.summary.presentIllness);
@@ -277,21 +277,26 @@ try {
   /* the rule engine: however it is called, it writes what it writes in Chinese */
   const enRules = ruleEngine();
   check("en: the first screen for the doctor is the Chinese one, to the letter", JSON.stringify(enRules.summary.glance) === JSON.stringify(zhRules.summary.glance) && enRules.summary.glance[0] === "肚子痛约 2 天，目前比较难受", enRules.summary.glance);
-  check("en: the history of this illness is the Chinese one, with Chinese dates", enRules.summary.presentIllness === zhRules.summary.presentIllness && enRules.summary.presentIllness.includes("2026年10月1日") && enRules.summary.presentIllness.includes("10月1日记录"), enRules.summary.presentIllness);
+  // in English the description the patient reads is written in English (what was recorded stays as it was said)
+  check("en: the patient's description is put together in English", (enRules.summary.narrative ?? "").startsWith("I'm ") && /Since \d+ \w+, /.test(enRules.summary.narrative ?? ""), enRules.summary.narrative);
+  check("zh: the patient's description stays Chinese", (zhRules.summary.narrative ?? "").startsWith("我"), zhRules.summary.narrative);
   check("en: the timeline is the Chinese one, with Chinese dates", JSON.stringify(enRules.summary.timeline) === JSON.stringify(zhRules.summary.timeline) && enRules.summary.timeline[0]?.time === "10月1日 09:00" && JSON.stringify(enRules.timeline) === JSON.stringify(zhRules.timeline), [enRules.summary.timeline, enRules.timeline]);
   check("en: no English date or duration in the first screen, the history or the timeline", !ENGLISH_DATE.test(wording([enRules.summary.glance, enRules.summary.presentIllness, enRules.summary.timeline, enRules.summary.chiefComplaint, enRules.summary.currentStatus]).join("\n")), wording([enRules.summary.glance, enRules.summary.presentIllness, enRules.summary.timeline]));
   for (const key of ["summary", "summaryFiveDays", "summarySeen", "summaryUnsaid", "summaryAfterTap"] as const) {
-    check(`en: page for the doctor (${key}) is the same as in Chinese`, JSON.stringify(enRules[key]) === JSON.stringify(zhRules[key]), enRules[key]);
+    // apart from the description the patient reads (narrative, chiefComplaint, presentIllness), which is English
+    const doctorPart = (x: object) => JSON.stringify({ ...x, narrative: undefined, chiefComplaint: undefined, presentIllness: undefined });
+    check(`en: page for the doctor (${key}) is the same as in Chinese`, doctorPart(enRules[key]) === doctorPart(zhRules[key]), enRules[key]);
   }
   check("en: the yearly summary is the same as in Chinese", JSON.stringify(enRules.annual) === JSON.stringify(zhRules.annual) && enRules.annual.glance[0] === "目前：「脚麻」已经约 3 周" && enRules.annual.medicationChanges[0]?.time === "2026年1月12日", enRules.annual);
   check("en: what the doctor said is organised the same as in Chinese", JSON.stringify([enRules.after, enRules.afterVague, enRules.parsed]) === JSON.stringify([zhRules.after, zhRules.afterVague, zhRules.parsed]), enRules.after);
-  check("en: the conversation by rule is the same as in Chinese", JSON.stringify([enRules.first, enRules.worse, enRules.fever, enRules.alarm, enRules.closing]) === JSON.stringify([zhRules.first, zhRules.worse, zhRules.fever, zhRules.alarm, zhRules.closing]), [enRules.first, enRules.worse]);
-  check("en: the reply and its quick answers are Chinese", enRules.first.reply === "记下了。现在有多难受？" && enRules.first.suggestedReplies.join() === "有点难受,比较难受,非常难受" && enRules.worse.hint?.text.includes("建议今天去看医生") === true, enRules.first);
+  // in English the conversation is held in English: without a model, the rules ask in English too
+  check("en: the conversation by rule asks in English", !hasChinese(enRules.first.reply) && /\?$/.test(enRules.first.reply) && enRules.first.suggestedReplies.length > 0 && enRules.first.suggestedReplies.every((x) => !hasChinese(x)), enRules.first);
+  check("zh: the conversation by rule is unchanged", zhRules.first.reply === "记下了。现在有多难受？" && zhRules.first.suggestedReplies.join() === "有点难受,比较难受,非常难受" && zhRules.worse.hint?.text.includes("建议今天去看医生") === true, zhRules.first);
   check("en: when to see a doctor, what to ask next and what is missing are the same as in Chinese", JSON.stringify([enRules.hints, enRules.must, enRules.missing]) === JSON.stringify([zhRules.hints, zhRules.must, zhRules.missing]), [enRules.hints, enRules.must, enRules.missing]);
   check("en: danger signals are raised the same as in Chinese", JSON.stringify([enRules.urgent, enRules.alerts]) === JSON.stringify([zhRules.urgent, zhRules.alerts]) && enRules.urgent.filter(Boolean).length === 5 && enRules.alerts.filter(Boolean).length === 3, [enRules.urgent, enRules.alerts]);
   const low = instantAlert("测了血糖 3.4");
   check("en: the alarm for a glucose of 3.4 is in Chinese", low?.level === "urgent" && hasChinese(low.text) && !/[A-Za-z]{2,}/.test(low.text) && low.text.includes("低血糖") && low.text.includes("15 克") && low.text.includes("120"), low);
-  check("en: nothing the rule engine writes carries an English date, duration or sentence", !ENGLISH_DATE.test(wording(enRules).join("\n")) && !/[A-Za-z]{2,} [a-z]{2,}/.test(wording(enRules).filter((x) => x !== "fallback").join("\n")), wording(enRules).filter((x) => ENGLISH_DATE.test(x) || /[A-Za-z]{2,} [a-z]{2,}/.test(x)));
+  check("zh: nothing the rule engine writes in Chinese carries an English date, duration or sentence", !ENGLISH_DATE.test(wording(zhRules).join("\n")) && !/[A-Za-z]{2,} [a-z]{2,}/.test(wording(zhRules).filter((x) => x !== "fallback").join("\n")), wording(zhRules).filter((x) => ENGLISH_DATE.test(x) || /[A-Za-z]{2,} [a-z]{2,}/.test(x)));
   check("en: after the rule engine has run, the interface is still in English", getLang() === "en" && dayLabel(fresh, now) === "Day 3" && checkInQuestion(fresh, now) === 'How is "肚子痛" today?');
 
   check("en: today's question keeps the symptom as written", checkInQuestion(fresh, now) === 'How is "肚子痛" today?', checkInQuestion(fresh, now));
@@ -307,17 +312,17 @@ try {
 
   // the three answers, in every scene: the record, the conversation, the reply and the advice are what they are in Chinese
   const enAnswers = answersIn();
-  check("en: tapping an answer records exactly what it records in Chinese", enAnswers.length === 21 && enAnswers.every((x, i) => x === zhAnswers[i]), enAnswers.find((x, i) => x !== zhAnswers[i]));
+  check("en: tapping an answer works in every scene", enAnswers.length === 21 && zhAnswers.length === 21, enAnswers.length);
   for (const key of KEYS) {
     const out = answerCheckIn(fresh, key, now);
     const label = CHECKIN_ANSWERS.find((a) => a.key === key)!.label;
     const note = out.episode.entries.at(-1);
     const said = out.episode.messages.at(-2);
     check(`en: ${key} is stored as ${label}`, note?.note === label && note.source === "checkin" && said?.content === `【定时记录】${label}` && said.kind === "checkin", { note, said });
-    check(`en: the reply to ${key} is Chinese`, hasChinese(out.reply) && !/[A-Za-z]{3,}/.test(out.reply) && out.episode.messages.at(-1)?.content === out.reply, out.reply);
+    check(`en: the reply to ${key} is English`, !hasChinese(out.reply) && out.episode.messages.at(-1)?.content === out.reply, out.reply);
   }
   const worse = answerCheckIn(fresh, "worse", now);
-  check("en: 更严重了 still says 建议今天去看医生", worse.suggestVisit && worse.hint?.level === "warn" && worse.reply === zhWorse.reply && worse.hint.text.includes("建议今天去看医生"), worse.reply);
+  check("en: Worse still says to see a doctor today", worse.suggestVisit && worse.hint?.level === "warn" && /see a doctor today/i.test(worse.reply) && zhWorse.reply.includes("建议今天去看医生"), worse.reply);
   check("en: advice that says 今天 is still gone the next day", currentHint(worse.episode, now)?.level === "warn" && currentHint(worse.episode, now + 20 * 3_600_000) === null);
 
   check("en: status", statusLabel("active") === "Tracking" && statusLabel("resolved") === "Well now", [statusLabel("active"), statusLabel("resolved")]);

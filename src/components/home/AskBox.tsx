@@ -92,7 +92,6 @@ export function AskBox({ now }: { now: number }) {
   const suggestions = suggestedTodoQuestions(homeTodos(state, now)).filter((q) => !asked.has(q));
   const last = state.asks[state.asks.length - 1];
   const empty = state.asks.length === 0 && !pending && !failed;
-  const english = state.settings.lang === "en";
 
   const expand = () => {
     setClosing(false);
@@ -264,7 +263,7 @@ export function AskBox({ now }: { now: number }) {
                   <LogoMark className="h-8 w-8" />
                   <span className="flex flex-col leading-tight">
                     <span className="t-heading leading-tight">{L("问一问", "Ask AI")}</span>
-                    <span className="text-base font-medium text-ink-2">VisitSmoothie</span>
+                    <span className="text-base font-medium text-ink-2">{L("问诊奶昔", "VisitSmoothie")}</span>
                   </span>
                 </span>
                 <span aria-hidden="true" />
@@ -276,7 +275,7 @@ export function AskBox({ now }: { now: number }) {
                 <div className="flex min-h-full flex-col items-center justify-center gap-5 py-6 text-center">
                   <span className="flex flex-col items-center gap-2">
                     <LogoMark className="h-20 w-20" />
-                    <span className="text-xl font-semibold tracking-tight text-brand-ink">VisitSmoothie</span>
+                    <span className="text-xl font-semibold tracking-tight text-brand-ink">{L("问诊奶昔", "VisitSmoothie")}</span>
                   </span>
                   <p className="t-title max-w-[16em] text-balance text-ink">{L("对吃药或就诊有疑问？问我", "Questions about medicines or a visit? Ask me")}</p>
                   {suggestions.length > 0 && (
@@ -327,8 +326,6 @@ export function AskBox({ now }: { now: number }) {
               style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
             >
               {!empty && chips}
-              {/* the answers come from the assistant, which speaks Chinese only for now: said once, quietly, in English only */}
-              {english && <p className="t-body text-center text-ink-2">AI replies are in Chinese for now.</p>}
               {form(true)}
             </div>
           </div>

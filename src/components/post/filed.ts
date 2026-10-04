@@ -12,6 +12,6 @@ export function filedLine(reminders: { kind: string; at?: string | null }[]): st
   const other = reminders.length - meds - (visit ? 1 : 0);
   if (other > 0) parts.push(L(`其他 ${other} 条`, `${other} other`));
   return parts.length
-    ? L(`已放进主页的 to do list：${parts.join("、")}。`, `Added to the to do list on the home page: ${parts.join(", ")}.`)
+    ? L(`已放进主页的待办：${parts.join("、")}。`, `Added to the to do list on the home page: ${parts.join(", ")}.`)
     : L("这次没有要按时提醒的事，记录已经存好了。", "Nothing needs a reminder this time. The record is saved.");
 }

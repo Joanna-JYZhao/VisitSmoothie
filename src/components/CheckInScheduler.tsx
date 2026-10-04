@@ -30,7 +30,7 @@ export function CheckInScheduler() {
         const s = getState().settings;
         if (s.notificationsEnabled && typeof Notification !== "undefined" && Notification.permission === "granted") {
           try {
-            const n = new Notification(L("医伴提醒你", "A reminder from VisitSmoothie"), { body: text, tag: `yiban-reminder-${r.id}` });
+            const n = new Notification(L("问诊奶昔提醒你", "A reminder from VisitSmoothie"), { body: text, tag: `yiban-reminder-${r.id}` });
             n.onclick = () => {
               window.focus();
               router.push("/post");
@@ -66,7 +66,7 @@ export function CheckInScheduler() {
       for (const e of due) {
         if (notified[e.id] === e.lastCheckInAt) continue;
         try {
-          const n = new Notification(L("医伴想问你", "VisitSmoothie has a question"), {
+          const n = new Notification(L("问诊奶昔想问你", "VisitSmoothie has a question"), {
             body: `${checkInQuestion(e)} 点开选一个答案就行。`,
             tag: `yiban-${e.id}`,
           });
@@ -85,7 +85,7 @@ export function CheckInScheduler() {
       const today = dayKey(new Date());
       if (metrics.length && notified.metrics !== today) {
         try {
-          const n = new Notification(L("医伴提醒你", "A reminder from VisitSmoothie"), {
+          const n = new Notification(L("问诊奶昔提醒你", "A reminder from VisitSmoothie"), {
             body: `该记${metrics.map((t) => METRICS[t].label).join("、")}了，打开填一个数就行。`,
             tag: "yiban-metrics",
           });

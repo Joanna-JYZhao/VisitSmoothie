@@ -13,7 +13,8 @@ import type {
   SummaryRequest,
   SummaryResponse,
 } from "../types";
-import { inChinese } from "../lang";
+import { getLang, inChinese } from "../lang";
+import { fallbackChatEn, narrativeEn, urgentEn } from "./fallbackEn";
 import { confirmQuestion, confirmedNote, findColloquial, termAsked } from "../colloquial";
 import { evaluateMeasurement } from "../metrics";
 import {
@@ -89,8 +90,9 @@ const URGENT: { re: RegExp; text: string }[] = [
   { re: /怀孕.*(出血|腹痛|肚子痛)|孕.*(出血|腹痛)/, text: "怀孕期间肚子痛或出血，请立即去产科急诊。" },
 ];
 
+/** A danger signal in a sentence, in Chinese or in English (the app may be in either). */
 export function detectUrgent(text: string): Hint | null {
-  return inChinese(() => urgentIn(text));
+  return inChinese(() => urgentIn(text)) ?? urgentEn(text);
 }
 
 function urgentIn(text: string): Hint | null {
@@ -1045,6 +1047,8 @@ export function answerEntry(req: ChatRequest): { note: string; location: string 
 const CHANGE_WORDS = /痛|疼|晕|吐|泻|烧|咳|痒|胀|麻|缓解|加重|反酸|恶心|难受|好多|好一|严重|度|分/;
 
 export function fallbackChat(req: ChatRequest): ChatResponse {
+  // the Chinese rules cannot read English answers: in English a plain list of questions is asked instead
+  if (getLang() === "en") return fallbackChatEn(req);
   return inChinese(() => chatByRule(req));
 }
 
@@ -1203,7 +1207,11 @@ export function ownQuestions(said: string): string[] {
 const READING_NAME: Record<ChatMeasurement["type"], string> = { bp: "血压", fbg: "空腹血糖", ppg: "血糖", hba1c: "糖化血红蛋白", weight: "体重" };
 
 export function fallbackSummary(req: SummaryRequest): SummaryResponse {
-  return inChinese(() => summaryByRule(req));
+  const out = inChinese(() => summaryByRule(req));
+  if (getLang() !== "en") return out;
+  // in English the description the patient sees is put together in English
+  const notes = sortedEntries(req.episode).slice(1).map((e) => e.note.trim()).filter(Boolean);
+  return { ...out, summary: { ...out.summary, narrative: narrativeEn(req.episode, req.profile), chiefComplaint: req.episode.title, presentIllness: notes.join(" ") } };
 }
 
 /** A diagnosis worth naming: not empty, and not a note that there was none. */
@@ -1439,7 +1447,7 @@ function annualByRule(req: AnnualRequest): AnnualResponse {
     const last = fbg[fbg.length - 1];
     metricTrends.push({
       name: "空腹血糖",
-      trend: `月均值由 ${first.label}的 ${first.avg.toFixed(1)} mmol/L 变为 ${last.label}的 ${last.avg.toFixed(1)} mmol/L。`,
+      trend: `月均值由 ${first.label}的 ${first.avg.toFixed(1)} 毫摩尔/升 变为 ${last.label}的 ${last.avg.toFixed(1)} 毫摩尔/升。`,
     });
   }
   if (facts.weight.length > 1) {
@@ -1450,7 +1458,7 @@ function annualByRule(req: AnnualRequest): AnnualResponse {
   if (facts.bp.length > 1) {
     const first = facts.bp[0];
     const last = facts.bp[facts.bp.length - 1];
-    metricTrends.push({ name: "血压", trend: `由 ${first.value}/${first.value2} mmHg 变为 ${last.value}/${last.value2} mmHg，共 ${facts.bp.length} 次记录。` });
+    metricTrends.push({ name: "血压", trend: `由 ${first.value}/${first.value2} 毫米汞柱 变为 ${last.value}/${last.value2} 毫米汞柱，共 ${facts.bp.length} 次记录。` });
   }
 
   const dateLabel = (d: string) => ymd(`${d}T12:00:00`);
@@ -1478,7 +1486,7 @@ function annualByRule(req: AnnualRequest): AnnualResponse {
       (e) => ymd(e.startedAt) === ymd(x.at) && e.firstNote.includes(x.value.toFixed(1)),
     );
     if (covered) continue;
-    events.push({ at: x.at, time: ymd(x.at), event: `低血糖 ${x.value.toFixed(1)} mmol/L${x.note ? `：${x.note}` : ""}` });
+    events.push({ at: x.at, time: ymd(x.at), event: `低血糖 ${x.value.toFixed(1)} 毫摩尔/升${x.note ? `：${x.note}` : ""}` });
   }
   for (const i of facts.insights.filter((x) => x.kind === "streak" && x.at)) {
     events.push({ at: i.at as string, time: ymd(i.at as string), event: i.text });

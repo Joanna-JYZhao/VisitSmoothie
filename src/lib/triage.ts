@@ -2,6 +2,7 @@ import type { Episode, Profile, Triage } from "./types";
 import { extractTemperatures, instantAlert } from "./ai/fallback";
 import { CHECKIN_ANSWERS } from "./checkin";
 import { calendarDays, latestSeverityEntry, mentions, previousSeverityEntry } from "./utils";
+import { L, getLang } from "./lang";
 
 /*
  * 初步分诊: once the questions are answered, one card says whether to see a doctor, how soon, and
@@ -46,10 +47,32 @@ const DEPARTMENTS: [string, RegExp][] = [
   ["口腔科", /牙|口腔|舌头|口疮/g],
 ];
 
+/** The same departments by English words, for a conversation held in English. */
+const DEPARTMENTS_EN: [string, RegExp][] = [
+  ["神经内科", /\b(headache|head (hurts|aches|pain)|migraine|dizz|vertigo|spinning)\b/gi],
+  ["心内科", /\b(chest|heart|palpitation|racing heart)\b/gi],
+  ["呼吸内科", /\b(cough|throat|fever|cold|flu|breath|phlegm|wheez)\b/gi],
+  ["消化内科", /\b(stomach|belly|abdomen|abdominal|tummy|nausea|vomit|heartburn|acid|constipat|diarrh|bloat)\b/gi],
+  ["骨科", /\b(knee|back|lower back|shoulder|joint|sprain|fall|fell|neck|ankle|wrist|bone|hip)\b/gi],
+  ["皮肤科", /\b(rash|itch|skin|hives|spots)\b/gi],
+  ["内分泌科", /\b(blood sugar|glucose|thirst|thirsty)\b/gi],
+  ["泌尿外科", /\b(urine|urinat|pee|bladder)\b/gi],
+  ["眼科", /\b(eye|eyes|vision|blurr)\b/gi],
+  ["耳鼻喉科", /\b(ear|ears|hearing|nose|sinus|tinnitus)\b/gi],
+  ["口腔科", /\b(tooth|teeth|gum|mouth ulcer|tongue)\b/gi],
+];
+/** What a department is called on screen. */
+const DEPARTMENT_EN: Record<string, string> = {
+  神经内科: "Neurology", 心内科: "Cardiology", 呼吸内科: "Respiratory medicine", 消化内科: "Gastroenterology", 骨科: "Orthopaedics",
+  皮肤科: "Dermatology", 内分泌科: "Endocrinology", 泌尿外科: "Urology", 眼科: "Ophthalmology", 耳鼻喉科: "ENT (ear, nose and throat)",
+  口腔科: "Dentistry", 急诊: "Emergency department", 发热门诊: "Fever clinic",
+};
+const deptShown = (d: string | null) => (d ? L(d, DEPARTMENT_EN[d] ?? d) : d);
+
 /** The department whose word comes first in the text; of two at the same place, the longer word. */
 function departmentIn(text: string): string | null {
   let best: { name: string; at: number; length: number } | null = null;
-  for (const [name, re] of DEPARTMENTS) {
+  for (const [name, re] of [...DEPARTMENTS, ...(getLang() === "en" ? DEPARTMENTS_EN : [])]) {
     const found = firstMention(text, re);
     if (found && (!best || found.at < best.at || (found.at === best.at && found.length > best.length))) best = { name, ...found };
   }
@@ -91,12 +114,22 @@ function touchesStanding(profile: Profile, about: string): boolean {
 
 /* ---------- the wording: what to do, nothing else ---------- */
 
-const BEFORE_GOING = "去之前把这次的情况给医生看。要是突然加重，或者出现喘不上气、神志不清，马上去急诊。";
+const BEFORE_GOING_BOTH = [
+  "去之前把这次的情况给医生看。要是突然加重，或者出现喘不上气、神志不清，马上去急诊。",
+  " Show the doctor what was written up. If it suddenly gets worse, or you have trouble breathing or feel confused, go to the emergency department right away.",
+] as const;
 /** as the rules for the conversation word it: a short answer that says it got worse */
-const SAYS_WORSE = /更严重|加重了|更痛了|更难受|厉害了/;
+const SAYS_WORSE = /更严重|加重了|更痛了|更难受|厉害了|\b(worse|getting worse)\b/i;
 const WORSE_TAP = CHECKIN_ANSWERS.find((a) => a.key === "worse")?.label ?? "更严重了";
 
 export function triageFor(episode: Episode, profile: Profile, opts: { related?: Episode[]; now?: number } = {}): Triage {
+  const t = triageByRule(episode, profile, opts);
+  // the department is decided by its Chinese name; it is shown in the language of the interface
+  return { ...t, department: deptShown(t.department) };
+}
+
+function triageByRule(episode: Episode, profile: Profile, opts: { related?: Episode[]; now?: number } = {}): Triage {
+  const BEFORE_GOING = L(...BEFORE_GOING_BOTH);
   const now = opts.now ?? Date.now();
   const visit = episode.visit ?? null;
   const seen = visit != null;
@@ -117,7 +150,7 @@ export function triageFor(episode: Episode, profile: Profile, opts: { related?: 
   /* 1. A danger signal in anything the patient said or anything on record: the rule's own words. */
   for (const text of [...since].reverse().concat(seen ? [] : [episode.title])) {
     const alarm = instantAlert(text);
-    if (alarm) return { level: "emergency", title: "请现在就去急诊，或拨打 120", department: "急诊", note: alarm.text };
+    if (alarm) return { level: "emergency", title: L("请现在就去急诊，或拨打 120", "Go to the emergency department now, or call 120"), department: "急诊", note: alarm.text };
   }
 
   const temps = [
@@ -143,8 +176,12 @@ export function triageFor(episode: Episode, profile: Profile, opts: { related?: 
     (newest.length <= 20 && SAYS_WORSE.test(newest));
   const veryUnwell = latest != null && (latest.severity ?? 0) >= 8;
   if (highFever || worse || veryUnwell) {
-    const why = highFever ? `体温到过 ${fever}℃。` : worse ? "比上一次重了。" : "你说现在很难受。";
-    return { level: "today", title: seen ? "建议再去看一次医生" : "建议今天去看医生", department, note: `${why}${BEFORE_GOING}` };
+    const why = highFever
+      ? L(`体温到过 ${fever}℃。`, `Your temperature reached ${fever} °C.`)
+      : worse
+        ? L("比上一次重了。", "It's worse than last time.")
+        : L("你说现在很难受。", "You said it feels very bad now.");
+    return { level: "today", title: seen ? L("建议再去看一次医生", "See a doctor again") : L("建议今天去看医生", "See a doctor today"), department, note: `${why}${BEFORE_GOING}` };
   }
 
   /* 3. These few days: it is not getting better, it needed a doctor before, or a standing condition makes it worth a look. */
@@ -152,9 +189,14 @@ export function triageFor(episode: Episode, profile: Profile, opts: { related?: 
   if (visit) {
     const days = calendarDays(visit.recordedAt, now);
     if (active && days >= 3) {
-      return { level: "soon", title: "建议这几天再去看一次医生", department, note: `看完医生 ${days} 天了还没好。${BEFORE_GOING}` };
+      return {
+        level: "soon",
+        title: L("建议这几天再去看一次医生", "See a doctor again in the next few days"),
+        department,
+        note: L(`看完医生 ${days} 天了还没好。${BEFORE_GOING}`, `${days} days since the doctor and not better yet.${BEFORE_GOING}`),
+      };
     }
-    return { level: "watch", title: "可以先观察", department, note: "先按医生说的做。两三天不见好，或者加重了，就再去看医生。" };
+    return { level: "watch", title: L("可以先观察", "You can wait and see"), department, note: L("先按医生说的做。两三天不见好，或者加重了，就再去看医生。", "Follow what the doctor said for now. If it's no better in two or three days, or gets worse, see the doctor again.") };
   }
   const days = calendarDays(episode.startedAt, now);
   // When the patient never said when it began, the day it was written down is the least it can be.
@@ -163,15 +205,15 @@ export function triageFor(episode: Episode, profile: Profile, opts: { related?: 
   const why =
     active && days >= 3
       ? told
-        ? `已经 ${days} 天了还没见好。`
-        : `记下来已经 ${days} 天了，还没见好。`
+        ? L(`已经 ${days} 天了还没见好。`, `${days} days now and not getting better.`)
+        : L(`记下来已经 ${days} 天了，还没见好。`, `Noted ${days} days ago and not getting better.`)
       : (opts.related ?? []).some((r) => r.visit)
-        ? "以前有过类似的情况，那次去看了医生。"
+        ? L("以前有过类似的情况，那次去看了医生。", "Something like this happened before, and you saw a doctor then.")
         : touchesStanding(profile, about)
-          ? "结合你档案里的情况，这类不舒服早点让医生看看。"
+          ? L("结合你档案里的情况，这类不舒服早点让医生看看。", "With what's in your profile, it's best to have this looked at early.")
           : null;
-  if (why) return { level: "soon", title: "建议这几天去看医生", department, note: `${why}${BEFORE_GOING}` };
+  if (why) return { level: "soon", title: L("建议这几天去看医生", "See a doctor in the next few days"), department, note: `${why}${BEFORE_GOING}` };
 
   /* 4. Otherwise: wait and see. */
-  return { level: "watch", title: "可以先观察", department, note: "两三天不见好，或者加重了，就去看医生。" };
+  return { level: "watch", title: L("可以先观察", "You can wait and see"), department, note: L("两三天不见好，或者加重了，就去看医生。", "If it's no better in two or three days, or gets worse, see a doctor.") };
 }

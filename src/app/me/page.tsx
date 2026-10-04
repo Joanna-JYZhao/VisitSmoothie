@@ -189,7 +189,7 @@ export default function MePage() {
           {longTerm && hasYearOfData(state) && (
             <RowLink href="/doctor/year" icon={<FileText />} title={L("给医生看：这一年", "For the doctor: this year")} detail={L("复诊时把一年的变化交给医生", "Show the doctor a year of changes at a follow-up visit")} className="press" />
           )}
-          <RowLink href="/ask" icon={<MessageCircleQuestion />} iconTone="info" title={L("问医伴", "Ask VisitSmoothie")} detail={L("记不清的，问我", "Can't remember something? Ask me")} className="press" />
+          <RowLink href="/ask" icon={<MessageCircleQuestion />} iconTone="info" title={L("问问诊奶昔", "Ask VisitSmoothie")} detail={L("记不清的，问我", "Can't remember something? Ask me")} className="press" />
           <RowLink href="/sos" icon={<Siren />} iconTone="solidDanger" title={L("应急手册", "Emergency guide")} detail={L("突发状况时，打开给身边的人看", "In an emergency, open this and show the people around you")} className="press" />
           <RowLink href="/me/settings" icon={<Settings />} iconTone="neutral" title={L("设置", "Settings")} detail={L("提醒、备份、演示数据", "Reminders, backup, demo")} className="press" />
         </Card>

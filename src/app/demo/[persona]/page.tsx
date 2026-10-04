@@ -42,7 +42,7 @@ export default function DemoLinkPage() {
             <SearchX />
           </IconTile>
           <h1 className="t-title text-ink">{L("没有这个演示", "No such demo")}</h1>
-          <p className="t-body mx-auto mt-2 max-w-sm text-ink-2">{L("可以打开的演示是 /demo/lin。", "The demo you can open is /demo/lin.")}</p>
+          <p className="t-body mx-auto mt-2 max-w-sm text-ink-2">{L("可以打开的演示只有林叔的。", "The demo you can open is /demo/lin.")}</p>
           <div className="mt-8 flex justify-center">
             <LinkButton href="/welcome" size="lg">
               {L("回到登录", "Back to sign in")}
@@ -62,7 +62,7 @@ export default function DemoLinkPage() {
             <Spinner className="absolute inset-0 h-28 w-28 border-[3px]" />
             <LogoMark className="h-[4.5rem] w-[4.5rem]" />
           </span>
-          <span className="text-xl font-semibold tracking-tight text-brand-ink">VisitSmoothie</span>
+          <span className="text-xl font-semibold tracking-tight text-brand-ink">{L("问诊奶昔", "VisitSmoothie")}</span>
           <span className="t-lead font-medium text-ink">{L(`正在打开${PERSONAS[persona].name()}的演示`, `Opening ${PERSONAS[persona].name()}'s demo`)}</span>
         </div>
         {/* the two halves of the home page, still empty */}

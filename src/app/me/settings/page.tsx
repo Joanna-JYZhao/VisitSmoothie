@@ -90,7 +90,7 @@ export default function SettingsPage() {
     if (p === "granted") {
       updateSettings({ notificationsEnabled: true });
       try {
-        new Notification(L("医伴", "VisitSmoothie"), { body: L("提醒已经打开。到了该问你的时候，我会来提醒。", "Reminders are on. I'll remind you when it's time to check in.") });
+        new Notification(L("问诊奶昔", "VisitSmoothie"), { body: L("提醒已经打开。到了该问你的时候，我会来提醒。", "Reminders are on. I'll remind you when it's time to check in.") });
       } catch {
         /* ignore */
       }
@@ -190,7 +190,7 @@ export default function SettingsPage() {
               title={L("弹出提醒", "Pop-up reminders")}
               detail={
                 perm === "unsupported"
-                  ? L("这个浏览器不能弹出提醒。打开医伴时，首页照样会问你。", "This browser can't show pop-up reminders. The home page still asks you when you open VisitSmoothie.")
+                  ? L("这个浏览器不能弹出提醒。打开问诊奶昔时，首页照样会问你。", "This browser can't show pop-up reminders. The home page still asks you when you open VisitSmoothie.")
                   : L(
                       "浏览器不允许这个网站发通知。请在地址栏左边的网站设置里允许，再回来打开。",
                       "The browser doesn't allow this site to send notifications. Allow them in the site settings left of the address bar, then come back and turn this on.",
@@ -218,7 +218,7 @@ export default function SettingsPage() {
             iconTone="neutral"
             title={L("数据存在哪里", "Where your data is kept")}
             detail={L(
-              "档案和记录只存在这台设备的浏览器里，每个账号分开存。只有在你和医伴说话、整理给医生看的内容、认照片和语音的时候，相关内容才会发给 AI 模型。",
+              "档案和记录只存在这台设备的浏览器里，每个账号分开存。只有在你和问诊奶昔说话、整理给医生看的内容、认照片和语音的时候，相关内容才会发给人工智能模型。",
               "Your profile and records are kept only in this device's browser, separately for each account. Only when you talk with VisitSmoothie, prepare a page for the doctor, or read a photo or voice note is the related content sent to the AI model.",
             )}
           />
@@ -262,14 +262,14 @@ export default function SettingsPage() {
             iconTone="neutral"
             title={L("使用须知", "Please note")}
             detail={L(
-              "医伴只帮你记录、整理和提醒，不做诊断，不建议用药。指标的范围是一般的标准，你自己的目标听医生的。胸痛、喘不上气、神志不清、大出血这类急事，请立即拨打 120。",
+              "问诊奶昔只帮你记录、整理和提醒，不做诊断，不建议用药。指标的范围是一般的标准，你自己的目标听医生的。胸痛、喘不上气、神志不清、大出血这类急事，请立即拨打 120。",
               "VisitSmoothie only helps you record, organize and remember. It does not diagnose or suggest medicines. Ranges for health numbers are general; your own targets come from your doctor. For emergencies like chest pain, trouble breathing, confusion or heavy bleeding, call 120 right away.",
             )}
           />
           <Block
             icon={<Sparkles />}
             iconTone={aiTone}
-            title={L("AI 连接", "AI connection")}
+            title={L("智能助手连接", "AI connection")}
             mark={<span aria-hidden="true" className={cn("inline-block h-2.5 w-2.5 rounded-full transition-all duration-300", aiLight, !health && "animate-breathe")} />}
             detail={
               !health ? (
@@ -279,20 +279,16 @@ export default function SettingsPage() {
                 </span>
               ) : health.configured ? (
                 <>
-                  {L("已连接智谱 GLM。对话 ", "Connected to Zhipu GLM. Chat ")}
-                  {health.model}
-                  {L("，认照片 ", ", photos ")}
-                  {health.visionModel}
-                  {L("，听语音 ", ", voice ")}
-                  {health.speechModel}
+                  {/* the model names are English words: shown in English only */}
+                  {L("已连接智能助手，对话、认照片、听语音都能用", `Connected. Chat ${health.model}, photos ${health.visionModel}, voice ${health.speechModel}`)}
                   {health.ok === true && health.latencyMs != null && L(`。刚才测试用了 ${(health.latencyMs / 1000).toFixed(1)} 秒`, `. The last test took ${(health.latencyMs / 1000).toFixed(1)} s`)}
                   {health.ok === false && L("。刚才测试没连上，对话会先用内置规则顶上", ". The last test failed; built-in rules answer for now")}
-                  {L("。密钥和模型名在项目根目录的配置文件 .env.local 里改。", ". Change the Key and model names in .env.local at the project root.")}
+                  {L("。密钥和模型在项目根目录的本地配置文件里改。", ". Change the Key and model names in .env.local at the project root.")}
                 </>
               ) : (
                 L(
-                  "还没有配置智谱的密钥。现在用内置规则回答，不能听语音、认照片。把密钥填进配置文件 .env.local 再重启就可以了。",
-                  "No GLM API Key set up yet. Built-in rules answer for now; voice and photos don't work. Put the Key in .env.local and restart.",
+                  "还没有配置智能助手的密钥。现在用内置规则回答，不能听语音、认照片。把密钥填进项目根目录的本地配置文件，再重启就可以了。",
+                  "No AI Key set up yet. Built-in rules answer for now; voice and photos don't work. Put the Key in .env.local and restart.",
                 )
               )
             }

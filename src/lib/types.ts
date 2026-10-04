@@ -278,6 +278,27 @@ export interface AppState {
   settings: Settings;
   /** Set while a demo dataset is loaded, so a demo link can replace it without asking. */
   demo: DemoPersona | null;
+  /**
+   * post, read but not saved yet: the Clinical Plan as it was left (lines ticked, what was explained).
+   * Kept until it is saved or the patient starts a new one, whatever page they go to in between.
+   */
+  postDraft?: PostDraft | null;
+}
+
+/** The Clinical Plan of a visit being looked over in post. */
+export interface PostDraft {
+  result: AfterResult;
+  mode: AiMode;
+  /** the recording's text, kept with the visit when it is saved */
+  text: string;
+  /** the pre record this visit is about; null for none */
+  episodeId: string | null;
+  todos: Todo[];
+  /** ids of the lines ticked for the to-do list */
+  picked: string[];
+  /** what was explained about each line (a to-do's id, or "diagnosis" / "findings"), follow-ups included */
+  turns: Record<string, { q: string; a: string }[]>;
+  at: string;
 }
 
 /* ---------- AI contracts (shared by client, API routes and fallback) ---------- */

@@ -27,7 +27,7 @@ import {
   uid,
 } from "./utils";
 import { metricsContextText } from "./metrics";
-import { inChinese } from "./lang";
+import { L, inChinese } from "./lang";
 
 /*
  * Talking to the assistant about one tracked symptom. The request lives outside React on purpose:
@@ -172,7 +172,7 @@ export async function requestReply(id: string, kind?: ChatKind, opts: { silent?:
         (m) => m.type === r.type && m.value === r.value && Math.abs(new Date(m.at).getTime() - Date.now()) < 30 * 60_000,
       );
       if (!duplicate) {
-        storeActions.addMeasurement({ type: r.type, value: r.value, value2: r.value2, at: now, source: "ai", note: `对话中提到（${episode.title}）` });
+        storeActions.addMeasurement({ type: r.type, value: r.value, value2: r.value2, at: now, source: "ai", note: L(`对话中提到（${episode.title}）`, `Mentioned in the chat (${episode.title})`) });
       }
     }
 
@@ -308,7 +308,7 @@ function temperatureNow(said: string): number | null {
 /** Blood pressure or glucose said along the way is filed with the day it was taken ("昨天量血压是 150/95"). */
 function fileReadings(said: string, title: string): void {
   for (const r of statedReadings(said)) {
-    storeActions.addMeasurement({ type: r.type, value: r.value, value2: r.value2, at: readingTime(r.daysAgo), source: "ai", note: `去看医生时说的（${title}）` });
+    storeActions.addMeasurement({ type: r.type, value: r.value, value2: r.value2, at: readingTime(r.daysAgo), source: "ai", note: L(`去看医生时说的（${title}）`, `Said before the visit (${title})`) });
   }
 }
 

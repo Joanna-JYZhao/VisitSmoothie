@@ -90,10 +90,10 @@ export function answerCheckIn(e: Episode, answer: CheckInAnswer, now: number = D
   const label = CHECKIN_ANSWERS.find((a) => a.key === answer)?.label ?? "";
   const prev = latestSeverityEntry(e)?.severity ?? null;
   const long = isLongRunning(e, now);
-  const next = long ? "下周" : "明天";
+  const next = long ? L("下周", "next week") : L("明天", "tomorrow");
   const days = calendarDays(e.startedAt, now);
   const seen = Boolean(e.visit);
-  const prepare = "去之前点「给医生看」，我把记录整理好。";
+  const prepare = L("去之前点「给医生看」，我把记录整理好。", " Before you go, tap “Show the doctor” and I'll have your record ready.");
 
   let severity: number | null = prev;
   let reply = "";
@@ -102,39 +102,41 @@ export function answerCheckIn(e: Episode, answer: CheckInAnswer, now: number = D
 
   if (answer === "better") {
     severity = prev != null ? Math.max(1, prev - 2) : null;
-    reply = "太好了，比上次好。";
+    reply = L("太好了，比上次好。", "Great, better than last time.");
   } else if (answer === "worse") {
     severity = prev != null ? Math.min(10, prev + 2) : null;
     suggestVisit = true;
     hint = {
       level: "warn",
-      text: seen ? `比上次重了，建议再去看一次医生。${prepare}` : `比上次重了，建议今天去看医生。${prepare}`,
+      text: seen
+        ? L(`比上次重了，建议再去看一次医生。${prepare}`, `Worse than last time. It's worth seeing a doctor again.${prepare}`)
+        : L(`比上次重了，建议今天去看医生。${prepare}`, `Worse than last time. It's best to see a doctor today.${prepare}`),
     };
     reply = hint.text;
   } else if (currentHint(e, now)) {
     // There is already specific advice on the card ("洗脚前先试水温…"). Keep it; do not swap it for a generic line.
     hint = e.lastHint ?? null;
     suggestVisit = !seen;
-    reply = `记下了，和上次差不多。${next}我再来问你。`;
+    reply = L(`记下了，和上次差不多。${next}我再来问你。`, `Noted, about the same as last time. I'll ask again ${next}.`);
   } else if (seen) {
     const sinceVisit = calendarDays(e.visit?.recordedAt ?? e.startedAt, now);
     if (sinceVisit >= 3) {
       suggestVisit = true;
-      hint = { level: "warn", text: `看完医生 ${sinceVisit} 天了还是差不多，建议再去问问医生。${prepare}` };
+      hint = { level: "warn", text: L(`看完医生 ${sinceVisit} 天了还是差不多，建议再去问问医生。${prepare}`, `${sinceVisit} days since the doctor and still about the same. It's worth asking the doctor again.${prepare}`) };
       reply = hint.text;
     } else {
-      reply = `记下了，和上次差不多。${next}我再来问你。`;
+      reply = L(`记下了，和上次差不多。${next}我再来问你。`, `Noted, about the same as last time. I'll ask again ${next}.`);
     }
   } else if (long) {
     suggestVisit = true;
-    hint = { level: "warn", text: `已经 ${days} 天了还是老样子，建议找医生看一下。${prepare}` };
+    hint = { level: "warn", text: L(`已经 ${days} 天了还是老样子，建议找医生看一下。${prepare}`, `${days} days now and no change. It's worth seeing a doctor.${prepare}`) };
     reply = hint.text;
   } else if (days >= 3) {
     suggestVisit = true;
-    hint = { level: "warn", text: `已经 ${days} 天了还没见好，建议去看医生。${prepare}` };
+    hint = { level: "warn", text: L(`已经 ${days} 天了还没见好，建议去看医生。${prepare}`, `${days} days now and not getting better. It's best to see a doctor.${prepare}`) };
     reply = hint.text;
   } else {
-    reply = `记下了，和上次差不多。${next}我再来问你。`;
+    reply = L(`记下了，和上次差不多。${next}我再来问你。`, `Noted, about the same as last time. I'll ask again ${next}.`);
   }
 
   const at = new Date(now).toISOString();
@@ -182,7 +184,7 @@ export function currentHint(e: Episode, now: number = Date.now()): Hint | null {
   if (hint.level === "urgent") return age <= 12 ? hint : null;
   // "建议今天去看医生" is about the day it was said. The next day it would be yesterday's advice
   // sitting above today's question, so it goes when the date changes.
-  if (/今天/.test(hint.text) && new Date(at).toDateString() !== new Date(now).toDateString()) return null;
+  if (/今天|\btoday\b/i.test(hint.text) && new Date(at).toDateString() !== new Date(now).toDateString()) return null;
   // any other warning lasts until about the next time the question is asked: three days, or nine for a weekly one
   return age <= (isLongRunning(e, now) ? 9 * DAY : 3 * DAY) ? hint : null;
 }

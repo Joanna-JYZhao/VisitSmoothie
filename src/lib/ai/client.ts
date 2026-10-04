@@ -18,15 +18,12 @@ import { getLang, inChinese } from "../lang";
 import type { Lang } from "../types";
 
 /**
- * The language the server is asked to answer in. For now that is always Chinese, whatever the
- * interface shows: only the fixed text of the screens is translated so far. What the assistant
- * says, and every rule that checks it, was written and tested in Chinese, and switching the
- * language of its answers before the English checks exist would switch those checks off.
- * Return getLang() here once they do.
+ * The language the server is asked to answer in: the language of the interface. In English the
+ * assistant asks, answers and writes everything in English, and what it writes is stored in English;
+ * the danger-signal checks have an English set (fallbackEn.ts) so the safety net stays in place.
  */
 function serverLang(): Lang {
-  void getLang;
-  return "zh";
+  return getLang();
 }
 
 async function post<T>(url: string, body: unknown): Promise<T> {
@@ -44,7 +41,8 @@ export async function askAI(req: ChatRequest): Promise<ChatResponse> {
     return await post<ChatResponse>("/api/chat", req);
   } catch (err) {
     console.warn("[医伴] /api/chat 不可用，使用本地规则引擎", err);
-    return { ...inChinese(() => fallbackChat(req)), error: String(err) };
+    // the rules answer in the language of the interface (fallbackChat picks the English ones itself)
+    return { ...fallbackChat(req), error: String(err) };
   }
 }
 
@@ -53,7 +51,7 @@ export async function generateSummary(req: SummaryRequest): Promise<SummaryRespo
     return await post<SummaryResponse>("/api/summary", req);
   } catch (err) {
     console.warn("[医伴] /api/summary 不可用，使用本地规则引擎", err);
-    return { ...inChinese(() => fallbackSummary(req)), error: String(err) };
+    return { ...fallbackSummary(req), error: String(err) };
   }
 }
 

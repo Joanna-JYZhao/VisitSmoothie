@@ -64,13 +64,20 @@ function PhoneFrame({ scale }: { scale: number }) {
   const time = useClock();
   // Where the phone starts: wherever this window is. Fixed from then on; changing it would reload the app.
   const [src] = useState(() => window.location.pathname + window.location.search + window.location.hash);
+  // the language the app inside is in, so the words around the phone are in it too
+  const [en, setEn] = useState(false);
 
   // The app inside says where it is each time it moves, and the address bar follows. A reload, or
   // dragging the window narrow, then opens the same place instead of where the phone started.
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.source !== frame.current?.contentWindow) return;
-      const data = e.data as { type?: unknown; href?: unknown } | null;
+      const data = e.data as { type?: unknown; href?: unknown; lang?: unknown } | null;
+      if (data?.type === "yiban:lang") {
+        setEn(data.lang === "en");
+        document.title = data.lang === "en" ? "VisitSmoothie · Your personal doctor's assistant" : "问诊奶昔 · 你的私人医生助理";
+        return;
+      }
       if (data?.type !== "yiban:location" || typeof data.href !== "string") return;
       if (!data.href.startsWith("/") || data.href.startsWith("//")) return;
       if (data.href === window.location.pathname + window.location.search + window.location.hash) return;
@@ -86,7 +93,9 @@ function PhoneFrame({ scale }: { scale: number }) {
     <main className="fixed inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden">
       {/* Printing this outer page would print a picture of a phone. The sheet for the doctor is printed from inside. */}
       <p className="print-only p-8 text-xl leading-relaxed text-ink">
-        这是电脑上的手机外壳，这一层没有可以打印的内容。要打印给医生看的一页，请在手机画面里点「打印」。
+        {en
+          ? "This is the phone frame on a computer; there is nothing to print here. To print the page for the doctor, tap “Print” inside the phone."
+          : "这是电脑上的手机外壳，这一层没有可以打印的内容。要打印给医生看的一页，请在手机画面里点「打印」。"}
       </p>
       <div className="no-print relative shrink-0" style={{ width: w * scale, height: h * scale }}>
         <div
@@ -111,7 +120,7 @@ function PhoneFrame({ scale }: { scale: number }) {
             <iframe
               ref={frame}
               src={src}
-              title="医伴"
+              title={en ? "VisitSmoothie" : "问诊奶昔"}
               allow="microphone; camera; clipboard-write"
               className="block w-full min-h-0 flex-1 border-0 bg-canvas"
             />
@@ -121,7 +130,7 @@ function PhoneFrame({ scale }: { scale: number }) {
           </div>
         </div>
       </div>
-      <p className="no-print text-base text-ink-2">医伴 · 在手机里操作</p>
+      <p className="no-print text-base text-ink-2">{en ? "VisitSmoothie · use it in the phone" : "问诊奶昔 · 在手机里操作"}</p>
     </main>
   );
 }

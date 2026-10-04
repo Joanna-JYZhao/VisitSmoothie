@@ -3,9 +3,9 @@
 import { Clock, ListChecks } from "lucide-react";
 import type { ThreadItem, Todo } from "@/lib/types";
 import { storeActions, useStore } from "@/lib/store";
-import { frequencyLabel, scheduleText, setReminders } from "@/lib/reminders";
+import { followUpNote, frequencyLabel, scheduleText, setReminders } from "@/lib/reminders";
 import { cn } from "@/lib/utils";
-import { L, inChinese } from "@/lib/lang";
+import { L } from "@/lib/lang";
 import { Badge, Button, Card, IconTile } from "@/components/ui";
 
 /* 医嘱 a: what to do, and which of them to be reminded about, set before anything is stored. */
@@ -16,7 +16,7 @@ const kindLabel = (k: Todo["kind"]) => L(KIND_ZH[k], KIND_EN[k]);
 const FREQ_EN: Record<Todo["frequency"], string> = { each: "Every dose", daily: "Once a day", once: "Just once", none: "No reminder" };
 const freqLabel = (f: Todo["frequency"]) => L(frequencyLabel(f), FREQ_EN[f]);
 /** The kind is already said in front of the text. */
-const shown = (t: Pick<Todo, "kind" | "text">) => (t.kind === "followup" ? t.text.replace(/^复诊[：:]/, "") : t.text);
+const shown = (t: Pick<Todo, "kind" | "text">) => (t.kind === "followup" ? followUpNote(t.text) : t.text);
 
 function choicesFor(t: Todo): Todo["frequency"][] {
   if (t.kind === "followup") return [];
@@ -140,15 +140,18 @@ export function TodoCard({ item }: { item: Extract<ThreadItem, { kind: "todo" }>
     const allowed = typeof Notification !== "undefined" && Notification.permission === "granted" && state.settings.notificationsEnabled;
     storeActions.pushThread({
       kind: "ai",
+      // in the language of the interface, like everything the assistant says
       text: made.length
-        ? // saved into the conversation in Chinese, like everything the assistant says (inChinese keeps the times Chinese too)
-          `设好了 ${made.length} 条提醒：\n${made.map((r) => `· ${r.text}：${inChinese(() => scheduleText(r))}`).join("\n")}\n到时间我会在这里提醒你${allowed ? "，也会弹出通知" : ""}。`
-        : "好的，这次不设提醒。上面的待办都留在记录里，随时可以看。",
+        ? L(
+            `设好了 ${made.length} 条提醒：\n${made.map((r) => `· ${r.text}：${scheduleText(r)}`).join("\n")}\n到时间我会在这里提醒你${allowed ? "，也会弹出通知" : ""}。`,
+            `${made.length} ${made.length === 1 ? "reminder is" : "reminders are"} set:\n${made.map((r) => `· ${r.text}: ${scheduleText(r)}`).join("\n")}\nI'll remind you here when it's time${allowed ? ", with a pop-up too" : ""}.`,
+          )
+        : L("好的，这次不设提醒。上面的待办都留在记录里，随时可以看。", "OK, no reminders this time. The to-dos above stay in your records."),
     });
     // the browser asks once, right after the button press; the answer may take a while, so nothing waits for it
     if (made.length && !allowed) {
       void askToNotify().then((ok) => {
-        if (ok) storeActions.pushThread({ kind: "ai", text: "好的，到时间也会弹出通知提醒你。" });
+        if (ok) storeActions.pushThread({ kind: "ai", text: L("好的，到时间也会弹出通知提醒你。", "OK, you'll also get a pop-up when it's time.") });
       });
     }
   };

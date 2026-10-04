@@ -125,11 +125,11 @@ export default function DoctorYearPage() {
             {fbg.length >= 2 && (
               <figure className="mt-7 print:break-inside-avoid">
                 <figcaption className="mb-3 text-base font-semibold text-ink print:text-black">
-                  {L("空腹血糖，每月平均（mmol/L）", "Fasting glucose, monthly average (mmol/L)")}
+                  {L("空腹血糖，每月平均（毫摩尔/升）", "Fasting glucose, monthly average (mmol/L)")}
                 </figcaption>
                 <TrendChart
                   points={fbg}
-                  unit="mmol/L"
+                  unit={L("毫摩尔/升", "mmol/L")}
                   decimals={1}
                   start={start}
                   end={end}

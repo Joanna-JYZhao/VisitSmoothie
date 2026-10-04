@@ -16,7 +16,7 @@ export function BrandLogo({ className, preload = true }: { className?: string; p
   return (
     <Image
       src="/visit-smoothie-logo.png"
-      alt="VisitSmoothie"
+      alt={L("问诊奶昔", "VisitSmoothie")}
       width={2172}
       height={724}
       /* Match the compact header and rail sizes. */
@@ -43,7 +43,7 @@ export function Logo({ compact = false, className, textClassName }: { compact?: 
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <LogoMark className={compact ? "h-9 w-9" : "h-11 w-11"} />
       <span className={cn("leading-tight", textClassName)}>
-        <span className={cn("block font-semibold tracking-tight text-ink", compact ? "text-xl" : "text-2xl")}>{L("医伴", "VisitSmoothie")}</span>
+        <span className={cn("block font-semibold tracking-tight text-ink", compact ? "text-xl" : "text-2xl")}>{L("问诊奶昔", "VisitSmoothie")}</span>
         {!compact && <span className="block text-base text-ink-2">{L("你的私人医生助理", "Your personal doctor's assistant")}</span>}
       </span>
     </span>

@@ -516,8 +516,8 @@ export function profileLine(p: Profile) {
     return shown.join(" · ");
   }
   const bits = [p.name, p.gender, `${ageOf(p.birthYear)} 岁`];
-  if (p.heightCm) bits.push(`${p.heightCm}cm`);
-  if (p.weightKg) bits.push(`${p.weightKg}kg`);
+  if (p.heightCm) bits.push(`${p.heightCm} 厘米`);
+  if (p.weightKg) bits.push(`${p.weightKg} 公斤`);
   if (p.bloodType) bits.push(`${p.bloodType} 型`);
   return bits.join(" · ");
 }

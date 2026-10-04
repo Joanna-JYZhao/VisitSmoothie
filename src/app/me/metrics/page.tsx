@@ -297,7 +297,7 @@ export default function MetricsPage() {
 
           {insights.length > 0 && (
             <Card className="rise-2 p-4">
-              <SectionTitle>{L("医伴看到的", "What VisitSmoothie noticed")}</SectionTitle>
+              <SectionTitle>{L("问诊奶昔看到的", "What VisitSmoothie noticed")}</SectionTitle>
               <InsightList insights={insights} />
             </Card>
           )}

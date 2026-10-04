@@ -78,9 +78,9 @@ const COLLAPSE_TEXT = {
     title: "如果我晕倒了、叫不醒",
     steps: [
       "拍拍我的肩膀，大声叫我，看我有没有反应。",
-      "没有反应：马上拨打 120，说清楚在哪里，同时请旁边的人去找 AED（自动体外除颤器）。",
+      "没有反应：马上拨打 120，说清楚在哪里，同时请旁边的人去找自动体外除颤器（除颤仪）。",
       "看我的胸口有没有起伏。有呼吸就让我侧躺，松开领口，守着我；不要喂水、喂药、喂吃的。",
-      "没有呼吸，或者只是偶尔喘一下：马上做胸外按压。两手叠在一起，按在胸口正中，用力往下按，每分钟 100 到 120 次，不要停。AED 拿来了就打开，照它说的做。",
+      "没有呼吸，或者只是偶尔喘一下：马上做胸外按压。两手叠在一起，按在胸口正中，用力往下按，每分钟 100 到 120 次，不要停。除颤仪拿来了就打开，照它说的做。",
       "急救人员到了，把这一页给他们看。",
     ],
   },
@@ -369,7 +369,7 @@ export function buildSos(profile: Profile): SosPlan {
           "If I carry emergency medicine from my doctor, get it out for me. Let me take it myself, the way my doctor said.",
         ),
         L(
-          "我没有反应、没有呼吸：马上做胸外按压，请旁边的人去找 AED。AED 拿来了就打开，照它说的做。",
+          "我没有反应、没有呼吸：马上做胸外按压，请旁边的人去找自动体外除颤器（除颤仪）。除颤仪拿来了就打开，照它说的做。",
           "If I do not respond and am not breathing: start chest compressions now, and ask someone nearby to bring an AED. When the AED arrives, turn it on and do what it says.",
         ),
       ],

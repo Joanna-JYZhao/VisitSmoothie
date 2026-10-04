@@ -79,7 +79,7 @@ export function TodoList({ now }: { now: number }) {
           <Sparkles />
         </IconTile>
         <p className="t-body text-ink">
-          {L("看完医生，在 post 里录音或上传，吃药和复诊会自动放到这里。", "After a doctor's visit, record or upload in post. Medicines and visits will show up here.")}
+          {L("看完医生，在「看病后」里录音或上传，吃药和复诊会自动放到这里。", "After a doctor's visit, record or upload in post. Medicines and visits will show up here.")}
         </p>
       </div>
     );
@@ -157,7 +157,7 @@ export function TodoList({ now }: { now: number }) {
                 <details className="group mt-1">
                   <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-lg text-base font-medium text-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 [&::-webkit-details-marker]:hidden">
                     <Lightbulb aria-hidden="true" className="h-4.5 w-4.5" />
-                    为什么要这样
+                    {L("为什么要这样", "Why this")}
                     <ChevronDown aria-hidden="true" className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
                   </summary>
                   <p className="t-body mt-1 mb-2 rounded-xl bg-brand-50/70 px-3.5 py-2.5 whitespace-pre-line text-ink">{t.explain}</p>

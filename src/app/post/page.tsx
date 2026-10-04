@@ -3,15 +3,17 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AudioLines, Camera, ChevronDown, ImageUp, TriangleAlert, X } from "lucide-react";
-import type { AfterResult, AiMode, Episode, Todo } from "@/lib/types";
-import { getState, useStore } from "@/lib/store";
+import type { Episode, Todo } from "@/lib/types";
+import { getState, storeActions, useStore } from "@/lib/store";
+import { createBusy } from "@/lib/busy";
+import { StartOver } from "@/components/StartOver";
 import { PhotoError, organizeVisit } from "@/lib/ai/client";
 import { saveAfter } from "@/lib/after";
 import { setReminders } from "@/lib/reminders";
 import { clipText, type LongTranscript } from "@/lib/audio";
 import { compressImage } from "@/lib/image";
 import { Recorder, bigTileCls } from "@/components/post/Recorder";
-import { ClinicalPlan } from "@/components/post/ClinicalPlan";
+import { ClinicalPlan, newPostDraft } from "@/components/post/ClinicalPlan";
 import { filedLine } from "@/components/post/filed";
 import { useToast } from "@/components/Toast";
 import { L } from "@/lib/lang";
@@ -26,8 +28,13 @@ const PHOTO_SIDE = 2000;
 const latestActive = (episodes: Episode[]) =>
   [...episodes].filter((e) => e.status === "active").sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] ?? null;
 
-/** What was read, held until the patient saves it from the Clinical Plan. */
-type Plan = { result: AfterResult; mode: AiMode; text: string; episodeId: string | null };
+/**
+ * Reading the photos and the recording takes up to a minute, and the patient may go to another page
+ * meanwhile: the request goes on, its result is put into the store as the Clinical Plan, and coming
+ * back while it is still going shows it is still going.
+ */
+const organizing = createBusy();
+const ORGANIZE = "post";
 
 /** A problem, in a quiet amber card with a tile in front, the same wherever one appears on this page. */
 function Problem({ children }: { children: React.ReactNode }) {
@@ -47,10 +54,12 @@ export default function PostPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [transcript, setTranscript] = useState<LongTranscript | null>(null);
   const [recording, setRecording] = useState(false);
-  const [working, setWorking] = useState(false);
+  const working = organizing.use(ORGANIZE);
   const [problem, setProblem] = useState<string | null>(null);
-  const [plan, setPlan] = useState<Plan | null>(null);
+  // the Clinical Plan not saved yet, kept in the store until it is saved or a new one is started
+  const plan = state.postDraft ?? null;
   const [saving, setSaving] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
   const router = useRouter();
   const toast = useToast();
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -73,7 +82,8 @@ export default function PostPage() {
     if (!s.profile) return;
     const about = latestActive(s.episodes);
     const text = transcript?.text ? clipText(transcript.text, 4000) : "";
-    setWorking(true);
+    if (organizing.has(ORGANIZE)) return;
+    organizing.start(ORGANIZE);
     setProblem(null);
     try {
       const res = await organizeVisit({
@@ -84,9 +94,10 @@ export default function PostPage() {
         text: text || undefined,
         images: photos.length ? photos : undefined,
       });
-      // nothing is stored yet: the patient looks it over in the Clinical Plan and saves from there
-      setPlan({ result: res.result, mode: res.mode, text, episodeId: about?.id ?? null });
+      // nothing is filed yet: the patient looks it over in the Clinical Plan and saves from there
+      storeActions.setPostDraft(newPostDraft(res.result, res.mode, text, about?.id ?? null));
       setPhotos([]);
+      setTranscript(null);
       window.scrollTo({ top: 0 });
     } catch (err) {
       const reason = err instanceof PhotoError ? err.reason : "failed";
@@ -98,30 +109,44 @@ export default function PostPage() {
             : L("这次没整理成，再点一次试试。", "That didn't work. Please tap again."),
       );
     } finally {
-      setWorking(false);
+      organizing.stop(ORGANIZE);
     }
   };
 
   if (plan) {
-    // 加入待办并保存: the visit goes on record, the lines ticked go on the to-do list (with what was explained), and back home
-    const save = (todos: Todo[]) => {
+    // 加入待办并保存: the visit goes on record (with the pre record picked), the lines ticked go on the to-do list (with what was explained), and back home
+    const save = (todos: Todo[], episodeId: string | null) => {
       setSaving(true);
-      saveAfter(plan.result, plan.episodeId, plan.mode, plan.text);
-      const set = setReminders(todos, plan.episodeId, Date.now(), { all: true });
+      saveAfter(plan.result, episodeId, plan.mode, plan.text);
+      const set = setReminders(todos, episodeId, Date.now(), { all: true });
+      storeActions.setPostDraft(null);
       toast.show(filedLine(set), "good");
       router.push("/");
+    };
+    // 开新的: this Clinical Plan is dropped without being saved, and the page is ready for the next visit
+    const startOver = () => {
+      storeActions.setPostDraft(null);
+      setConfirmNew(false);
+      window.scrollTo({ top: 0 });
     };
     return (
       <div className="space-y-6">
         <PageTitle
           sub={L(
-            "AI 从照片和录音里整理的。勾选要加入待办的，看不懂的可以让 AI 解释。",
+            "智能助手从照片和录音里整理的。勾选要加入待办的，看不懂的可以让助手解释。",
             "Sorted out by the AI from your photos and recording. Tick what to add to your to-do list; ask the AI to explain anything unclear.",
           )}
         >
           {L("这次看医生的结果", "Results of this visit")}
         </PageTitle>
-        <ClinicalPlan result={plan.result} onSave={save} saving={saving} />
+        <ClinicalPlan draft={plan} onSave={save} saving={saving} />
+        <StartOver
+          confirming={confirmNew}
+          onAsk={() => setConfirmNew(true)}
+          onCancel={() => setConfirmNew(false)}
+          onConfirm={startOver}
+          what={L("这次的治疗计划还没保存，开新的就不要它了。", "This Clinical Plan isn't saved yet. Starting a new one drops it.")}
+        />
       </div>
     );
   }

@@ -12,10 +12,11 @@ import type {
 import { ageOf, durationText, feelWord, fmtDate, roughDuration, sortedEntries } from "../utils";
 import { CONSULT_LABELS, MAX_QUESTIONS, consultPlan, weekdayNamed } from "./fallback";
 import type { GlmMessage } from "./glm";
+import { getLang } from "../lang";
 
 /* ---------- the conversation ---------- */
 
-export const CHAT_SYSTEM = `你是「医伴」，一位温和、可靠的私人医生助理。你帮患者把病情记清楚，方便交给医生。你不做诊断、不开药。和你说话的是普通人，不懂医学，想越省事越好。
+export const CHAT_SYSTEM = `你是「问诊奶昔」，一位温和、可靠的私人医生助理。你帮患者把病情记清楚，方便交给医生。你不做诊断、不开药。和你说话的是普通人，不懂医学，想越省事越好。
 
 ## 怎么说话
 1. 一次只问一个问题：一条 reply 里最多一个问句、一个问号。开头用两三个字回应就够了（“记下了。”“好的。”），不要把对方刚说的话再复述一遍。reply 不超过 40 个字，用大白话，不用医学术语。
@@ -56,7 +57,7 @@ const JSON_REMINDER =
 
 /* ---------- documents for the doctor ---------- */
 
-export const SUMMARY_SYSTEM = `你是「医伴」的医疗文书助理。请根据患者档案、这次不舒服的完整记录、对话内容和以前类似的记录，生成一份交给医生看的「就医摘要」。
+export const SUMMARY_SYSTEM = `你是「问诊奶昔」的医疗文书助理。请根据患者档案、这次不舒服的完整记录、对话内容和以前类似的记录，生成一份交给医生看的「就医摘要」。
 
 要求：
 - 客观、简洁的书面语，第三人称（“患者”），不写废话，同一件事只写一次。
@@ -87,7 +88,7 @@ export const SUMMARY_SYSTEM = `你是「医伴」的医疗文书助理。请根�
 }
 hints 0-3 条，没有值得医生留意的就给空数组。时间线由系统按原始记录另行列出，不用你写。每个字段直接写内容，不要以“主诉：”“现病史：”这样的名称开头。`;
 
-export const ANNUAL_SYSTEM = `你是「医伴」的医疗文书助理。患者要去做年度复诊，请根据患者档案和过去一年的全部记录（健康指标、复诊记录、症状记录、自动发现的规律），生成一份交给医生看的「年度摘要」。
+export const ANNUAL_SYSTEM = `你是「问诊奶昔」的医疗文书助理。患者要去做年度复诊，请根据患者档案和过去一年的全部记录（健康指标、复诊记录、症状记录、自动发现的规律），生成一份交给医生看的「年度摘要」。
 
 要求：
 - 客观、简洁的书面语，第三人称（“患者”）。只整理事实，不下诊断，不建议具体检查或药物调整。
@@ -136,7 +137,7 @@ const AFTER_RULES = `- 只整理提到的内容，没提到的填 null 或空数
 - summary 结合给出的症状记录写清起病经过；没有症状记录时只写这次就诊。医生对情况的总体评价（如“控制得不错”“问题不大”）也要写进 summary。
 - hospital 和 department 只在明确提到时填，不要根据病情猜科室。`;
 
-export const AFTER_TEXT_SYSTEM = `你是「医伴」的档案整理助理。患者刚看完医生，用自己的话（可能是语音转成的文字）讲了医生说的内容。请把它整理成存档。
+export const AFTER_TEXT_SYSTEM = `你是「问诊奶昔」的档案整理助理。患者刚看完医生，用自己的话（可能是语音转成的文字）讲了医生说的内容。请把它整理成存档。
 
 要求：
 ${AFTER_RULES}
@@ -293,6 +294,17 @@ function consultNote(req: ChatRequest): string {
   return L.join("\n");
 }
 
+/**
+ * In English the conversation is run by the model alone, so it is told here what the rules would
+ * otherwise have told it turn by turn: what to cover, how to confirm an everyday word, how to close.
+ */
+const ENGLISH_CONSULT = `【问诊进度 — English conversation】
+The patient writes in English. Ask and answer only in English, and write entry.note, title, tags and suggestedReplies in English.
+Keep track yourself of what is already known from the whole conversation. Cover these, one question per turn, skipping anything already said (an answer like "no" or "not sure" counts as answered); never ask the same thing twice:
+when it started; exactly where (for pain in a limb, joint, back or belly ask "Where exactly is it?" — a body picture appears under that question); what it feels like; how bad it is now (suggestedReplies: "A little", "Quite bad", "Very bad"; severity 3 / 6 / 8); when it is worse; what makes it better; anything else wrong at the same time; medicines or anything else taken for it; whether it has happened before.
+Everyday words: whenever the patient describes something informally (e.g. "my head is pounding", "my stomach is twisting"), first confirm it in plain words and give the doctor's term in double quotes, e.g. "Is it a beating pain, in time with your pulse? Doctors call this "throbbing pain"." with suggestedReplies "Yes", "No". Confirm one word per turn; if they say no, ask again with another meaning. Once confirmed, write entry.note as "doctor's term (patient's words: …)", e.g. "throbbing pain (patient's words: pounding)".
+Close only when all of the above are known and every informal description has been confirmed, or when the patient says that's all: reply "Got it, I've written it all down." plus one useful sentence, and set done to true.`;
+
 export function buildChatMessages(req: ChatRequest, opts: { avoid?: string } = {}): GlmMessage[] {
   const context = [
     profileContext(req.profile),
@@ -303,7 +315,8 @@ export function buildChatMessages(req: ChatRequest, opts: { avoid?: string } = {
     `【当前时间】${req.localTime ?? fmtDate(new Date(), { year: true, weekday: true, time: true })}`,
     req.kind === "intake" ? "【提示】这是对话的第一轮，请给出 title。" : "",
     roundNote(req.messages),
-    consultNote(req),
+    // the plan is worked out by rules that read Chinese: in English the model keeps track itself
+    getLang() === "en" ? ENGLISH_CONSULT : consultNote(req),
   ]
     .filter(Boolean)
     .join("\n\n");

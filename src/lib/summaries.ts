@@ -47,17 +47,14 @@ export function vitalsLines(state: AppState, now: number = Date.now()): string[]
 export function instantSummary(e: Episode, state: AppState): DoctorSummaryBody | null {
   const profile = state.profile;
   if (!profile) return null;
-  // in the language the server will answer in, so the first screen does not change when it does
-  return inChinese(
-    () =>
-      fallbackSummary({
-        profile,
-        episode: e,
-        related: relatedEpisodesOf(e, state.episodes).map(toRelatedContext),
-        vitals: vitalsLines(state),
-        background: checkupBackground(state),
-      }).summary,
-  );
+  // the material is put together in Chinese (it is what the rules read); the description the
+  // patient sees comes out in the language of the interface, as the server's will
+  const material = inChinese(() => ({
+    related: relatedEpisodesOf(e, state.episodes).map(toRelatedContext),
+    vitals: vitalsLines(state),
+    background: checkupBackground(state),
+  }));
+  return fallbackSummary({ profile, episode: e, ...material }).summary;
 }
 
 export async function refreshSummary(episodeId: string): Promise<void> {

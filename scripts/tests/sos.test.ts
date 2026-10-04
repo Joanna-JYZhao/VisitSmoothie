@@ -28,7 +28,8 @@ const generalUnchanged = (p: SosPlan) => JSON.stringify(general(p)) === JSON.str
 /** Only what the rules wrote: titles, background, steps and items. Not the person's own lists. */
 const ruleText = (p: SosPlan) =>
   [...p.blocks.flatMap((b) => [b.title, b.why ?? "", ...b.steps]), ...p.self.flatMap((g) => [g.title, ...g.items])].join("\n");
-const AED_USE = "AED 拿来了就打开，照它说的做。";
+// the Chinese screen has no English: the AED is called 自动体外除颤器（除颤仪）
+const AED_USE = "除颤仪拿来了就打开，照它说的做。";
 
 /** Someone with nothing on file, to build the other cases from. */
 const blank: Profile = {
@@ -143,18 +144,18 @@ const person = (p: Partial<Profile>): Profile => ({ ...blank, ...p });
 /* ---------- 1. AED: sent for as soon as 120 is called, used as soon as it arrives ---------- */
 {
   const steps = COLLAPSE.steps;
-  const fetch = steps.findIndex((s) => /去找 AED/.test(s));
+  const fetch = steps.findIndex((s) => /去找自动体外除颤器/.test(s));
   const press = steps.findIndex((s) => /胸外按压/.test(s));
   check(
     "collapse step 2: call 120, say where, and at the same time send someone for the AED",
-    steps[1] === "没有反应：马上拨打 120，说清楚在哪里，同时请旁边的人去找 AED（自动体外除颤器）。",
+    steps[1] === "没有反应：马上拨打 120，说清楚在哪里，同时请旁边的人去找自动体外除颤器（除颤仪）。",
     steps[1],
   );
   check("collapse: the AED is sent for before compressions start", fetch === 1 && press === 3, [fetch, press]);
-  check("collapse step 4: only about pressing, ending with using the AED", !/去找 AED/.test(steps[3]) && /每分钟 100 到 120 次，不要停/.test(steps[3]) && steps[3].endsWith(AED_USE), steps[3]);
+  check("collapse step 4: only about pressing, ending with using the AED", !/去找自动体外除颤器/.test(steps[3]) && /每分钟 100 到 120 次，不要停/.test(steps[3]) && steps[3].endsWith(AED_USE), steps[3]);
   const heart = block(buildSos(person({ conditions: ["冠心病"] })), "heart")?.steps[2] ?? "";
   check("heart step 3: compressions, then use the AED when it comes", /胸外按压/.test(heart) && heart.endsWith(AED_USE), heart);
-  check("heart plan: both compression steps say how to use the AED", ruleText(buildSos(person({ conditions: ["冠心病"] }))).match(/AED 拿来了就打开，照它说的做/g)?.length === 2);
+  check("heart plan: both compression steps say how to use the AED", ruleText(buildSos(person({ conditions: ["冠心病"] }))).match(/除颤仪拿来了就打开，照它说的做/g)?.length === 2);
 }
 
 /* ---------- 2. epilepsy: their block leads, and seizures leave the general list ---------- */

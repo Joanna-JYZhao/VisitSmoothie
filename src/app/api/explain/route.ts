@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { setLang } from "@/lib/lang";
 import type { AfterResult, Profile } from "@/lib/types";
 import { GlmFormatError, glmConfigured, glmJSON } from "@/lib/ai/glm";
 import { buildExplainMessages, fallbackExplain, guardExplain, type ExplainTurn } from "@/lib/ai/ordersAI";
@@ -10,12 +11,14 @@ const list = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => ty
 
 /** 医嘱 b: explains one part of the doctor's orders in plain words. */
 export async function POST(req: Request) {
-  let body: { profile?: Profile; result?: AfterResult; part?: string; history?: unknown };
+  let body: { profile?: Profile; result?: AfterResult; part?: string; history?: unknown; lang?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "请求体不是合法 JSON" }, { status: 400 });
   }
+  // the explanation is in the language of the interface
+  setLang(body?.lang);
   const part = typeof body?.part === "string" ? body.part.trim().slice(0, 200) : "";
   if (!body?.profile || !body.result || !part) return NextResponse.json({ error: "缺少 profile / result / part" }, { status: 400 });
   const p = body.profile;

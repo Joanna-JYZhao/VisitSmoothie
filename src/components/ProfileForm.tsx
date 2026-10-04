@@ -171,7 +171,7 @@ export function BasicFields({ draft, onChange }: { draft: ProfileDraft; onChange
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="身高（cm）">
+        <Field label={L("身高（厘米）", "Height (cm)")}>
           <Input
             type="number"
             inputMode="numeric"
@@ -180,7 +180,7 @@ export function BasicFields({ draft, onChange }: { draft: ProfileDraft; onChange
             placeholder="可以不填"
           />
         </Field>
-        <Field label="体重（kg）">
+        <Field label={L("体重（公斤）", "Weight (kg)")}>
           <Input
             type="number"
             inputMode="decimal"

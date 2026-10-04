@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { CheckInScheduler } from "@/components/CheckInScheduler";
 
 export const metadata: Metadata = {
-  title: { default: "医伴 · 你的私人医生助理", template: "%s · 医伴" },
+  title: { default: "问诊奶昔 · 你的私人医生助理", template: "%s · 问诊奶昔" },
   description: "帮你记录病情和病史，就医时把整理好的信息交给医生。说不清的，我帮你说清楚；记不住的，我帮你记住。",
 };
 

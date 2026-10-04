@@ -37,7 +37,7 @@ function TypeBox({ onSend, disabled }: { onSend: (text: string) => void; disable
           }
         }}
         placeholder={L("在这里打字", "Type here")}
-        aria-label={L("对医伴说", "Say it to VisitSmoothie")}
+        aria-label={L("对问诊奶昔说", "Say it to VisitSmoothie")}
         className="min-h-11 min-w-0 flex-1 resize-none bg-transparent py-2 pr-1 pl-3.5 text-base leading-relaxed text-ink outline-none placeholder:text-ink-3"
       />
       <button

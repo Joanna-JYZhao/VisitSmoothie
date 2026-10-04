@@ -188,11 +188,11 @@ const spoken = pairs.filter((p): p is { r: Reading; zh: Hint; en: Hint } => p.zh
 /* ---------- the table: read through getters, so it follows the language of the moment ---------- */
 {
   const held = METRICS.fbg; // taken while the language is Chinese, as a page would
-  const zh = METRIC_ORDER.map((t) => ({ label: METRICS[t].label, targetText: METRICS[t].targetText, placeholder: METRICS[t].placeholder, unit: METRICS[t].unit }));
+  const zh = METRIC_ORDER.map((t) => ({ label: METRICS[t].label, targetText: METRICS[t].targetText, placeholder: METRICS[t].placeholder, unit: METRICS[t].unit, symbol: METRICS[t].symbol }));
   check("labels start in Chinese", sameList(zh.map((x) => x.label), ["空腹血糖", "饭后或其他时间的血糖", "糖化血红蛋白", "体重", "血压"]), zh.map((x) => x.label));
 
   setLang("en");
-  const en = METRIC_ORDER.map((t) => ({ label: METRICS[t].label, targetText: METRICS[t].targetText, placeholder: METRICS[t].placeholder, unit: METRICS[t].unit }));
+  const en = METRIC_ORDER.map((t) => ({ label: METRICS[t].label, targetText: METRICS[t].targetText, placeholder: METRICS[t].placeholder, unit: METRICS[t].unit, symbol: METRICS[t].symbol }));
   const heldInEnglish = held.label;
   const copied = { ...METRICS.bp }.label;
   setLang("zh");
@@ -204,7 +204,9 @@ const spoken = pairs.filter((p): p is { r: Reading; zh: Hint; en: Hint } => p.zh
   );
   check("an entry taken out of the table earlier follows the language too", heldInEnglish === "Fasting glucose" && held.label === "空腹血糖", [heldInEnglish, held.label]);
   check("a copy made in English keeps the English it was copied with", copied === "Blood pressure", copied);
-  check("units do not change with the language", sameList(en.map((x) => x.unit), ["mmol/L", "mmol/L", "%", "kg", "mmHg"]) && sameList(zh.map((x) => x.unit), en.map((x) => x.unit)), en.map((x) => x.unit));
+  // the Chinese screen spells units out in Chinese; the symbol handed to the model is the same in either language
+  check("units on screen follow the language", sameList(en.map((x) => x.unit), ["mmol/L", "mmol/L", "%", "kg", "mmHg"]) && sameList(zh.map((x) => x.unit), ["毫摩尔/升", "毫摩尔/升", "%", "公斤", "毫米汞柱"]), [en.map((x) => x.unit), zh.map((x) => x.unit)]);
+  check("the unit symbol does not change with the language", sameList(en.map((x) => x.symbol), zh.map((x) => x.symbol)) && en[0].symbol === "mmol/L", en.map((x) => x.symbol));
   check(
     "the English ranges are the Chinese ranges",
     sameList(en.map((x) => x.targetText ?? ""), ["Usually between 4.4 and 7.0", "Usually below 10.0", "Usually below 7.0%", "", "Usually below 140/90; your doctor may set it lower for you"]),
@@ -215,7 +217,7 @@ const spoken = pairs.filter((p): p is { r: Reading; zh: Hint; en: Hint } => p.zh
   check("no Chinese is left in the English table", en.every((x) => !HAN.test(`${x.label}${x.targetText ?? ""}${x.placeholder}`)), en);
   check("placeholders are in English", sameList(en.map((x) => x.placeholder), ["e.g. 6.5", "e.g. 8.2", "e.g. 6.8", "e.g. 68", "Top number"]), en.map((x) => x.placeholder));
   check("set back to Chinese, the labels are Chinese again", sameList(METRIC_ORDER.map((t) => METRICS[t].label), zh.map((x) => x.label)) && METRICS.bp.placeholder === "高压" && METRICS.fbg.targetText === "一般在 4.4–7.0 之间");
-  check("the table still lists its fields in the same order", sameList(Object.keys(METRICS.fbg), ["type", "label", "unit", "decimals", "inputMin", "inputMax", "step", "target", "targetText", "placeholder", "lowerIsBetter"]), Object.keys(METRICS.fbg));
+  check("the table still lists its fields in the same order", sameList(Object.keys(METRICS.fbg), ["type", "label", "unit", "symbol", "decimals", "inputMin", "inputMax", "step", "target", "targetText", "placeholder", "lowerIsBetter"]), Object.keys(METRICS.fbg));
 }
 
 /* ---------- "is this number right?" ---------- */

@@ -77,8 +77,8 @@ const BACK: Zone[] = [
 ];
 
 /*
- * English names, for what is shown only. What is picked (and sent on) is always the Chinese name
- * above, so the record and the assistant see the same words in either language.
+ * English names. In English what is picked is sent on in English too ("Left knee, inner side"), so
+ * nothing Chinese shows up in an English conversation; in Chinese the Chinese name above is sent.
  */
 const NAME_EN: Record<string, string> = {
   头: "Head", 颈部: "Neck", 右肩: "Right shoulder", 左肩: "Left shoulder", 胸部: "Chest", 上腹: "Upper belly", 下腹: "Lower belly",
@@ -281,7 +281,8 @@ export function BodyMap({ onPick, prompt = L("点一下不舒服的地方", "Tap
   const done = () => {
     if (sent || !picked.length) return;
     setSent(true);
-    onPick(picked);
+    // sent on in the language of the interface: in English the conversation and the record say "Left knee, inner side"
+    onPick(picked.map(shownName));
   };
 
   if (sent) {

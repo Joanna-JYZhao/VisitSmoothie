@@ -43,12 +43,12 @@ export default function WelcomePage() {
               <span />
               {L("你的健康故事，从这里开始", "Your health story starts here")}
             </p>
-            {/* reads as one word, VisitSmoothie; set on two lines like the keynote title it was drawn as */}
+            {/* reads as one word, VisitSmoothie (问诊奶昔); set on two lines like the keynote title it was drawn as */}
             <h1>
-              Visit
+              {L("问诊", "Visit")}
               <br />
-              <em>Smoothie</em>
-              <span className="welcome-period">.</span>
+              <em>{L("奶昔", "Smoothie")}</em>
+              <span className="welcome-period">{L("。", ".")}</span>
             </h1>
             <p className="welcome-description">
               {L("从认识你开始，", "It starts with getting to know you, ")}

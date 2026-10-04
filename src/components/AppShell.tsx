@@ -17,7 +17,7 @@ function Splash() {
     <div className="phone-col flex items-center justify-center">
       <div className="flex animate-fade-up flex-col items-center gap-4 text-ink-2">
         <LogoMark className="h-[4.5rem] w-[4.5rem]" />
-        <span className="t-lead font-semibold text-brand-ink">VisitSmoothie</span>
+        <span className="t-lead font-semibold text-brand-ink">{L("问诊奶昔", "VisitSmoothie")}</span>
         <span className="spinner-ring h-6 w-6" aria-hidden="true" />
       </div>
     </div>
@@ -69,7 +69,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const lang = state.settings.lang === "en" ? "en" : "zh-CN";
   useEffect(() => {
     document.documentElement.lang = lang;
+    // drawn inside a phone on a computer: the page around it follows the language too
+    if (window.parent !== window) window.parent.postMessage({ type: "yiban:lang", lang: lang === "en" ? "en" : "zh" }, window.location.origin);
   }, [lang]);
+  // the browser tab's name follows the language too (the page titles are written in Chinese)
+  useEffect(() => {
+    document.title = pathname.startsWith("/sos") ? L("应急手册", "Emergency card") : L("问诊奶昔 · 你的私人医生助理", "VisitSmoothie · Your personal doctor's assistant");
+  }, [lang, pathname]);
 
   // Inside a frame (a phone drawn on a computer): tell the window around us where we are,
   // so its address bar follows and a reload comes back to this page.
@@ -89,7 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         className="no-print glass sticky top-0 z-30 flex min-h-[3.75rem] items-center justify-between gap-3 px-4 pb-1.5 shadow-header"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.375rem)" }}
       >
-        <Link href="/" className={cn("app-brand inline-flex rounded-lg", focusRing)} aria-label="VisitSmoothie">
+        <Link href="/" className={cn("app-brand inline-flex rounded-lg", focusRing)} aria-label={L("问诊奶昔", "VisitSmoothie")}>
           <BrandLogo className="!w-[8rem]" />
         </Link>
         <div className="flex shrink-0 items-center gap-2">

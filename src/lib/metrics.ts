@@ -26,7 +26,10 @@ export const METRIC_ORDER: MetricType[] = ["fbg", "ppg", "hba1c", "weight", "bp"
 export interface MetricDef {
   type: MetricType;
   label: string;
+  /** the unit as the screen shows it (毫摩尔/升 in Chinese, mmol/L in English) */
   unit: string;
+  /** the unit as a symbol, the same in either language: what is handed to the model */
+  symbol: string;
   decimals: number;
   inputMin: number;
   inputMax: number;
@@ -37,6 +40,12 @@ export interface MetricDef {
   placeholder: string;
   /** For delta colouring: is a lower number the good direction? */
   lowerIsBetter: boolean;
+}
+
+/** A unit as the screen shows it: the Chinese interface spells it out in Chinese (毫摩尔/升), English keeps the symbol. */
+export function unitWord(unit: "mmol/L" | "kg" | "mmHg" | "cm"): string {
+  const zh = { "mmol/L": "毫摩尔/升", kg: "公斤", mmHg: "毫米汞柱", cm: "厘米" }[unit];
+  return L(zh, unit);
 }
 
 /** One piece of wording in both languages: Chinese first, English second. */
@@ -86,7 +95,10 @@ export const METRICS: Record<MetricType, MetricDef> = {
     get label() {
       return say(WORDS.fbg.label);
     },
-    unit: "mmol/L",
+    get unit() {
+      return unitWord("mmol/L");
+    },
+    symbol: "mmol/L",
     decimals: 1,
     inputMin: 1,
     inputMax: 35,
@@ -105,7 +117,10 @@ export const METRICS: Record<MetricType, MetricDef> = {
     get label() {
       return say(WORDS.ppg.label);
     },
-    unit: "mmol/L",
+    get unit() {
+      return unitWord("mmol/L");
+    },
+    symbol: "mmol/L",
     decimals: 1,
     inputMin: 1,
     inputMax: 35,
@@ -125,6 +140,7 @@ export const METRICS: Record<MetricType, MetricDef> = {
       return say(WORDS.hba1c.label);
     },
     unit: "%",
+    symbol: "%",
     decimals: 1,
     inputMin: 3,
     inputMax: 20,
@@ -143,7 +159,10 @@ export const METRICS: Record<MetricType, MetricDef> = {
     get label() {
       return say(WORDS.weight.label);
     },
-    unit: "kg",
+    get unit() {
+      return unitWord("kg");
+    },
+    symbol: "kg",
     decimals: 1,
     inputMin: 20,
     inputMax: 250,
@@ -158,7 +177,10 @@ export const METRICS: Record<MetricType, MetricDef> = {
     get label() {
       return say(WORDS.bp.label);
     },
-    unit: "mmHg",
+    get unit() {
+      return unitWord("mmHg");
+    },
+    symbol: "mmHg",
     decimals: 0,
     inputMin: 50,
     inputMax: 260,
@@ -614,7 +636,7 @@ export function detectInsights(measurements: Measurement[], now: number = Date.n
       level: recentLevel(m.at),
       title: "低血糖记录",
       at: m.at,
-      text: `${monthDay(m.at)} 血糖 ${m.value.toFixed(1)} mmol/L，属于低血糖。${m.note ? `${m.note.replace(/[。.]$/, "")}。` : ""}复诊时请告诉医生。`,
+      text: `${monthDay(m.at)} 血糖 ${m.value.toFixed(1)} 毫摩尔/升，属于低血糖。${m.note ? `${m.note.replace(/[。.]$/, "")}。` : ""}复诊时请告诉医生。`,
     });
   }
 
@@ -640,7 +662,7 @@ export function detectInsights(measurements: Measurement[], now: number = Date.n
       kind: "recent",
       level: inRange >= recent.length * 0.7 ? "info" : "warn",
       title: "近两周空腹血糖",
-      text: `平均 ${mean(recent.map((m) => m.value)).toFixed(1)} mmol/L，${recent.length} 次记录中 ${inRange} 次在一般范围内。`,
+      text: `平均 ${mean(recent.map((m) => m.value)).toFixed(1)} 毫摩尔/升，${recent.length} 次记录中 ${inRange} 次在一般范围内。`,
     });
   }
 
@@ -697,7 +719,7 @@ export function metricsContextText(measurements: Measurement[], now: number = Da
     if (!last) continue;
     const words: { label: Words; targetText?: Words } = WORDS[type];
     const targetText = words.targetText?.[0];
-    lines.push(`${words.label[0]}：最近一次 ${formatValue(last)} ${METRICS[type].unit}（${monthDay(last.at)}）${targetText ? `，${targetText}` : ""}`);
+    lines.push(`${words.label[0]}：最近一次 ${formatValue(last)} ${METRICS[type].symbol}（${monthDay(last.at)}）${targetText ? `，${targetText}` : ""}`);
   }
   const recent = measurementsOf(measurements, "fbg").filter((m) => now - time(m.at) <= 14 * DAY);
   if (recent.length >= 3) {

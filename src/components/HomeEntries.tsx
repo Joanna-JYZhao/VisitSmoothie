@@ -86,7 +86,7 @@ export function QuickEntries() {
         href="/ask"
         stacked={english}
         icon={<MessageCircleQuestion className="h-5 w-5" />}
-        title={L("问医伴", "Ask Yiban")}
+        title={L("问问诊奶昔", "Ask VisitSmoothie")}
         detail={
           english ? (
             <>

@@ -549,8 +549,8 @@ function Confirm({
   const list = (items: string[]) => items.join(L("、", ", "));
   const who = [r.name, r.gender ? genderLabel(r.gender) : "", r.birthYear != null ? L(`${r.birthYear} 年生（约 ${ageOf(r.birthYear)} 岁）`, `born ${r.birthYear} (about ${ageOf(r.birthYear)})`) : ""].filter(Boolean);
   const body = [
-    r.heightCm != null ? L(`身高 ${r.heightCm} cm`, `height ${r.heightCm} cm`) : "",
-    r.weightKg != null ? L(`体重 ${r.weightKg} kg`, `weight ${r.weightKg} kg`) : "",
+    r.heightCm != null ? L(`身高 ${r.heightCm} 厘米`, `height ${r.heightCm} cm`) : "",
+    r.weightKg != null ? L(`体重 ${r.weightKg} 公斤`, `weight ${r.weightKg} kg`) : "",
     r.bloodType ? L(`${r.bloodType} 型血`, `blood type ${r.bloodType}`) : "",
   ].filter(Boolean);
   const when = r.date ? fmtDate(`${r.date}T12:00:00`, { year: true }) : "";

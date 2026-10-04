@@ -68,7 +68,7 @@ function OpenQuestion({ text, chips, onChip, opening }: { text: string; chips?: 
         <>
           <span aria-hidden="true" className="pool -top-10 left-1/2 h-64 w-64 -translate-x-1/2" />
           <LogoMark className="relative h-11 w-11 rounded-xl" />
-          <span className="relative mt-2 text-lg font-semibold tracking-tight text-brand-ink">VisitSmoothie</span>
+          <span className="relative mt-2 text-lg font-semibold tracking-tight text-brand-ink">{L("问诊奶昔", "VisitSmoothie")}</span>
         </>
       ) : (
         <Mark />
@@ -280,7 +280,7 @@ function OrdersCard({ item, busy }: { item: Extract<ThreadItem, { kind: "orders"
       <dl className="mt-5 divide-y divide-line border-t border-line pt-5">
         {(r.date || r.hospital || r.department) && <Row label={L("时间和地点", "When and where")}>{[r.date, r.hospital, r.department].filter(Boolean).join(" · ")}</Row>}
         <Row label={L("诊断", "Diagnosis")}>{r.diagnosis ? showDiagnosis(r.diagnosis) : L("没有认出诊断", "No diagnosis found")}</Row>
-        {r.findings.length > 0 && <Row label={L("检查结果", "Test results")}>{r.findings.join("；")}</Row>}
+        {r.findings.length > 0 && <Row label={L("检查结果", "Test results")}>{r.findings.join(L("；", "; "))}</Row>}
         {r.medications.length > 0 && (
           <Row label={L("开的药", "Medicines")}>
             <ul className="space-y-1">
@@ -290,10 +290,10 @@ function OrdersCard({ item, busy }: { item: Extract<ThreadItem, { kind: "orders"
             </ul>
           </Row>
         )}
-        {r.procedures.length > 0 && <Row label={L("其他处理", "Other treatment")}>{r.procedures.join("；")}</Row>}
+        {r.procedures.length > 0 && <Row label={L("其他处理", "Other treatment")}>{r.procedures.join(L("；", "; "))}</Row>}
         {r.advice && <Row label={L("医生叮嘱", "Doctor's advice")}>{r.advice}</Row>}
         {r.followUpNote && <Row label={L("复诊", "Follow-up visit")}>{r.followUpNote}</Row>}
-        {r.unclear.length > 0 && <Row label={L("没认准的地方", "Not sure about")}>{r.unclear.join("；")}</Row>}
+        {r.unclear.length > 0 && <Row label={L("没认准的地方", "Not sure about")}>{r.unclear.join(L("；", "; "))}</Row>}
       </dl>
       {draft ? (
         <div className="mt-6 grid grid-cols-2 gap-2">

@@ -11,8 +11,10 @@ import { followUpDate, saveAfter } from "./after";
 import { ask } from "./ask";
 import { triageFor } from "./triage";
 import { buildTodos, explainParts } from "./reminders";
-import { CHECKIN_ANSWERS, answerCheckIn, checkInQuestion, isCheckInDue, type CheckInAnswer } from "./checkin";
+import { CHECKIN_ANSWERS, answerCheckIn, answerLabel, checkInQuestion, isCheckInDue, type CheckInAnswer } from "./checkin";
 import { HOUR, firstComplaint, nowISO } from "./utils";
+import { unsavedCards } from "./drafts";
+import { L, getLang, pick } from "./lang";
 
 /*
  * 第三版: the main screen is one conversation. The patient only speaks, types or takes a photo;
@@ -91,8 +93,18 @@ export function isComplaint(text: string): boolean {
   return !MAY_I.test(text);
 }
 
+/** The three answers to the daily question as buttons, in Chinese (the stored labels) and in English. */
+const CHECKIN_CHIPS: string[][] = [CHECKIN_ANSWERS.map((a) => a.label), ["Much better", "About the same", "Worse"]];
 const sameChips = (chips: string[] | undefined) =>
-  chips != null && chips.length === CHECKIN_ANSWERS.length && CHECKIN_ANSWERS.every((a, i) => chips[i] === a.label);
+  chips != null && CHECKIN_CHIPS.some((set) => chips.length === set.length && set.every((c, i) => chips[i] === c));
+/** Which of the three answers a tapped button is, in either language. */
+const checkInAnswerOf = (text: string) => {
+  for (const set of CHECKIN_CHIPS) {
+    const i = set.indexOf(text);
+    if (i >= 0) return CHECKIN_ANSWERS[i];
+  }
+  return undefined;
+};
 
 /** Decides which flow one turn belongs to. Pure, so it can be checked on its own. */
 export function routeTurn(turn: Turn, ctx: RouteContext): Routed {
@@ -102,7 +114,7 @@ export function routeTurn(turn: Turn, ctx: RouteContext): Routed {
   if (turn.photos > 0) return { route: "photo", alert, episodeId: awaitingReply(ctx.episodes, ctx.now)?.id };
   if (ctx.revising && ctx.episodes.some((e) => e.id === ctx.revising)) return { route: "revise", alert, episodeId: ctx.revising };
   const last = ctx.thread[ctx.thread.length - 1];
-  const answer = CHECKIN_ANSWERS.find((a) => a.label === text);
+  const answer = checkInAnswerOf(text);
   if (answer && last?.kind === "ai" && last.episodeId && sameChips(last.chips)) {
     return { route: "checkin", alert, episodeId: last.episodeId, answer: answer.key };
   }
@@ -146,7 +158,7 @@ function finishIntake(episodeId: string): void {
 /** Puts the assistant's answer about a complaint into the conversation, and wraps up when it has no more questions. */
 function showReply(episodeId: string, res: { reply: string; suggestedReplies: string[]; done: boolean; widget?: "bodymap" | null } | null): void {
   if (!res) {
-    say("这次没接上，再说一遍试试。");
+    say(L("这次没接上，再说一遍试试。", "That didn't go through. Please say it again."));
     return;
   }
   say(res.reply, res.done ? { episodeId } : { chips: res.suggestedReplies, episodeId });
@@ -157,11 +169,23 @@ function showReply(episodeId: string, res: { reply: string; suggestedReplies: st
 
 /* ---------- two more things before the description: what it gets in the way of, what to ask the doctor ---------- */
 
-const WRAP: Record<"impact" | "wish", { label: string; question: string; chips: string[] }> = {
-  impact: { label: "对生活工作的影响", question: "还有两件事，问完就整理：这对你的生活、工作有影响吗？", chips: ["没什么影响", "影响走路", "影响上班", "影响睡觉"] },
-  wish: { label: "想请医生", question: "最后一个：这次看医生，你最想请医生帮你看什么？", chips: ["要不要做检查", "怎么治", "平时要注意什么", "没有特别的"] },
+type WrapWords = { label: string; question: string; chips: string[] };
+/** Each in Chinese and in English; `label` is how the answer is written into the record ("想请医生：…"). */
+const WRAP_WORDS: Record<"impact" | "wish", [WrapWords, WrapWords]> = {
+  impact: [
+    { label: "对生活工作的影响", question: "还有两件事，问完就整理：这对你的生活、工作有影响吗？", chips: ["没什么影响", "影响走路", "影响上班", "影响睡觉"] },
+    { label: "Effect on daily life", question: "Two more things, then I'll write it up. Does this get in the way of your daily life or work?", chips: ["Not really", "Walking", "Work", "Sleep"] },
+  ],
+  wish: [
+    { label: "想请医生", question: "最后一个：这次看医生，你最想请医生帮你看什么？", chips: ["要不要做检查", "怎么治", "平时要注意什么", "没有特别的"] },
+    { label: "Wants the doctor to", question: "Last one: what do you most want the doctor to help with this time?", chips: ["Whether I need tests", "How to treat it", "What to watch out for", "Nothing in particular"] },
+  ],
 };
+/** the words of a wrap-up question in the language of the interface */
+const wrapWords = (k: "impact" | "wish"): WrapWords => pick(...WRAP_WORDS[k]);
 const WRAP_ORDER = ["impact", "wish"] as const;
+/** the answer is on record already, in either language */
+const wrapAnswered = (notes: string[], k: "impact" | "wish") => WRAP_WORDS[k].some((w) => notes.some((n) => n.startsWith(`${w.label}：`) || n.startsWith(`${w.label}: `)));
 
 /** The wrap-up question still waiting for its answer, if the last thing said is one. */
 export function pendingWrap(thread: ThreadItem[]): { episodeId: string; step: "impact" | "wish" } | null {
@@ -178,22 +202,28 @@ function wrapUp(episodeId: string, after?: "impact" | "wish"): void {
   const episode = getState().episodes.find((e) => e.id === episodeId);
   if (!episode) return;
   const start = after ? WRAP_ORDER.indexOf(after) + 1 : 0;
-  const next = WRAP_ORDER.slice(start).find((k) => !episode.entries.some((x) => x.note.startsWith(`${WRAP[k].label}：`)));
-  if (next) say(WRAP[next].question, { chips: WRAP[next].chips, episodeId, wrap: next });
+  const notes = episode.entries.map((x) => x.note);
+  const next = WRAP_ORDER.slice(start).find((k) => !wrapAnswered(notes, k));
+  if (next) say(wrapWords(next).question, { chips: wrapWords(next).chips, episodeId, wrap: next });
   else finishIntake(episodeId);
 }
 
-/** The answer to a wrap-up question goes on the record as "想请医生：要不要做检查", then on to the next. */
+/** The answer to a wrap-up question goes on the record as "想请医生：要不要做检查" (in English "Wants the doctor to: …"), then on to the next. */
 async function answerWrap(episodeId: string, step: "impact" | "wish", said: string): Promise<void> {
-  await supplement(episodeId, `${WRAP[step].label}：${said}`);
+  await supplement(episodeId, L(`${wrapWords(step).label}：${said}`, `${wrapWords(step).label}: ${said}`));
   wrapUp(episodeId, step);
 }
 
 /* ---------- opening pre: where, then how ---------- */
 
 /** Asked once places are picked on the opening body map. */
-export const HOW_QUESTION = (areas: string) => (areas.includes("、") ? "这几个地方是怎么不舒服？" : `${areas}是怎么不舒服？`);
-export const HOW_CHIPS = ["疼", "酸痛", "胀", "麻", "痒"];
+export const HOW_QUESTION = (areas: string) =>
+  L(areas.includes("、") ? "这几个地方是怎么不舒服？" : `${areas}是怎么不舒服？`, areas.includes(", ") || areas.includes("; ") ? "How do these places feel?" : `How does it feel (${areas})?`);
+export const HOW_CHIPS_BOTH = [
+  ["疼", "酸痛", "胀", "麻", "痒"],
+  ["Pain", "Aching", "Swollen", "Numb", "Itchy"],
+] as const;
+export const HOW_CHIPS: string[] = [...HOW_CHIPS_BOTH[0]];
 
 /** The places picked on the opening body map, while the question about how they feel is still unanswered. */
 export function pendingAreas(thread: ThreadItem[]): string | null {
@@ -208,6 +238,8 @@ export function pendingAreas(thread: ThreadItem[]): string | null {
 /** The first sentence of a complaint started from the body map: "左膝内侧、腰正中酸痛". */
 export function complaintFromAreas(areas: string, said: string): string {
   const how = said.trim().replace(/[。.]+$/, "");
+  // in English: "Left knee, inner side: aching"
+  if (getLang() === "en") return how ? `${areas}: ${how.charAt(0).toLowerCase()}${how.slice(1)}` : `${areas}: not feeling right`;
   if (!how) return `${areas}不舒服`;
   return how.length <= 4 ? `${areas}${how}` : `${areas}，${how}`;
 }
@@ -224,14 +256,14 @@ async function startFromAreas(areas: string, said: string, alert: Hint | null): 
 export async function pickBodyArea(itemId: string, picked: string | string[]): Promise<void> {
   const item = itemOf(itemId);
   if (item?.kind !== "bodymap" || item.state !== "open" || working.has(THREAD)) return;
-  const area = (Array.isArray(picked) ? picked : [picked]).filter(Boolean).join("、");
+  const area = (Array.isArray(picked) ? picked : [picked]).filter(Boolean).join(L("、", "; "));
   if (!area) return;
   storeActions.patchThread(itemId, (x) => (x.kind === "bodymap" ? { ...x, state: "done", picked: area } : x));
-  const said = `部位：${area}`;
+  const said = L(`部位：${area}`, `Location: ${area}`);
   storeActions.pushThread({ kind: "user", text: said });
   // on opening there is no complaint yet: ask how these places feel, and start it from the answer
   if (!item.episodeId) {
-    say(HOW_QUESTION(area), { chips: HOW_CHIPS, areas: area });
+    say(HOW_QUESTION(area), { chips: [...pick<readonly string[]>(HOW_CHIPS_BOTH[0], HOW_CHIPS_BOTH[1])], areas: area });
     return;
   }
   const episodeId = item.episodeId;
@@ -240,7 +272,7 @@ export async function pickBodyArea(itemId: string, picked: string | string[]): P
     showReply(episodeId, await sendMessage(episodeId, said));
   } catch (err) {
     console.warn("[医伴] 身体图这一轮没有走完", err);
-    say("这次没弄成，再点一下试试，或者直接说哪里疼。");
+    say(L("这次没弄成，再点一下试试，或者直接说哪里疼。", "That didn't work. Tap again, or just say where it hurts."));
   } finally {
     working.stop(THREAD);
   }
@@ -273,20 +305,20 @@ export async function sendTurn(text: string, images: string[] = []): Promise<voi
     } else if (wrap && getState().episodes.some((e) => e.id === wrap.episodeId)) {
       await answerWrap(wrap.episodeId, wrap.step, said);
     } else if (routed.route === "photo") {
-      storeActions.pushThread({ kind: "note", text: "正在看照片，大约十几秒。" });
+      storeActions.pushThread({ kind: "note", text: L("正在看照片，大约十几秒。", "Looking at the photo. This takes about ten seconds.") });
       const seen = await describeSymptomPhoto(images);
       if (typeof seen !== "string") {
         say(
           seen.reason === "unavailable"
-            ? "现在认不了照片。用几句话说说看到的样子吧：在哪儿、什么颜色、多大。"
+            ? L("现在认不了照片。用几句话说说看到的样子吧：在哪儿、什么颜色、多大。", "Photos can't be read right now. Describe what you see in a few words: where, what colour, how big.")
             : seen.reason === "unreadable"
-              ? "这张照片上没看清不舒服的地方。换一张近一点、亮一点的，或者直接说说看到的样子。"
-              : "这次没看成照片，再发一次试试，或者直接说说看到的样子。",
+              ? L("这张照片上没看清不舒服的地方。换一张近一点、亮一点的，或者直接说说看到的样子。", "I couldn't see the problem in this photo. Try a closer, brighter one, or just describe what you see.")
+              : L("这次没看成照片，再发一次试试，或者直接说说看到的样子。", "That photo didn't go through. Send it again, or just describe what you see."),
         );
       } else {
         // the photo itself is not kept: only what it shows, in words, goes on the record
-        const line = said ? `${said}。照片：${seen}` : `照片：${seen}`;
-        say(`照片上看到：${seen}。`);
+        const line = said ? L(`${said}。照片：${seen}`, `${said}. Photo: ${seen}`) : L(`照片：${seen}`, `Photo: ${seen}`);
+        say(L(`照片上看到：${seen}。`, `In the photo: ${seen}.`));
         if (routed.episodeId) {
           showReply(routed.episodeId, await sendMessage(routed.episodeId, line));
         } else {
@@ -299,7 +331,7 @@ export async function sendTurn(text: string, images: string[] = []): Promise<voi
       // the card that was corrected keeps what it said; the corrected description comes in below it
       freezeDescription(routed.episodeId);
       await supplement(routed.episodeId, said);
-      say("好，按你说的改了，新的描述在下面。还有不对的，点「改一下」再说。");
+      say(L("好，按你说的改了，新的描述在下面。还有不对的，点「改一下」再说。", "Done. The corrected description is below. If anything is still wrong, tap “Change” again."));
       storeActions.pushThread({ kind: "description", episodeId: routed.episodeId, state: "draft" });
       void refreshSummary(routed.episodeId);
     } else if (routed.route === "checkin" && routed.episodeId && routed.answer) {
@@ -319,12 +351,12 @@ export async function sendTurn(text: string, images: string[] = []): Promise<voi
       showReply(routed.episodeId, await sendMessage(routed.episodeId, said));
     } else if (routed.route === "reading") {
       for (const r of routed.readings ?? []) {
-        const saved = storeActions.addMeasurement({ type: r.type, value: r.value, value2: r.value2, at: nowISO(), source: "user", note: "对话里说的" });
+        const saved = storeActions.addMeasurement({ type: r.type, value: r.value, value2: r.value2, at: nowISO(), source: "user", note: L("对话里说的", "Said in the chat") });
         const hint = evaluateMeasurement(saved);
         if (hint?.level === "urgent") {
           if (hint.text !== routed.alert?.text) storeActions.pushThread({ kind: "alert", hint });
         } else {
-          say(`记下了：${METRICS[r.type].label} ${formatValue(saved)}。${hint ? hint.text : ""}`);
+          say(L(`记下了：${METRICS[r.type].label} ${formatValue(saved)}。${hint ? hint.text : ""}`, `Noted: ${METRICS[r.type].label} ${formatValue(saved)}.${hint ? ` ${hint.text}` : ""}`));
         }
       }
     } else if (routed.route === "complaint") {
@@ -332,7 +364,7 @@ export async function sendTurn(text: string, images: string[] = []): Promise<voi
       showReply(episode.id, await requestReply(episode.id, "intake"));
     } else {
       const turn = await ask(said);
-      if (!turn) say("这个我没接住，换个说法再问一遍。");
+      if (!turn) say(L("这个我没接住，换个说法再问一遍。", "I didn't catch that. Try asking another way."));
       else {
         if (turn.hint?.level === "urgent" && turn.hint.text !== routed.alert?.text) storeActions.pushThread({ kind: "alert", hint: turn.hint });
         storeActions.pushThread({ kind: "answer", text: turn.answer, sources: turn.sources.map((s) => ({ label: s.label, href: s.href })) });
@@ -340,7 +372,7 @@ export async function sendTurn(text: string, images: string[] = []): Promise<voi
     }
   } catch (err) {
     console.warn("[医伴] 这一轮没有走完", err);
-    say("这次没弄成，再说一遍试试。");
+    say(L("这次没弄成，再说一遍试试。", "That didn't work. Please say it again."));
   } finally {
     working.stop(THREAD);
   }
@@ -371,7 +403,7 @@ function freezeDescription(episodeId: string): void {
 
 export function saveDescription(itemId: string): void {
   storeActions.patchThread(itemId, (x) => (x.kind === "description" ? { ...x, state: "saved" } : x));
-  say("存进就诊记录了。去看医生的时候，点卡片上的「给医生看」。");
+  say(L("存进就诊记录了。去看医生的时候，点卡片上的「给医生看」。", "Saved to your records. At the doctor's, tap “Show the doctor” on the card."));
 }
 
 /** "改一下": nothing to fill in, the patient just says what is wrong with it. */
@@ -379,7 +411,7 @@ export function reviseDescription(itemId: string): void {
   const item = itemOf(itemId);
   if (item?.kind !== "description") return;
   revising = item.episodeId;
-  say("哪里不对？直接说，比如「不对，是饭后才疼」。");
+  say(L("哪里不对？直接说，比如「不对，是饭后才疼」。", "What's wrong with it? Just say, for example “No, it only hurts after meals.”"));
 }
 
 /** Drops the complaint. Returns what is needed to bring it back. */
@@ -403,7 +435,7 @@ export function saveOrders(itemId: string): void {
   if (item?.kind !== "orders" || item.state !== "draft") return;
   saveAfter(item.result, item.episodeId, item.mode);
   storeActions.patchThread(itemId, (x) => (x.kind === "orders" ? { ...x, state: "saved" } : x));
-  say("存进就诊记录了。要我接着做哪一样？点上面卡片里的按钮就行。");
+  say(L("存进就诊记录了。要我接着做哪一样？点上面卡片里的按钮就行。", "Saved to your records. What next? Tap a button on the card above."));
 }
 
 export function discardOrders(itemId: string): void {
@@ -421,15 +453,15 @@ export function listTodos(itemId: string): void {
     if (item.episodeId) {
       storeActions.updateEpisode(item.episodeId, (e) => (e.visit ? { ...e, visit: { ...e.visit, followUpAt: at } } : e));
     } else {
-      storeActions.setNextVisit({ at, note: r.followUpNote ?? "复查" });
+      storeActions.setNextVisit({ at, note: r.followUpNote ?? L("复查", "Check-up") });
     }
   }
   const todos = buildTodos(r);
   if (!todos.length) {
-    say("这次的医嘱里没有认出要吃的药或要做的事。");
+    say(L("这次的医嘱里没有认出要吃的药或要做的事。", "No medicines or tasks were found in these orders."));
     return;
   }
-  say("这是医嘱里要做的事。哪些要提醒、多久提醒一次，你来定，定好点「设好了」。");
+  say(L("这是医嘱里要做的事。哪些要提醒、多久提醒一次，你来定，定好点「设好了」。", "Here is what the orders ask you to do. Choose which ones to be reminded about and how often, then tap “Done”."));
   storeActions.pushThread({ kind: "todo", ordersItemId: itemId, episodeId: item.episodeId, todos, state: "draft" });
 }
 
@@ -445,7 +477,7 @@ export function explainOrders(itemId: string): void {
 /** What a photo of the complaint shows, in words, or why it could not be read. */
 async function describeSymptomPhoto(images: string[]): Promise<string | { reason: "unavailable" | "unreadable" | "failed" }> {
   try {
-    const res = await fetch("/api/symptom-photo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ images }) });
+    const res = await fetch("/api/symptom-photo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ images, lang: getLang() }) });
     const data = (await res.json()) as { description?: string; reason?: "unavailable" | "unreadable" | "failed" };
     if (res.ok && data.description) return data.description;
     return { reason: data.reason ?? "failed" };
@@ -457,23 +489,63 @@ async function describeSymptomPhoto(images: string[]): Promise<string | { reason
 /* ---------- opening pre ---------- */
 
 export const GREETING = "今天哪里不舒服？";
+/** The opening question in each language: Chinese, English. */
+const GREETINGS: readonly string[] = [GREETING, "Where don't you feel well today?"];
 
 /** Should opening the page say 今天哪里不舒服？ No while a round of questions is going on, or when it was already said since the patient last spoke. */
 export function needsGreeting(thread: ThreadItem[], episodes: Episode[], now: number = Date.now()): boolean {
-  if (awaitingReply(episodes, now)) return false;
+  if (inProgress(thread, episodes, now)) return false;
   for (let i = thread.length - 1; i >= 0; i--) {
     const x = thread[i];
     if (x.kind === "user") return true;
-    if (x.kind === "ai" && x.text === GREETING) return false;
+    if (x.kind === "ai" && GREETINGS.includes(x.text)) return false;
   }
   return true;
+}
+
+/**
+ * Is a round in pre under way and not finished? Questions still being asked, the places picked but
+ * not yet how they feel, the last two questions before the description, a description waiting to be
+ * saved, or a correction asked for. Then the page is left exactly as it is until the round is
+ * finished or the patient starts a new one: nothing is added when it is opened again.
+ */
+export function inProgress(thread: ThreadItem[], episodes: Episode[], now: number = Date.now()): boolean {
+  if (revising && episodes.some((e) => e.id === revising)) return true;
+  if (awaitingReply(episodes, now) || pendingAreas(thread) || pendingWrap(thread)) return true;
+  if (thread.some((x) => x.kind === "bodymap" && x.state === "open" && x.episodeId)) return true;
+  return unsavedCards(thread, episodes).some((c) => c.kind === "description");
+}
+
+/** The complaints the round in progress has started and nobody saved: they go when it is dropped. */
+export function unfinishedEpisodes(thread: ThreadItem[], episodes: Episode[]): string[] {
+  const out = new Set<string>();
+  const start = thread[0] ? new Date(thread[0].at).getTime() : Infinity;
+  const described = new Set(thread.filter((x) => x.kind === "description").map((x) => (x as { episodeId: string }).episodeId));
+  for (const c of unsavedCards(thread, episodes)) if (c.kind === "description") out.add(c.episodeId);
+  for (const x of thread) {
+    const id = (x.kind === "ai" || x.kind === "bodymap") && x.episodeId ? x.episodeId : null;
+    const e = id ? episodes.find((y) => y.id === id) : null;
+    // started in this conversation and never got as far as a description
+    if (e && !described.has(e.id) && new Date(e.createdAt).getTime() >= start) out.add(e.id);
+  }
+  return [...out];
+}
+
+/** 开新的: drops the round in progress (the complaint it started is not kept) and opens with the question again. */
+export function startOverPre(): void {
+  if (working.has(THREAD)) return;
+  const { thread, episodes } = getState();
+  for (const id of unfinishedEpisodes(thread, episodes)) storeActions.deleteEpisode(id);
+  revising = null;
+  storeActions.clearThread();
+  greet();
 }
 
 /** 今天哪里不舒服？ with the body picture right under it: pick the places first, then say how they feel. */
 export function greet(): void {
   const { thread, episodes } = getState();
   if (!needsGreeting(thread, episodes)) return;
-  say(GREETING);
+  say(L(GREETINGS[0], GREETINGS[1]));
   storeActions.pushThread({ kind: "bodymap", state: "open" });
 }
 
@@ -484,7 +556,7 @@ export function doctorPage(which: "visit" | "export"): string | null {
   const { episodes } = getState();
   const episode = which === "visit" ? latestActive(episodes) : [...episodes].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
   if (episode) return `/doctor/${episode.id}`;
-  say(which === "visit" ? "先告诉我哪里不舒服，我来整理。" : "现在还没有可以导出的内容。先说一句哪里不舒服，或者拍一张医嘱。");
+  say(which === "visit" ? L("先告诉我哪里不舒服，我来整理。", "First tell me what's wrong, and I'll write it up.") : L("现在还没有可以导出的内容。先说一句哪里不舒服，或者拍一张医嘱。", "There's nothing to export yet. Say what's wrong, or take a photo of the doctor's orders."));
   return null;
 }
 
@@ -497,6 +569,6 @@ export function askDueCheckIns(now: number = Date.now()): void {
   for (const e of state.episodes) {
     if (!isCheckInDue(e, state.settings, now)) continue;
     const asked = state.thread.some((x) => x.kind === "ai" && x.episodeId === e.id && sameChips(x.chips) && new Date(x.at).toDateString() === today);
-    if (!asked) say(checkInQuestion(e, now), { chips: CHECKIN_ANSWERS.map((a) => a.label), episodeId: e.id });
+    if (!asked) say(checkInQuestion(e, now), { chips: CHECKIN_ANSWERS.map((a) => answerLabel(a.key)), episodeId: e.id });
   }
 }

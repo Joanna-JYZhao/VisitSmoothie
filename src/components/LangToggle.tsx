@@ -3,6 +3,7 @@
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useToast } from "./Toast";
+import { L } from "@/lib/lang";
 
 const TRIAL = "English is a trial version. What you recorded yourself stays as you wrote it.";
 
@@ -47,7 +48,7 @@ export function LangToggle({ className, segmented = false }: { className?: strin
     return (
       <div
         role="group"
-        aria-label="语言 / Language"
+        aria-label={L("语言", "Language")}
         className={cn("no-print inline-flex shrink-0 items-center rounded-full bg-surface-2 ring-1 ring-line/80", className)}
       >
         {half("zh", "中", "中文")}

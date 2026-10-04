@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getState, storeActions, useStore } from "@/lib/store";
 import { compressImage } from "@/lib/image";
@@ -9,20 +9,23 @@ import {
   discardDescription,
   discardOrders,
   greet,
+  inProgress,
   reviseDescription,
   saveDescription,
   saveOrders,
   sendTurn,
+  startOverPre,
   useThreadBusy,
 } from "@/lib/thread";
-import { DRAFT_CHOICES, draftPrompt, isDraftPrompt, unsavedCards } from "@/lib/drafts";
+import { StartOver } from "@/components/StartOver";
+import { draftChoiceOf, draftChoices, draftPrompt, isDraftPrompt, unsavedCards } from "@/lib/drafts";
 import { Thread } from "@/components/chat/Thread";
 import { Composer } from "@/components/chat/Composer";
 import { useToast } from "@/components/Toast";
-import { IconTile, LinkButton } from "@/components/ui";
-import { ArrowRight, ChevronRight, FileText } from "lucide-react";
+import { IconTile } from "@/components/ui";
+import { ChevronRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { L, getLang } from "@/lib/lang";
+import { L } from "@/lib/lang";
 
 const MAX_PHOTOS = 4;
 
@@ -31,7 +34,7 @@ function askAboutDraft(): void {
   const { thread, episodes } = getState();
   const card = unsavedCards(thread, episodes).at(-1);
   if (!card || isDraftPrompt(thread.at(-1))) return;
-  storeActions.pushThread({ kind: "ai", text: draftPrompt(card, episodes), chips: [...DRAFT_CHOICES] });
+  storeActions.pushThread({ kind: "ai", text: draftPrompt(card, episodes), chips: draftChoices() });
 }
 
 /**
@@ -40,24 +43,24 @@ function askAboutDraft(): void {
  */
 function answerDraft(text: string): boolean {
   const { thread, episodes } = getState();
-  const choice = DRAFT_CHOICES.find((c) => c === text.trim());
+  const choice = draftChoiceOf(text);
   const card = unsavedCards(thread, episodes).at(-1);
   if (!choice || !card || !isDraftPrompt(thread.at(-1))) return false;
-  storeActions.pushThread({ kind: "user", text: choice });
-  if (choice === "接着改") {
+  storeActions.pushThread({ kind: "user", text: text.trim() });
+  if (choice === "edit") {
     // the card stays a draft: a description is corrected by what is said next; the orders card is right above
     if (card.kind === "description") reviseDescription(card.id);
-    else storeActions.pushThread({ kind: "ai", text: "好，医嘱就在上面，看完再点「保存」。" });
+    else storeActions.pushThread({ kind: "ai", text: L("好，医嘱就在上面，看完再点「保存」。", "OK, the orders are just above. Tap “Save” when you've read them.") });
     return true;
   }
   if (card.kind === "description") {
-    if (choice === "保存") saveDescription(card.id);
-    else if (discardDescription(card.id)) storeActions.pushThread({ kind: "ai", text: "好，这条没有保存。" });
-  } else if (choice === "保存") {
+    if (choice === "save") saveDescription(card.id);
+    else if (discardDescription(card.id)) storeActions.pushThread({ kind: "ai", text: L("好，这条没有保存。", "OK, that one wasn't saved.") });
+  } else if (choice === "save") {
     saveOrders(card.id);
   } else {
     discardOrders(card.id);
-    storeActions.pushThread({ kind: "ai", text: "好，这次的医嘱没有保存。" });
+    storeActions.pushThread({ kind: "ai", text: L("好，这次的医嘱没有保存。", "OK, these orders weren't saved.") });
   }
   // one more left from before: ask about that one too
   askAboutDraft();
@@ -82,12 +85,16 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   const busy = useThreadBusy();
   const end = useRef<HTMLDivElement>(null);
   const asked = useRef(false);
+  const [confirmNew, setConfirmNew] = useState(false);
 
   // the daily question about each complaint that is due, once per opening
   useEffect(() => {
     if (asked.current || !state.profile) return;
     asked.current = true;
-    // 今天哪里不舒服？ — unless questions are going on, or it was already said since the patient last spoke
+    // a round left unfinished is shown exactly as it was left: nothing is added until it is finished or dropped (开新的)
+    const { thread, episodes } = getState();
+    if (inProgress(thread, episodes)) return;
+    // 今天哪里不舒服？ — unless it was already said since the patient last spoke
     greet();
     askDueCheckIns();
     // 离开时问保存还是放弃: a card left unsaved last time is asked about once more, at the end
@@ -137,6 +144,8 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   // Before the patient has said anything the screen is an invitation, not a thread: the opening
   // question sits in the middle of the page, and the ways to answer sit right under it.
   const opening = !state.thread.some((t) => t.kind === "user");
+  // a round under way, which 开新的 can drop
+  const going = !busy && inProgress(state.thread, state.episodes);
 
   /*
    * A phone chat, like Messages: the title at the top, the conversation in the middle, and docked
@@ -148,21 +157,26 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   return (
     <div className="-mb-9 flex min-w-0 flex-1 flex-col">
       {/* while the page is an invitation the name of the page steps back and the question is the headline */}
-      {/* the page name and the shortcut to post share one row, so they can never overlap on a narrow phone */}
+      {/* the page name and 开新的 share one row, so they can never overlap on a narrow phone */}
       <div className={cn("flex items-center justify-between gap-3", !opening && "mb-4")}>
         <h1 className={cn("min-w-0 animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-ink-2" : "t-title text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
-        {/* 看完医生直接跳到 post；回主页还是底部栏中间那个图标（或左上角 logo） */}
-        <LinkButton
-          href="/post"
-          variant="soft"
-          size="sm"
-          aria-label={L("看完医生了？去 post 整理", "Seen the doctor? Go to post")}
-          className="press shrink-0 gap-1 rounded-full"
-        >
-          {L("下一步：看病后", "next · post")}
-          <ArrowRight className="h-4.5 w-4.5" aria-hidden="true" />
-        </LinkButton>
+        {/* 开新的: only while a round is under way; dropping it is asked once more, below */}
+        {going && !confirmNew && <StartOver compact confirming={false} onAsk={() => setConfirmNew(true)} onCancel={() => setConfirmNew(false)} onConfirm={() => undefined} what="" />}
       </div>
+      {going && confirmNew && (
+        <div className="mb-4">
+          <StartOver
+            confirming
+            onAsk={() => undefined}
+            onCancel={() => setConfirmNew(false)}
+            onConfirm={() => {
+              setConfirmNew(false);
+              startOverPre();
+            }}
+            what={L("这一次还没问完、没保存，开新的就不要它了。已经保存的记录不受影响。", "This round isn't finished or saved yet. Starting a new one drops it. Records you already saved stay.")}
+          />
+        </div>
+      )}
       <div className={cn("flex flex-1 flex-col pt-2 pb-5", opening ? "justify-center" : "justify-end")}>
         <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
         {/* scrolled to with room for the dock and the tab bar below it (the page simply stops at its end) */}
@@ -184,8 +198,6 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
             <ChevronRight className="h-5 w-5 shrink-0 text-brand-700" />
           </button>
         )}
-        {/* the assistant still answers in Chinese: said once, quietly, where its replies arrive */}
-        {getLang() === "en" && <p className="text-center text-base leading-snug text-ink-2">AI replies are in Chinese for now.</p>}
         <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
       </div>
     </div>

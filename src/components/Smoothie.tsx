@@ -7,7 +7,7 @@ import { L } from "@/lib/lang";
 
 /* The user's own logo, in the same link to the same place, with the same accessible name as before. */
 const brand = (
-  <Link className="smoothie-brand" href="/welcome" aria-label="VisitSmoothie">
+  <Link className="smoothie-brand" href="/welcome" aria-label={L("问诊奶昔", "VisitSmoothie")}>
     <BrandLogo />
   </Link>
 );
@@ -29,7 +29,7 @@ export function SmoothieHeader({ right }: { right?: React.ReactNode }) {
 export function SmoothieFooter() {
   return (
     <footer className="onboarding-footer">
-      <span>VisitSmoothie</span>
+      <span>{L("问诊奶昔", "VisitSmoothie")}</span>
       <span>{L("档案保存在这台电脑上。", "Your profile is kept on this computer.")}</span>
     </footer>
   );
@@ -43,7 +43,7 @@ export function SmoothieAppMark() {
   return (
     <div className="login-mark">
       <LogoMark className="login-mark-tile" />
-      <span className="login-mark-name">VisitSmoothie</span>
+      <span className="login-mark-name">{L("问诊奶昔", "VisitSmoothie")}</span>
     </div>
   );
 }

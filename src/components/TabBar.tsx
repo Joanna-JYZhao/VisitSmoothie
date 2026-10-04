@@ -27,7 +27,7 @@ const LEFT: Tab[] = [
   { href: "/post", label: ["看病后", "post"], guide: "post", Icon: Camera },
 ];
 const RIGHT: Tab[] = [
-  { href: "/report", label: ["记录", "report"], guide: "report", Icon: FileText },
+  { href: "/report", label: ["健康记录", "Health Record"], guide: "report", Icon: FileText },
   { href: "/set", label: ["设置", "set"], guide: "profile", Icon: Settings },
 ];
 
@@ -61,11 +61,11 @@ export function TabBar() {
         ))}
         {/* the app icon stands up out of the bar, its name under it; the middle column is wide enough for the name */}
         <div className="relative h-full">
-          <Link href="/" aria-label={L("VisitSmoothie 首页", "VisitSmoothie home")} aria-current={home ? "page" : undefined} className={cn("tab-home press", focusRing)}>
+          <Link href="/" aria-label={L("问诊奶昔首页", "VisitSmoothie home")} aria-current={home ? "page" : undefined} className={cn("tab-home press", focusRing)}>
             <SmoothieMark className="h-[3.6rem] w-[3.6rem]" />
             {/* the name under the icon, where the other tabs have their labels */}
             <span aria-hidden="true" className={cn("tab-home-name text-base leading-tight tracking-tight", home ? "font-semibold text-brand-700" : "font-medium text-ink-2")}>
-              VisitSmoothie
+              {L("问诊奶昔", "VisitSmoothie")}
             </span>
           </Link>
         </div>

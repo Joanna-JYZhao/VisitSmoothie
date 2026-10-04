@@ -17,6 +17,7 @@ import type {
   Lang,
   Measurement,
   NewThreadItem,
+  PostDraft,
   Profile,
   Reminder,
   Settings,
@@ -92,7 +93,11 @@ export interface StoreApi {
   /** Changes a card in place (a draft that was saved, a description that was rewritten). */
   patchThread: (id: string, fn: (item: ThreadItem) => ThreadItem) => void;
   clearThread: () => void;
-  addReminders: (list: Omit<Reminder, "id" | "createdAt">[]) => Reminder[];
+  /** The Clinical Plan being looked over in post; null when there is none (saved, or started over). */
+  setPostDraft: (draft: PostDraft | null) => void;
+  /** Changes the Clinical Plan being looked over, if there still is one. */
+  patchPostDraft: (fn: (d: PostDraft) => PostDraft) => void;
+  addReminders:(list: Omit<Reminder, "id" | "createdAt">[]) => Reminder[];
   updateReminder: (id: string, fn: (r: Reminder) => Reminder) => void;
   removeReminder: (id: string) => void;
   /** Adds medicines to the profile's long-term list. Unlike setProfile, this keeps a demo a demo. */
@@ -532,6 +537,8 @@ const actions: Omit<StoreApi, "state" | "ready"> = {
   },
   patchThread: (id, fn) => update((prev) => ({ ...prev, thread: prev.thread.map((x) => (x.id === id ? fn(x) : x)) })),
   clearThread: () => update((prev) => ({ ...prev, thread: [] })),
+  setPostDraft: (draft) => update((prev) => ({ ...prev, postDraft: draft })),
+  patchPostDraft: (fn) => update((prev) => (prev.postDraft ? { ...prev, postDraft: fn(prev.postDraft) } : prev)),
   addReminders: (list) => {
     const made: Reminder[] = list.map((r) => ({ id: uid(), createdAt: nowISO(), ...r }));
     update((prev) => ({ ...prev, reminders: [...prev.reminders, ...made] }));

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronDown, ChevronUp, FileText, MessageCircleQuestion } from "lucide-react";
 import type { AskTurn } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { L, getLang } from "@/lib/lang";
+import { L } from "@/lib/lang";
 import { ask, suggestedQuestions, usePendingAsk } from "@/lib/ask";
 import { HintBanner } from "@/components/HintBanner";
 import { SpeakInput } from "@/components/SpeakInput";
@@ -82,7 +82,7 @@ export default function AskPage() {
       {/* the same top as the home's 问 AI sheet: the way back on the left, the name beside it, 清空 at the right */}
       <div className="flex min-h-12 items-center gap-1">
         <BackLink href="/">{L("返回", "Back")}</BackLink>
-        <h1 className="t-heading min-w-0 flex-1 animate-fade-up truncate text-ink">{L("问医伴", "Ask VisitSmoothie")}</h1>
+        <h1 className="t-heading min-w-0 flex-1 animate-fade-up truncate text-ink">{L("问问诊奶昔", "Ask VisitSmoothie")}</h1>
         {turns.length > 0 && !busy && (
           <TextButton tone="muted" className="-mr-2" onClick={clear}>
             {L("清空", "Clear")}
@@ -95,7 +95,6 @@ export default function AskPage() {
           "Ask me what you can't quite remember about your own health. I answer from your records and your doctor visits. I do not diagnose.",
         )}
       </p>
-      {getLang() === "en" && <p className="t-body mt-2 text-ink-2">AI replies are in Chinese for now.</p>}
 
       <div className="mt-6 space-y-3" aria-live="polite">
         {turns.map((t) => (
@@ -112,7 +111,7 @@ export default function AskPage() {
             )}
             <p className="mt-3 flex items-center gap-3 text-lg text-ink-2">
               <span>{L("正在查你的记录", "Checking your records")}</span>
-              <TypingDots label={L("医伴正在查记录", "VisitSmoothie is checking your records")} />
+              <TypingDots label={L("问诊奶昔正在查记录", "VisitSmoothie is checking your records")} />
             </p>
           </div>
         )}
@@ -165,7 +164,7 @@ export default function AskPage() {
         <div className="px-4 pt-2.5 pb-8">
           <SpeakInput
             placeholder={L("说一句或打一句，比如：上次医生说了什么", "Ask a question")}
-            ariaLabel={L("问医伴", "Ask VisitSmoothie")}
+            ariaLabel={L("问问诊奶昔", "Ask VisitSmoothie")}
             onSubmit={send}
             disabled={busy}
           />

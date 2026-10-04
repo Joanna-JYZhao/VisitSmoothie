@@ -254,7 +254,7 @@ export default function SosPage() {
             </TextLink>
             <TextLink href="/" tone="plain">
               <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-              {L("回到医伴", "Back to VisitSmoothie")}
+              {L("回到问诊奶昔", "Back to VisitSmoothie")}
             </TextLink>
           </div>
         </div>

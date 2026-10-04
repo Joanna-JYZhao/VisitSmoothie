@@ -15,6 +15,8 @@ import type {
 } from "../types";
 import { clampSeverity, provisionalTitle, textOverlap, uniq } from "../utils";
 import { findColloquial, termAsked } from "../colloquial";
+import { L, getLang } from "../lang";
+import { titleEn } from "./fallbackEn";
 import {
   extractMeasurements,
   extractOnsetHours,
@@ -133,6 +135,17 @@ export function repeatedQuestion(reply: string, messages: { role: string; conten
   return null;
 }
 
+const NOTED_ONLY = ["好，这些我先记下。", "OK, I've noted that."] as const;
+const CLOSE_LINE = ["好了，我都记下了。", "Got it, I've written it all down."] as const;
+
+/** What was acknowledged, closed with 好了，我都记下了 (said once, in the language of the interface). */
+function closeWith(acknowledged: string): string {
+  const kept = acknowledged === NOTED_ONLY[0] || acknowledged === NOTED_ONLY[1] ? "" : acknowledged;
+  const close = L(CLOSE_LINE[0], CLOSE_LINE[1]);
+  if (/记下了|written it all down/.test(kept)) return kept;
+  return kept ? `${kept}${getLang() === "en" ? " " : ""}${close}` : close;
+}
+
 /** Last resort when the model insists on repeating itself: keep what it acknowledged, drop the question. */
 export function withoutQuestion(res: ChatResponse): ChatResponse {
   const kept = res.reply
@@ -140,7 +153,7 @@ export function withoutQuestion(res: ChatResponse): ChatResponse {
     .map((x) => x.trim())
     .filter((x) => x && !/[？?]$/.test(x))
     .join("");
-  return { ...res, reply: kept || "好，这些我先记下。", suggestedReplies: [], done: true, widget: null };
+  return { ...res, reply: kept || L(NOTED_ONLY[0], NOTED_ONLY[1]), suggestedReplies: [], done: true, widget: null };
 }
 
 const lastUserText = (req: ChatRequest) =>
@@ -153,10 +166,10 @@ const firstUserText = (req: ChatRequest) => req.messages.find((m) => m.role === 
  */
 export function salvageChat(text: string, req: ChatRequest): ChatResponse {
   const ruled = fallbackChat(req);
-  let reply = withoutTestAdvice(withoutSpeculation(text.trim().slice(0, 400))) || "记下了。";
+  let reply = withoutTestAdvice(withoutSpeculation(text.trim().slice(0, 400))) || L("记下了。", "Noted.");
   // the question limit holds here too
   if (hasQuestion(reply) && (askedInRound(req.messages) >= MAX_QUESTIONS || evasive(req.messages))) {
-    reply = `${withoutQuestion({ reply } as ChatResponse).reply.replace(/^好，这些我先记下。$/, "")}好了，我都记下了。`.replace(/(好了，我都记下了。)+/, "好了，我都记下了。");
+    reply = closeWith(withoutQuestion({ reply } as ChatResponse).reply);
   }
   return {
     mode: "glm",
@@ -238,7 +251,8 @@ const NAMES_A_DISEASE = /炎|癌|瘤|综合征|感冒|流感|中风|脑梗|心�
 
 export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-  const reply = withoutTestAdvice(withoutSpeculation(str(o.reply))) || "记下了。";
+  // in English a sentence that runs into the next ("pulse?Doctors call this…") gets its space back
+  const reply = (withoutTestAdvice(withoutSpeculation(str(o.reply))) || L("记下了。", "Noted.")).replace(getLang() === "en" ? /([?.!])(?=[A-Z])/g : /$^/, "$1 ");
   const said = lastUserText(req);
   const first = req.kind === "intake";
 
@@ -298,8 +312,8 @@ export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
   let quick = done && !hasQuestion(reply) ? [] : suggestedReplies;
   // out of questions: whatever the model asked last is dropped, and the round is wrapped up
   if (spent && hasQuestion(reply)) {
-    finalReply = withoutQuestion({ reply } as ChatResponse).reply.replace(/^好，这些我先记下。$/, "") || "好了，我都记下了。";
-    if (!/记下了/.test(finalReply)) finalReply = `${finalReply}好了，我都记下了。`;
+    finalReply = closeWith(withoutQuestion({ reply } as ChatResponse).reply);
+    
     quick = [];
   }
 
@@ -324,12 +338,17 @@ export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
   // it is, what has been taken, an everyday word to confirm, where it hurts, a link to an old illness,
   // and how it hurts. The model tends to stop after two.
   const firstRound = req.kind !== "checkin" && !req.messages.some((m) => m.role === "assistant" && !hasQuestion(m.content));
-  const step = firstRound && !spent && hint?.level !== "urgent" ? consultPlan(req).next : null;
+  // In English the rules' plan cannot read the answers (it reads Chinese): the model runs the questions
+  // itself, from the list in the prompt, and nothing is asked in the rules' (Chinese) words.
+  const en = getLang() === "en";
+  const step = !en && firstRound && !spent && hint?.level !== "urgent" ? consultPlan(req).next : null;
   // The model may put an everyday word the table does not know ("头咚咚的") into the doctor's word itself.
   // Words the table knows are confirmed in the table's wording, by the rules.
-  const ownConfirm = !done && termAsked(reply) != null && findColloquial(said).length === 0 && step?.key !== "confirm";
-  if (ownConfirm) quick = ["是", "不是"];
+  const ownConfirm = !done && (en ? termAskedEn(reply) != null : termAsked(reply) != null && findColloquial(said).length === 0 && step?.key !== "confirm");
+  if (ownConfirm) quick = en ? ["Yes", "No"] : ["是", "不是"];
   let widget: ChatResponse["widget"] = null;
+  // asked where it is: the body map to tap, right under the question (in English, by the model's own question)
+  if (en && !done && LOCATION_ASKED_EN.test(questionOf(reply) ?? "")) widget = "bodymap";
   if (step && !ownConfirm) {
     if (done && !hasQuestion(reply)) {
       if (step.required) {
@@ -359,7 +378,7 @@ export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
     if (!done && step.widget && LOCATION_ASKED_BY_MODEL.test(questionOf(finalReply) ?? "")) widget = step.widget;
   }
   // a confirmed everyday word, or a place picked on the body map, goes on the record the way a doctor reads it
-  const answered = first ? null : answerEntry(req);
+  const answered = first || en ? null : answerEntry(req);
   if (answered) {
     entry = {
       severity: entry?.severity ?? null,
@@ -378,7 +397,7 @@ export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
     suggestedReplies: quick,
     hint,
     measurements,
-    title: first ? title || provisionalTitle(firstUserText(req)) : null,
+    title: first ? title || (en ? titleEn(firstUserText(req)) : provisionalTitle(firstUserText(req))) : null,
     onsetHoursAgo: onset,
     done,
     widget,
@@ -388,6 +407,38 @@ export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
 /** steps asked in the rules' own words when the model asks something else instead */
 const OVERRIDE = new Set<ConsultStep["key"]>(["confirm", "location", "link"]);
 const LOCATION_ASKED_BY_MODEL = /哪个位置|哪个部位|哪里(疼|痛|不舒服)|哪边|具体位置|哪一侧|图上/;
+const LOCATION_ASKED_EN = /where exactly|which (part|side|spot|area)|where (does|is) (it|the pain)|where do you feel|point to|on the picture/i;
+
+/**
+ * The English description keeps only what is on record. The Chinese filters cannot read English, so
+ * here a sentence that says the patient has *not* had something ("I haven't taken any medicine",
+ * "no other symptoms") is dropped unless the record itself says no to that thing.
+ */
+export function onlyStatedEn(text: string, said: string): string {
+  const record = said.toLowerCase();
+  const NEGATIVE = /\b(haven't|have not|hasn't|has not|didn't|did not|don't|do not|no other|not noticed|never had|none)\b/i;
+  const KEYWORDS: [RegExp, RegExp][] = [
+    [/medic|medicine|pill|tablet|taken anything|taken any/i, /\b(no|not|haven't|didn't|nothing)\b.{0,30}(medic|medicine|pill|tablet|took|taken)|no medicine|nothing for it/],
+    [/before|similar|first time|previous/i, /first time|never (had|happened)|not before|hasn't happened/],
+    [/other symptom|anything else|else wrong/i, /nothing else|no other|not anything else/],
+    [/fever|temperature/i, /no fever|not.{0,10}fever/],
+  ];
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => {
+      if (!NEGATIVE.test(sentence)) return true;
+      const topic = KEYWORDS.find(([about]) => about.test(sentence));
+      // a "no" about something the record does say no to stays; any other "no" was made up
+      return topic ? topic[1].test(record) : false;
+    })
+    .join(" ")
+    .trim();
+}
+
+/** In English the doctor's word is given in quotes: Doctors call this "throbbing pain". */
+export function termAskedEn(text: string): string | null {
+  return termAsked(text) ?? text.match(/call(?:s|ed)? (?:this|it|that) ["“]([^"”]+)["”]/i)?.[1] ?? null;
+}
 
 /** Does the model's question ask what this step is about? */
 function askedAbout(step: ConsultStep, q: string, whole = q): boolean {
@@ -588,7 +639,7 @@ export function normalizeSummary(raw: unknown, req: SummaryRequest): DoctorSumma
     // The first screen is built from the records by rule. It is on screen at once, every line can be
     // traced to something recorded, and it does not change when the model's version arrives.
     glance: base.glance,
-    narrative: clean(o.narrative) || base.narrative,
+    narrative: (getLang() === "en" ? onlyStatedEn(str(o.narrative), said) : clean(o.narrative)) || base.narrative,
     chiefComplaint: clean(o.chiefComplaint) || base.chiefComplaint,
     presentIllness: clean(o.presentIllness) || base.presentIllness,
     // The timeline is never the model's: it is the recorded entries themselves, so nothing in it can be made up.

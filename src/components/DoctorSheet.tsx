@@ -353,10 +353,10 @@ export function SheetActions({
         <div className="px-4 pt-4 pb-3">
           <Button size="lg" className="press w-full text-lg" onClick={() => window.print()}>
             <FileDown className="h-6 w-6" />
-            {L("导出 PDF", "Export PDF")}
+            {L("导出文件", "Export PDF")}
           </Button>
           <p className="mt-2 text-center text-base leading-snug text-ink-2">
-            {L("在打印窗口里选「存储为 PDF」", "In the print window, choose “Save as PDF”")}
+            {L("在打印窗口里，目标打印机选「另存为」那一项", "In the print window, choose “Save as PDF”")}
           </p>
         </div>
       )}
@@ -417,7 +417,7 @@ export function SheetFootnote() {
   return (
     // on paper it closes the sheet: set off from the last section by a rule, like a footer
     <p className="mx-auto max-w-[30rem] px-4 pt-2 pb-4 text-center text-base leading-relaxed text-ink-2 print:mt-5 print:max-w-none print:border-t print:border-line print:px-0! print:pt-3 print:text-black">
-      {L("以上是患者自己记录、由医伴整理的内容，不是诊断。", "Recorded by the patient and organized by VisitSmoothie. Not a diagnosis.")}
+      {L("以上是患者自己记录、由问诊奶昔整理的内容，不是诊断。", "Recorded by the patient and organized by VisitSmoothie. Not a diagnosis.")}
     </p>
   );
 }

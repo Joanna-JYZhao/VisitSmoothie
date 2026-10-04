@@ -7,7 +7,7 @@ import type { ChatMessage, Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { requestReply, sendMessage, useRelatedEpisodes, useReplyPending } from "@/lib/episodeAI";
 import { cn, episodeLine, fmtDate, fmtTime, textOverlap } from "@/lib/utils";
-import { L, getLang } from "@/lib/lang";
+import { L } from "@/lib/lang";
 import { HintBanner } from "@/components/HintBanner";
 import { SpeakInput } from "@/components/SpeakInput";
 import { useToast } from "@/components/Toast";
@@ -152,7 +152,6 @@ function Conversation({ episode: e }: { episode: Episode }) {
         </TextLink>
       )}
 
-      {getLang() === "en" && <p className="t-body mb-4 text-ink-2">AI replies are in Chinese for now.</p>}
       <div className="space-y-3.5" aria-live="polite">
         {e.messages.map((m, i) => (
           <Fragment key={m.id}>
@@ -208,7 +207,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
             <div className="glass mx-auto w-full max-w-[36rem] rounded-[30px] border border-white/70 p-1.5 shadow-float">
               <SpeakInput
                 placeholder={finished ? L("还想补充什么，说或者打字", "Anything to add? Say it or type it") : L("说一句或打一句", "Say or type a line")}
-                ariaLabel={L("对医伴说", "Say it to VisitSmoothie")}
+                ariaLabel={L("对问诊奶昔说", "Say it to VisitSmoothie")}
                 onSubmit={(t) => void sendMessage(e.id, t)}
                 disabled={pending}
               />
