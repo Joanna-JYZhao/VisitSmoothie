@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertCircle, AlertTriangle, ArrowRight, Camera, ChevronRight, ListChecks, MessageCircle } from "lucide-react";
+import { AlertCircle, AlertTriangle, Camera, ChevronRight, ListChecks, MessageCircle } from "lucide-react";
 import { useNow, useStore } from "@/lib/store";
 import { checkInQuestion, currentHint, isCheckInDue } from "@/lib/checkin";
 import { TodoList } from "@/components/home/TodoList";
@@ -11,12 +11,13 @@ import { unsavedCards } from "@/lib/drafts";
 import { cn } from "@/lib/utils";
 
 /*
- * One door: a sheet of white lit from the corner, an app-icon tile resting on it, the word in display
- * type, one sentence. It lifts to the hand and gives under the finger; an arrow in the corner says it opens.
+ * One door: a compact row — the app-icon tile on the left, the word and its one sentence beside it,
+ * a quiet chevron at the end. It lifts to the hand and gives under the finger. Small enough that both
+ * doors and a good part of the to-do list share the first screen of a phone.
  */
 const doorCls =
-  "lift press group jade-edge relative flex min-h-64 flex-col items-center justify-center overflow-hidden rounded-[32px] border border-line/70 px-8 py-12 text-center material-raised sm:min-h-80 hover:border-brand-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
-const iconCls = "relative flex h-24 w-24 items-center justify-center rounded-[28px] text-white transition-transform duration-500 ease-[cubic-bezier(0.34,1.3,0.64,1)] group-hover:scale-105 group-hover:-translate-y-1";
+  "lift press group jade-edge flex min-h-25 items-center gap-3.5 rounded-[20px] border border-line/70 px-4 py-3.5 text-left material sm:min-h-28 sm:gap-4 sm:px-5 sm:py-5 hover:border-brand-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
+const iconCls = "flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] text-white transition-transform duration-300 ease-[cubic-bezier(0.34,1.3,0.64,1)] group-hover:scale-105";
 
 const ITEM_TONE = {
   red: { row: "bg-danger-bg", tile: "solidDanger" as const, Icon: AlertTriangle },
@@ -50,33 +51,33 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* the two doors: big, calm, and the first things to move when the page opens */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+    <div className="space-y-5 sm:space-y-6">
+      {/* the two doors: one compact row each, still the first things to move when the page opens */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
         <Link href="/pre" className={cn(doorCls, "rise-1")}>
-          {/* the stage: a pool of light behind the tile, as on the welcome screen */}
-          <span aria-hidden="true" className="pool -top-24 left-1/2 h-72 w-72 -translate-x-1/2" />
           <span className={cn(iconCls, "tile-brand")}>
-            <MessageCircle className="h-12 w-12" strokeWidth={2} />
+            <MessageCircle className="h-5 w-5" strokeWidth={2} />
           </span>
-          <span className="relative mt-7 text-[3.25rem] leading-none font-bold tracking-[-0.045em] text-ink sm:text-[3.75rem]">pre</span>
-          <span className="t-lead relative mt-3 text-ink-2">看医生之前：哪里不舒服，跟我说</span>
-          <ArrowRight className="absolute right-6 bottom-6 hidden h-6 w-6 text-brand-400 transition-transform duration-300 group-hover:translate-x-1 sm:block" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[1.5rem] leading-none font-bold tracking-[-0.03em] text-ink">pre</span>
+            <span className="t-body mt-1 block text-ink-2">看医生之前：哪里不舒服，跟我说</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
         </Link>
         <Link href="/post" className={cn(doorCls, "rise-2")}>
-          {/* the stage: a pool of light behind the tile, as on the welcome screen */}
-          <span aria-hidden="true" className="pool -top-24 left-1/2 h-72 w-72 -translate-x-1/2" />
           <span className={cn(iconCls, "tile-ink")}>
-            <Camera className="h-12 w-12" strokeWidth={2} />
+            <Camera className="h-5 w-5" strokeWidth={2} />
           </span>
-          <span className="relative mt-7 text-[3.25rem] leading-none font-bold tracking-[-0.045em] text-ink sm:text-[3.75rem]">post</span>
-          <span className="t-lead relative mt-3 text-ink-2">看完医生：把医嘱拍给我</span>
-          <ArrowRight className="absolute right-6 bottom-6 hidden h-6 w-6 text-brand-400 transition-transform duration-300 group-hover:translate-x-1 sm:block" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[1.5rem] leading-none font-bold tracking-[-0.03em] text-ink">post</span>
+            <span className="t-body mt-1 block text-ink-2">看完医生：把医嘱拍给我</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
         </Link>
       </div>
 
-      <section className="rise-3 material-raised min-h-48 rounded-[32px] border border-line/70 p-5 sm:p-8">
-        <div className="flex items-center gap-3.5">
+      <section className="rise-3 material-raised rounded-[28px] border border-line/70 p-4 sm:p-6">
+        <div className="flex items-center gap-3">
           <IconTile tone="solid" size="lg">
             <ListChecks />
           </IconTile>
@@ -84,16 +85,16 @@ export default function HomePage() {
         </div>
         <TodoList now={now} />
         {items.length > 0 && (
-          <ul className="mt-5 space-y-2.5">
+          <ul className="mt-4 space-y-2">
             {items.map((it, i) => {
               const t = ITEM_TONE[it.tone ?? "plain"];
               const body = (
-                <span className={cn("flex items-start gap-3.5 rounded-2xl px-4 py-3.5", t.row)}>
+                <span className={cn("flex items-start gap-3 rounded-2xl px-3.5 py-3", t.row)}>
                   <IconTile tone={t.tile} size="md" className="mt-0.5">
                     <t.Icon />
                   </IconTile>
-                  <span className={cn("t-body min-w-0 flex-1 pt-1.5", it.tone === "red" ? "font-semibold text-danger" : "text-ink")}>{it.text}</span>
-                  {it.href && <ChevronRight className="mt-2.5 h-5 w-5 shrink-0 text-ink-3" aria-hidden="true" />}
+                  <span className={cn("t-body min-w-0 flex-1 pt-1", it.tone === "red" ? "font-semibold text-danger" : "text-ink")}>{it.text}</span>
+                  {it.href && <ChevronRight className="mt-2 h-5 w-5 shrink-0 text-ink-3" aria-hidden="true" />}
                 </span>
               );
               return (
@@ -110,7 +111,7 @@ export default function HomePage() {
             })}
           </ul>
         )}
-        <div className="mt-7 border-t border-line pt-7">
+        <div className="mt-5 border-t border-line pt-5">
           <AskBox now={now} />
         </div>
       </section>

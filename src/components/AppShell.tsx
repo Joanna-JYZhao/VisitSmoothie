@@ -29,7 +29,7 @@ function Splash() {
  */
 function SosLink() {
   return (
-    <Link href="/sos" className={cn("press inline-flex min-h-12 items-center rounded-full", focusRing)}>
+    <Link href="/sos" className={cn("press inline-flex min-h-11 items-center rounded-full", focusRing)}>
       <span className="tile-danger inline-flex min-h-10 items-center gap-1.5 rounded-full px-4 text-base font-semibold whitespace-nowrap text-white transition duration-200 hover:brightness-110">
         <Siren className="h-4.5 w-4.5" aria-hidden="true" />
         应急
@@ -43,7 +43,7 @@ function SosLink() {
  * they lift to the hand. On a phone they are small pills in a row above the title.
  */
 const doorCls =
-  "lift press material flex min-h-12 flex-col items-center justify-center gap-1.5 rounded-full border border-line/80 px-3.5 text-base font-semibold whitespace-nowrap text-ink hover:border-brand-200 hover:text-brand-800 md:px-0";
+  "lift press material flex min-h-11 flex-col items-center justify-center gap-1.5 rounded-full border border-line/80 px-3.5 text-base font-semibold whitespace-nowrap text-ink hover:border-brand-200 hover:text-brand-800 md:px-0";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { state, ready } = useStore();
@@ -79,11 +79,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // The wireframe: the title and a line across the top of the main area, and a bar on the right
   // with profile (round) and report (square). 应急 stays, small, at the bottom of that bar.
   // On a phone the bar is a compact row above the title; the reading order stays the same.
+  // The bar is a column you keep for the whole session, so it is sized to be read, not to fill the
+  // screen: 170px wide on a desktop, and its two doors are 96×96 and 96×85 rather than 128s.
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col md:flex-row">
-      <div className="min-w-0 flex-1 px-4 pt-4 pb-16 sm:px-8 sm:pt-7 lg:px-12">
+      <div className="min-w-0 flex-1 px-4 pt-3 pb-12 sm:px-8 sm:pt-5 lg:px-12">
         {/* the title and the line under it, the way the wireframe draws them */}
-        <header className="no-print mb-7 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-ink/15 pb-3 sm:mb-10">
+        <header className="no-print mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-ink/15 pb-2.5 sm:mb-6 sm:pb-3">
           <Link href="/" className={cn("app-brand rounded-lg", focusRing)} aria-label="VisitSmoothie">
             <BrandLogo />
           </Link>
@@ -103,23 +105,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       {/* the bar on the right: a composed column — the two doors at the top, the mark resting in the middle, the way out at the foot */}
-      <aside className="app-rail no-print order-first flex shrink-0 flex-wrap items-center justify-between gap-1.5 border-b border-line px-2 py-2 sm:gap-2 sm:px-3 md:sticky md:top-0 md:z-30 md:order-none md:h-screen md:w-56 md:flex-col md:flex-nowrap md:justify-start md:gap-7 md:border-b-0 md:border-l md:border-ink/15 md:px-0 md:py-0 md:pt-10">
-        <Link href="/me" className={cn(doorCls, "md:h-32 md:w-32 md:rounded-full", focusRing)}>
-          <span className="tile-brand hidden h-11 w-11 items-center justify-center rounded-[13px] text-white md:flex">
-            <UserRound className="h-6 w-6" />
+      <aside className="app-rail no-print order-first flex shrink-0 flex-wrap items-center justify-between gap-1.5 border-b border-line px-2 py-1.5 sm:gap-2 sm:px-3 md:sticky md:top-0 md:z-30 md:order-none md:h-screen md:w-40 md:flex-col md:flex-nowrap md:justify-start md:gap-5 md:border-b-0 md:border-l md:border-ink/15 md:px-0 md:py-0 md:pt-7">
+        <Link href="/me" className={cn(doorCls, "md:h-24 md:w-24 md:rounded-full", focusRing)}>
+          <span className="tile-brand hidden h-10 w-10 items-center justify-center rounded-[12px] text-white md:flex">
+            <UserRound className="h-5 w-5" />
           </span>
           profile
         </Link>
-        <Link href="/report" className={cn(doorCls, "md:h-28 md:w-32 md:rounded-[24px]", focusRing)}>
-          <span className="tile-ink hidden h-11 w-11 items-center justify-center rounded-[13px] text-white md:flex">
-            <FileText className="h-6 w-6" />
+        <Link href="/report" className={cn(doorCls, "md:h-20 md:w-24 md:rounded-[20px]", focusRing)}>
+          <span className="tile-ink hidden h-10 w-10 items-center justify-center rounded-[12px] text-white md:flex">
+            <FileText className="h-5 w-5" />
           </span>
           report
         </Link>
         <div aria-hidden="true" className="hidden flex-1 items-center justify-center self-stretch select-none md:flex">
           <BrandLogo className="rail-watermark" preload={false} />
         </div>
-        <div className="flex items-center gap-1 md:mb-8 md:flex-col md:gap-3">
+        <div className="flex items-center gap-1 md:mb-6 md:flex-col md:gap-2.5">
           <SosLink />
           {/* log out: this account's records stay saved for the next login */}
           <button
@@ -129,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               reloadAccount();
               router.replace("/welcome");
             }}
-            className={cn("press min-h-12 rounded-full px-2 text-base font-medium whitespace-nowrap text-ink-2 underline decoration-line-strong underline-offset-4 transition hover:text-ink sm:px-3", focusRing)}
+            className={cn("press min-h-11 rounded-full px-2 text-base font-medium whitespace-nowrap text-ink-2 underline decoration-line-strong underline-offset-4 transition hover:text-ink sm:px-3", focusRing)}
           >
             退出登录
           </button>
