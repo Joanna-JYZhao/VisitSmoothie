@@ -19,8 +19,8 @@ import { DRAFT_CHOICES, draftPrompt, isDraftPrompt, unsavedCards } from "@/lib/d
 import { Thread } from "@/components/chat/Thread";
 import { Composer } from "@/components/chat/Composer";
 import { useToast } from "@/components/Toast";
-import { IconTile } from "@/components/ui";
-import { ChevronRight, FileText } from "lucide-react";
+import { IconTile, LinkButton } from "@/components/ui";
+import { ArrowRight, ChevronRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { L, getLang } from "@/lib/lang";
 
@@ -94,6 +94,12 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
     askAboutDraft();
   }, [state.profile]);
 
+  // the conversation was emptied while open (the demo is rebuilt when the language is switched): greet again
+  const empty = state.thread.length === 0;
+  useEffect(() => {
+    if (asked.current && empty && state.profile) greet();
+  }, [empty, state.profile]);
+
   // closing or reloading the page with an unsaved card: the browser's own "leave this page?" prompt
   const unsaved = unsavedCards(state.thread, state.episodes).length > 0;
   useEffect(() => {
@@ -142,7 +148,21 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   return (
     <div className="-mb-9 flex min-w-0 flex-1 flex-col">
       {/* while the page is an invitation the name of the page steps back and the question is the headline */}
-      <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-center text-ink-2" : "t-title mb-4 text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
+      {/* the page name and the shortcut to post share one row, so they can never overlap on a narrow phone */}
+      <div className={cn("flex items-center justify-between gap-3", !opening && "mb-4")}>
+        <h1 className={cn("min-w-0 animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-ink-2" : "t-title text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
+        {/* 看完医生直接跳到 post；回主页还是底部栏中间那个图标（或左上角 logo） */}
+        <LinkButton
+          href="/post"
+          variant="soft"
+          size="sm"
+          aria-label={L("看完医生了？去 post 整理", "Seen the doctor? Go to post")}
+          className="press shrink-0 gap-1 rounded-full"
+        >
+          next · post
+          <ArrowRight className="h-4.5 w-4.5" aria-hidden="true" />
+        </LinkButton>
+      </div>
       <div className={cn("flex flex-1 flex-col pt-2 pb-5", opening ? "justify-center" : "justify-end")}>
         <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
         {/* scrolled to with room for the dock and the tab bar below it (the page simply stops at its end) */}
