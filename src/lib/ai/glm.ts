@@ -1,5 +1,9 @@
-/** Server-side client for the Zhipu GLM OpenAI-compatible chat API. */
+/**
+ * Server-side model client. Chat and photos go to Claude (Anthropic API); speech to text stays on
+ * Zhipu GLM, which Claude has no counterpart for. The exported names are kept from the GLM days.
+ */
 
+import Anthropic from "@anthropic-ai/sdk";
 import { ENGLISH_OUTPUT, getLang } from "../lang";
 
 export interface GlmMessage {
@@ -7,8 +11,10 @@ export interface GlmMessage {
   content: string;
 }
 
-function baseUrl() {
-  return (process.env.GLM_BASE_URL || "https://open.bigmodel.cn/api/paas/v4").replace(/\/$/, "");
+let client: Anthropic | null = null;
+function anthropic() {
+  client ??= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 1 });
+  return client;
 }
 
 /** While the app is in English, the last user turn carries the instruction to answer in English. */
@@ -20,18 +26,18 @@ function inLanguage(messages: GlmMessage[]): GlmMessage[] {
 }
 
 export function glmModel() {
-  return process.env.GLM_MODEL || "glm-5";
+  return process.env.CLAUDE_MODEL || "claude-opus-5-5";
 }
 
 export function glmConfigured() {
-  return Boolean(process.env.GLM_API_KEY && process.env.GLM_API_KEY.trim());
+  return Boolean(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY.trim());
 }
 
 /** The model answered, but not in JSON. `content` is what it said. */
 export class GlmFormatError extends Error {
   readonly content: string;
   constructor(content: string) {
-    super("GLM 返回的不是 JSON");
+    super("模型返回的不是 JSON");
     this.name = "GlmFormatError";
     this.content = content;
   }
@@ -47,42 +53,53 @@ export function parseJSONContent<T>(content: string): T {
   return JSON.parse(s) as T;
 }
 
+/**
+ * One request to Claude, returning its text. Thinking cannot be turned off on Opus 5.5 and counts
+ * against max_tokens, so the callers' small token caps are not passed on; low effort keeps it quick.
+ * Sampling parameters (temperature) are not accepted by the model either.
+ */
+async function claudeText(
+  system: string,
+  messages: Anthropic.Beta.BetaMessageParam[],
+  timeoutMs: number,
+): Promise<string> {
+  const res = await anthropic().beta.messages.create(
+    {
+      model: glmModel(),
+      max_tokens: 16000,
+      output_config: { effort: "low" },
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      ...(system ? { system } : {}),
+      messages,
+    },
+    { timeout: timeoutMs },
+  );
+  if (res.stop_reason === "refusal") throw new Error(`Claude 拒绝回答: ${res.stop_details?.category ?? ""}`);
+  const content = res.content
+    .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
+    .map((b) => b.text)
+    .join("")
+    .trim();
+  if (!content) throw new Error("Claude 返回为空");
+  return content;
+}
+
 export async function glmJSON<T>(
   messages: GlmMessage[],
   opts: { temperature?: number; maxTokens?: number; timeoutMs?: number } = {},
 ): Promise<T> {
-  const key = process.env.GLM_API_KEY;
-  if (!key) throw new Error("GLM_API_KEY 未配置");
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 90_000);
+  if (!glmConfigured()) throw new Error("ANTHROPIC_API_KEY 未配置");
+  const all = inLanguage(messages);
+  const system = all.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
+  const turns = all
+    .filter((m) => m.role !== "system")
+    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+  const content = await claudeText(system, turns, opts.timeoutMs ?? 90_000);
   try {
-    const res = await fetch(`${baseUrl()}/chat/completions`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: glmModel(),
-        messages: inLanguage(messages),
-        temperature: opts.temperature ?? 0.5,
-        max_tokens: opts.maxTokens ?? 800,
-        thinking: { type: "disabled" },
-        response_format: { type: "json_object" },
-      }),
-      signal: ctrl.signal,
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`GLM ${res.status}: ${text.slice(0, 300)}`);
-    }
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const content = data?.choices?.[0]?.message?.content ?? "";
-    if (!content) throw new Error("GLM 返回为空");
-    try {
-      return parseJSONContent<T>(content);
-    } catch {
-      throw new GlmFormatError(content);
-    }
-  } finally {
-    clearTimeout(timer);
+    return parseJSONContent<T>(content);
+  } catch {
+    throw new GlmFormatError(content);
   }
 }
 
@@ -107,7 +124,7 @@ export async function glmPing(): Promise<{ ok: boolean; latencyMs: number; error
         { role: "system", content: '只输出 JSON：{"ok": true}' },
         { role: "user", content: "ping" },
       ],
-      { maxTokens: 20, timeoutMs: 20_000 },
+      { timeoutMs: 30_000 },
     );
     return { ok: true, latencyMs: Date.now() - start };
   } catch (err) {
@@ -118,55 +135,48 @@ export async function glmPing(): Promise<{ ok: boolean; latencyMs: number; error
 /* ---------- photos and speech ---------- */
 
 export function glmVisionModel() {
-  return process.env.GLM_VISION_MODEL || "glm-4.6v";
+  return glmModel();
 }
 
 export function glmAsrModel() {
   return process.env.GLM_ASR_MODEL || "glm-asr-2512";
 }
 
+type ImageMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+
+function imageBlock(dataUrl: string): Anthropic.Beta.BetaImageBlockParam {
+  const m = dataUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/i);
+  if (!m) return { type: "image", source: { type: "url", url: dataUrl } };
+  const media = m[1].toLowerCase().replace("image/jpg", "image/jpeg") as ImageMediaType;
+  return { type: "image", source: { type: "base64", media_type: media, data: m[2] } };
+}
+
 /** Reads one or more photos (data URLs) with the vision model and returns its JSON answer. */
 export async function glmVisionJSON<T>(prompt: string, images: string[], opts: { maxTokens?: number } = {}): Promise<T> {
-  const key = process.env.GLM_API_KEY;
-  if (!key) throw new Error("GLM_API_KEY 未配置");
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 90_000);
+  void opts;
+  if (!glmConfigured()) throw new Error("ANTHROPIC_API_KEY 未配置");
+  const text = getLang() === "en" ? `${prompt}\n\n${ENGLISH_OUTPUT}` : prompt;
+  const content = await claudeText(
+    "",
+    [{ role: "user", content: [...images.map(imageBlock), { type: "text", text }] }],
+    90_000,
+  );
   try {
-    const res = await fetch(`${baseUrl()}/chat/completions`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: glmVisionModel(),
-        temperature: 0.1,
-        max_tokens: opts.maxTokens ?? 1200,
-        thinking: { type: "disabled" },
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: getLang() === "en" ? `${prompt}\n\n${ENGLISH_OUTPUT}` : prompt },
-              ...images.map((url) => ({ type: "image_url", image_url: { url } })),
-            ],
-          },
-        ],
-      }),
-      signal: ctrl.signal,
-    });
-    if (!res.ok) throw new Error(`GLM vision ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const content = data?.choices?.[0]?.message?.content ?? "";
-    if (!content) throw new Error("GLM vision 返回为空");
-    try {
-      return parseJSONContent<T>(content);
-    } catch {
-      throw new GlmFormatError(content);
-    }
-  } finally {
-    clearTimeout(timer);
+    return parseJSONContent<T>(content);
+  } catch {
+    throw new GlmFormatError(content);
   }
 }
 
-/** Speech to text. The service accepts WAV or MP3, at most 30 seconds per request. */
+function glmBaseUrl() {
+  return (process.env.GLM_BASE_URL || "https://open.bigmodel.cn/api/paas/v4").replace(/\/$/, "");
+}
+
+export function glmAsrConfigured() {
+  return Boolean(process.env.GLM_API_KEY && process.env.GLM_API_KEY.trim());
+}
+
+/** Speech to text (Zhipu GLM). The service accepts WAV or MP3, at most 30 seconds per request. */
 export async function glmTranscribe(file: Blob, filename = "speech.wav"): Promise<string> {
   const key = process.env.GLM_API_KEY;
   if (!key) throw new Error("GLM_API_KEY 未配置");
@@ -177,7 +187,7 @@ export async function glmTranscribe(file: Blob, filename = "speech.wav"): Promis
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 60_000);
   try {
-    const res = await fetch(`${baseUrl()}/audio/transcriptions`, {
+    const res = await fetch(`${glmBaseUrl()}/audio/transcriptions`, {
       method: "POST",
       headers: { Authorization: `Bearer ${key}` },
       body: form,

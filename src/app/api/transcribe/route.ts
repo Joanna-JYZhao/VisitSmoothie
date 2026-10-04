@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { glmConfigured, glmTranscribe } from "@/lib/ai/glm";
+import { glmAsrConfigured, glmTranscribe } from "@/lib/ai/glm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ const MAX_BYTES = 3_000_000;
 
 /** Speech to text for one short clip. The browser sends 16 kHz mono WAV, at most 30 seconds. */
 export async function POST(req: Request) {
-  if (!glmConfigured()) return NextResponse.json({ error: "语音识别需要先配置 AI" }, { status: 503 });
+  if (!glmAsrConfigured()) return NextResponse.json({ error: "语音识别需要先配置 AI" }, { status: 503 });
   let file: File | null = null;
   try {
     const form = await req.formData();
