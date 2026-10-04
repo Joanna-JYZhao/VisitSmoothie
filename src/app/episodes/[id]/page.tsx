@@ -171,7 +171,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
       {quick.length > 0 && (
         <div className="mt-5 grid grid-cols-2 gap-2.5" aria-label="可以直接点的回答">
           {quick.map((q, i) => (
-            <Button key={q} variant="secondary" size="tile" className={cn("animate-rise", `rise-${Math.min(i + 1, 4)}`)} onClick={() => void sendMessage(e.id, q)}>
+            <Button key={q} variant="outline" size="tile" className={cn("animate-rise", `rise-${Math.min(i + 1, 4)}`)} onClick={() => void sendMessage(e.id, q)}>
               {q}
             </Button>
           ))}
@@ -180,10 +180,10 @@ function Conversation({ episode: e }: { episode: Episode }) {
 
       {finished && (
         <div className="mt-5 grid animate-fade-up grid-cols-2 gap-2.5">
-          <LinkButton href={`/doctor/${e.id}`} variant={serious ? "primary" : "secondary"} size="lg" className="press">
+          <LinkButton href={`/doctor/${e.id}`} variant={serious ? "primary" : "outline"} size="lg" className="press">
             给医生看
           </LinkButton>
-          <LinkButton href="/" variant={serious ? "secondary" : "primary"} size="lg" className="press">
+          <LinkButton href="/" variant={serious ? "outline" : "primary"} size="lg" className="press">
             回到首页
           </LinkButton>
           <div className="col-span-2 flex justify-center">
@@ -199,7 +199,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
            * under it. Sticky rather than fixed, so it stays in the page's own column and keeps working
            * inside an animated or transformed ancestor.
            */}
-          <div className="no-print sticky bottom-4 z-20 mt-6 sm:bottom-5">
+          <div className="no-print sticky z-20 mt-6" style={{ bottom: "calc(var(--tab-bar) + 2.25rem)" }}>
             <div className="glass mx-auto w-full max-w-[36rem] rounded-[30px] border border-white/70 p-1.5 shadow-float">
               <SpeakInput
                 placeholder={finished ? "还想补充什么，说或者打字" : "说一句或打一句"}
@@ -211,7 +211,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
           </div>
         </>
       ) : (
-        <Card className="mt-8 animate-fade-up p-5 sm:p-6">
+        <Card className="mt-8 animate-fade-up p-4">
           <div className="flex items-start gap-4">
             <IconTile tone="good" size="lg">
               <CircleCheck />
@@ -223,7 +223,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
               <p className="t-body mt-1.5 text-ink-2">又不舒服了？可以接着这次的记录继续。</p>
             </div>
           </div>
-          <Button variant="secondary" className="press mt-5 w-full sm:w-auto" onClick={() => setStatus(e.id, "active")}>
+          <Button variant="secondary" className="press mt-5 w-full" onClick={() => setStatus(e.id, "active")}>
             又不舒服了，接着记
           </Button>
         </Card>

@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { UserRound } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { SmoothieFooter, SmoothieHeader } from "@/components/Smoothie";
+import { SmoothieMark } from "@/components/Logo";
 import "./smoothie.css";
 
-/* A calm welcome sheet, with the existing registration and login destinations. */
+/* A calm welcome sheet for the phone column: the app icon, the name, one big way in, and the login. */
 
 export default function WelcomePage() {
   const { state, ready } = useStore();
@@ -33,6 +34,7 @@ export default function WelcomePage() {
       <main className="onboarding-main is-welcome">
         <section className="welcome-stage">
           <div className="welcome-intro">
+            <SmoothieMark className="welcome-icon" />
             <p className="welcome-eyebrow">
               <span />
               你的健康故事，从这里开始

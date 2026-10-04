@@ -65,7 +65,7 @@ export default function VisitPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <BackLink href="/">{L("返回", "Back")}</BackLink>
         <PageTitle
@@ -150,8 +150,8 @@ export default function VisitPage() {
             })}
           </ul>
         </Card>
-        {/* Stays at the bottom edge of the screen while the text above it grows, so it is never pushed out of sight. */}
-        <div className="sticky bottom-0 z-10 -mx-4 bg-linear-to-t from-canvas via-canvas/95 to-canvas/0 px-4 pt-4 pb-3">
+        {/* Stays at the bottom of the screen, right on the tab bar, while the text above it grows, so it is never pushed out of sight. */}
+        <div className="sticky z-10 -mx-4 bg-linear-to-t from-canvas from-75% to-canvas/0 px-4 pt-6 pb-8" style={{ bottom: "var(--tab-bar)" }}>
           <Button size="lg" className="press w-full" disabled={!text.trim()} onClick={go}>
             {L("整理成给医生看的一页", "Make the doctor's page")}
           </Button>

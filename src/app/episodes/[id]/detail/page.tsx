@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ChartLine, FileSearch, History, ListOrdered, Stethoscope } from "lucide-react";
 import type { Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { useRelatedEpisodes } from "@/lib/episodeAI";
-import { episodeLine, fmtDate, roughDuration, severitySeries } from "@/lib/utils";
+import { cn, episodeLine, fmtDate, roughDuration, severitySeries } from "@/lib/utils";
 import { HintBanner } from "@/components/HintBanner";
 import { SeverityChart } from "@/components/SeverityChart";
 import { Timeline } from "@/components/Timeline";
 import { useToast } from "@/components/Toast";
-import { Badge, Button, Card, IconTile, LinkButton, Modal, Notice, PageHeader, RowLink, SectionTitle } from "@/components/ui";
+import { Badge, Button, Card, IconTile, LinkButton, Modal, Notice, PageHeader, RowLink, SectionTitle, focusRing } from "@/components/ui";
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +27,13 @@ export default function DetailPage() {
   }
   return <Detail episode={episode} />;
 }
+
+/** One action in a white group: a full-width row, the words in the middle. */
+const rowAction = cn(
+  "press flex min-h-14 w-full items-center justify-center px-4 py-3 text-center text-lg font-semibold transition-colors duration-200 hover:bg-surface-2/70",
+  focusRing,
+  "focus-visible:outline-offset-[-2px]",
+);
 
 /** A section's title with its tile in front, the way the Health app heads a card. */
 function CardTitle({ icon, tone = "brand", children }: { icon: React.ReactNode; tone?: "brand" | "good" | "neutral"; children: React.ReactNode }) {
@@ -55,7 +63,7 @@ function Detail({ episode: e }: { episode: Episode }) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         back={{ href: active ? "/" : "/me", label: active ? "今天" : "我的档案" }}
         title={
@@ -81,14 +89,14 @@ function Detail({ episode: e }: { episode: Episode }) {
         <LinkButton href={`/doctor/${e.id}`} size="lg" className="press">
           给医生看
         </LinkButton>
-        <LinkButton href={`/episodes/${e.id}`} variant="secondary" size="lg" className="press">
+        <LinkButton href={`/episodes/${e.id}`} variant="outline" size="lg" className="press">
           看对话
         </LinkButton>
       </div>
 
       {v && (
         // what the doctor said is the record that matters most here: the raised card
-        <Card tone="raised" className="animate-rise px-5 pt-5 pb-2 rise-2 sm:px-6 sm:pt-6">
+        <Card tone="raised" className="animate-rise px-4 pt-4 pb-1 rise-2">
           <CardTitle icon={<Stethoscope />}>看医生的结果</CardTitle>
           <dl className="divide-y divide-line text-lg leading-relaxed [&>div]:py-4 [&>div:first-child]:pt-1">
             <div>
@@ -134,13 +142,13 @@ function Detail({ episode: e }: { episode: Episode }) {
       )}
 
       {severitySeries(e).length >= 2 && (
-        <Card className="animate-rise p-5 rise-3 sm:p-6">
+        <Card className="animate-rise p-4 rise-3">
           <CardTitle icon={<ChartLine />}>难受程度的变化</CardTitle>
           <SeverityChart entries={e.entries} />
         </Card>
       )}
 
-      <Card className="animate-rise p-5 rise-4 sm:p-6">
+      <Card className="animate-rise p-4 rise-4">
         <CardTitle icon={<ListOrdered />}>全部记录</CardTitle>
         <div className="pt-1">
           <Timeline episode={e} />
@@ -149,7 +157,7 @@ function Detail({ episode: e }: { episode: Episode }) {
 
       {related.length > 0 && (
         <Card className="animate-rise overflow-hidden rise-4">
-          <div className="px-5 pt-5 sm:px-6 sm:pt-6">
+          <div className="px-4 pt-4">
             <CardTitle icon={<History />} tone="neutral">
               以前类似的情况
             </CardTitle>
@@ -167,15 +175,16 @@ function Detail({ episode: e }: { episode: Episode }) {
         </Card>
       )}
 
-      <div className="grid gap-2.5 pt-2">
+      {/* what can still be done with this record: one white group of rows, the delete on its own below */}
+      <Card className="divide-y divide-line overflow-hidden">
         {active ? (
           <>
-            <LinkButton href={`/after?episode=${e.id}`} variant="secondary" className="press">
+            <Link href={`/after?episode=${e.id}`} className={cn(rowAction, "text-brand-700")}>
               {v ? "又看了医生，记一下" : "看完医生了，记一下"}
-            </LinkButton>
-            <Button
-              variant="secondary"
-              className="press"
+            </Link>
+            <button
+              type="button"
+              className={cn(rowAction, "text-brand-700")}
               onClick={() => {
                 const snapshot = e;
                 setStatus(e.id, "resolved");
@@ -183,17 +192,19 @@ function Detail({ episode: e }: { episode: Episode }) {
               }}
             >
               我好了，结束跟踪
-            </Button>
+            </button>
           </>
         ) : (
-          <Button variant="secondary" className="press" onClick={() => setStatus(e.id, "active")}>
+          <button type="button" className={cn(rowAction, "text-brand-700")} onClick={() => setStatus(e.id, "active")}>
             又不舒服了，接着跟踪
-          </Button>
+          </button>
         )}
-        <Button variant="dangerGhost" className="press" onClick={() => setConfirming(true)}>
+      </Card>
+      <Card className="overflow-hidden">
+        <button type="button" className={cn(rowAction, "text-danger")} onClick={() => setConfirming(true)}>
           删除这条记录
-        </Button>
-      </div>
+        </button>
+      </Card>
 
       <Modal
         open={confirming}

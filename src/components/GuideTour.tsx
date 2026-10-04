@@ -65,6 +65,8 @@ export function GuideTour({ onFinish }: { onFinish: () => void }) {
   // 每换一步：把目标滚到屏幕中间再量位置；窗口变化时跟着量
   useLayoutEffect(() => {
     if (!current.target) {
+      // a layout effect that measures the DOM sets state on purpose (react.dev: "measuring layout")
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRect(null);
       return;
     }
@@ -95,21 +97,23 @@ export function GuideTour({ onFinish }: { onFinish: () => void }) {
     ? { top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }
     : null;
 
-  // 气泡位置：优先放目标下方，放不下就放上方；水平与目标居中并夹进屏幕
-  const vw = window.innerWidth;
+  // 气泡位置：优先放目标下方，放不下就放上方；水平与目标居中并夹进手机那一栏（宽屏上栏居中，不是整个窗口）
+  const col = document.querySelector(".phone-col")?.getBoundingClientRect();
+  const colLeft = col ? Math.max(0, col.left) : 0;
+  const colW = col ? Math.min(col.width, window.innerWidth) : window.innerWidth;
   const vh = window.innerHeight;
-  const bw = Math.min(360, vw - 32);
-  const EST_H = 200;
-  let bubblePos: React.CSSProperties = { width: bw, left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
+  const bw = Math.min(360, colW - 32);
+  const EST_H = 280; // a bubble with a two-line body at 17px
+  let bubblePos: React.CSSProperties = { width: bw, left: colLeft + colW / 2, top: "50%", transform: "translate(-50%,-50%)" };
   let arrowUp = false; // 气泡在目标下方时，小箭头朝上指
   if (hl) {
     const belowY = hl.top + hl.height + 16;
     const room = belowY + EST_H <= vh;
     arrowUp = room;
-    const top = room ? belowY : Math.max(16, hl.top - 16 - EST_H);
     const centerX = hl.left + hl.width / 2;
-    const left = Math.min(Math.max(16, centerX - bw / 2), vw - bw - 16);
-    bubblePos = { width: bw, top, left };
+    const left = Math.min(Math.max(colLeft + 16, centerX - bw / 2), colLeft + colW - bw - 16);
+    // above the target: anchored by its bottom edge, so however tall the text makes it, it never covers the target
+    bubblePos = room ? { width: bw, top: belowY, left } : { width: bw, bottom: Math.max(16, vh - hl.top + 16), left };
   }
 
   return createPortal(
@@ -140,18 +144,18 @@ export function GuideTour({ onFinish }: { onFinish: () => void }) {
             }
           />
         )}
-        {step > 0 && !last && <div className="text-sm font-semibold text-brand-600">{`${step} / ${total}`}</div>}
+        {step > 0 && !last && <div className="text-base font-semibold text-brand-700 tabular-nums">{`${step} / ${total}`}</div>}
         <h3 className="t-title mt-1 text-ink">{current.title}</h3>
         <p className="t-body mt-2.5 text-ink-2">{current.body}</p>
         <div className="mt-6 flex items-center gap-4">
-          <Button size="md" className="flex-1" onClick={() => (last ? onFinish() : setStep(step + 1))}>
+          <Button size="lg" className="flex-1" onClick={() => (last ? onFinish() : setStep(step + 1))}>
             {current.button}
           </Button>
           {!last && (
             <button
               type="button"
               onClick={onFinish}
-              className="shrink-0 text-sm text-ink-3 underline underline-offset-4 transition hover:text-ink"
+              className="-mr-2 inline-flex min-h-12 shrink-0 items-center rounded-xl px-2 text-base text-ink-2 underline underline-offset-4 transition hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-600"
             >
               跳过
             </button>

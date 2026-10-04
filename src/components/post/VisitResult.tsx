@@ -29,7 +29,7 @@ function Block({
   children: React.ReactNode;
 }) {
   return (
-    <section className={cn("px-6 py-5 sm:px-8 sm:py-6", className)}>
+    <section className={cn("px-5 py-5", className)}>
       <p className="flex items-center gap-2.5 text-base leading-snug font-medium text-ink-2">
         <IconTile tone={tone} size="sm">
           {icon}
@@ -51,7 +51,7 @@ export function VisitResult({ result: r }: { result: AfterResult }) {
   return (
     <Card tone="raised" className="animate-rise divide-y divide-line overflow-hidden">
       {/* the letterhead: when and where, then the diagnosis as the title of the sheet */}
-      <div className="px-6 pt-6 pb-6 sm:px-8 sm:pt-8 sm:pb-7">
+      <div className="px-5 pt-5 pb-5">
         {where && (
           <p className="mb-5 flex items-center gap-2.5 text-base leading-snug font-medium text-ink-2">
             <IconTile tone="neutral" size="sm">

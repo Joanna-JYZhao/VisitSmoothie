@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, CalendarDays, Check, ClipboardCheck, Pill, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarDays, Check, ClipboardCheck, Clock, Pill, Sparkles } from "lucide-react";
 import { IconTile, type IconTone } from "@/components/ui";
 import { storeActions, useStore } from "@/lib/store";
 import { homeTodos, type HomeTodo } from "@/lib/reminders";
@@ -11,13 +11,29 @@ import { cn, fmtISODate } from "@/lib/utils";
 
 const DONE_KEY = "yiban.doneToday";
 const KIND: Record<HomeTodo["kind"], string> = { medicine: "吃药", care: "要做的", followup: "下次复诊", caution: "注意" };
-/* Kind icons supplement, rather than replace, the written labels. */
+/* Kind icons supplement, rather than replace, the written labels. One accent; only a caution is amber. */
 const KIND_ICON: Record<HomeTodo["kind"], { Icon: typeof Pill; tone: IconTone }> = {
   medicine: { Icon: Pill, tone: "brand" },
-  care: { Icon: ClipboardCheck, tone: "info" },
-  followup: { Icon: CalendarDays, tone: "good" },
+  care: { Icon: ClipboardCheck, tone: "brand" },
+  followup: { Icon: CalendarDays, tone: "brand" },
   caution: { Icon: AlertTriangle, tone: "warn" },
 };
+
+const HAS_TIME = /\d{1,2}:\d{2}/;
+const ONLY_TIMES = /^\d{1,2}:\d{2}(\s+\d{1,2}:\d{2})*$/;
+
+/**
+ * One to-do, laid out as "what · when": the what (the kind and its name), the when on its own line
+ * in large figures, and whatever else was said (饭后, the note for a visit) after it. Only the
+ * order on screen changes; the words are the ones the list already carries.
+ */
+function layout(t: HomeTodo): { what: string; when: string; note: string } {
+  // a visit: the date is its title, the note says what it is for
+  if (t.kind === "followup") return { what: "", when: t.title, note: t.detail };
+  const parts = t.detail ? t.detail.split(" · ") : [];
+  if (parts.length && HAS_TIME.test(parts[0])) return { what: t.title, when: parts[0], note: parts.slice(1).join(" · ") };
+  return { what: t.title, when: "", note: t.detail };
+}
 
 /** What was ticked today. Kept in this browser only and forgotten the next day. */
 function readDone(today: string): string[] {
@@ -51,44 +67,82 @@ export function TodoList({ now }: { now: number }) {
 
   if (!todos.length) {
     return (
-      <div className="mt-4 flex items-center gap-3 border-t border-line px-1 py-5">
-        <IconTile tone="neutral" size="sm">
+      <div className="mt-3 flex items-center gap-3 border-t border-line py-4">
+        <IconTile tone="brand" size="sm">
           <Sparkles />
         </IconTile>
         <p className="t-body text-ink">看完医生，在 post 里录音或上传，吃药和复诊会自动放到这里。</p>
       </div>
     );
   }
+  /* Rows: tick, what to do and when, and the reminder switch. */
   return (
-    <ul className="mt-3 divide-y divide-line border-t border-line">
+    <ul className="mt-2 divide-y divide-line border-t border-line">
       {todos.map((t) => {
         const ticked = keys.includes(t.key);
         const r = t.reminder;
         const k = KIND_ICON[t.kind];
+        const { what, when, note } = layout(t);
+        const times = ONLY_TIMES.test(when) ? when.split(/\s+/) : null;
         return (
-          <li key={t.key} className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 py-2 transition-colors duration-150", !ticked && "bg-surface")}>
+          <li key={t.key} className="flex items-start gap-1.5 py-2.5">
             <button
               type="button"
               role="checkbox"
               aria-checked={ticked}
               aria-label={`今天做了：${t.title}`}
               onClick={() => tick(t.key)}
-              className="press flex min-h-12 min-w-12 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+              className="press -ml-2.5 flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
-              <span className={cn("flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] transition-all duration-300", ticked ? "bg-brand-600 border-transparent text-white" : "border-line-strong bg-surface")}>
-                {ticked && <Check className="h-5 w-5 animate-pop" strokeWidth={2.5} />}
+              <span
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all duration-300",
+                  ticked ? "border-transparent bg-brand-600 text-white" : "border-line-strong/70 bg-surface",
+                )}
+              >
+                {ticked && <Check className="h-[1.1rem] w-[1.1rem] animate-pop" strokeWidth={3} />}
               </span>
             </button>
-            <IconTile tone={ticked ? "neutral" : k.tone} size="md" className="transition duration-300 max-sm:hidden">
-              <k.Icon />
-            </IconTile>
-            {/* on a phone the text gets the whole width; the switch wraps under it */}
-            <div className="min-w-0 flex-1 transition duration-300 max-sm:basis-[calc(100%-3.75rem)]">
-              <p className={cn("text-base leading-snug font-medium", ticked ? "text-ink-3 line-through decoration-ink-3" : "text-ink")}>
-                <span className={cn("mr-2 font-semibold", ticked ? "text-ink-3" : "text-brand-700")}>{KIND[t.kind]}</span>
-                {t.title}
+            <div className={cn("min-w-0 flex-1 pt-2.5 transition-opacity duration-300", ticked && "opacity-60")}>
+              {/* what */}
+              <p className="text-base leading-snug">
+                <k.Icon
+                  className={cn("mr-1.5 inline-block h-5 w-5 align-[-0.22em]", ticked ? "text-ink-3" : k.tone === "warn" ? "text-warn" : "text-brand-600")}
+                  aria-hidden="true"
+                />
+                <span className={cn("font-semibold", ticked ? "text-ink-2" : k.tone === "warn" ? "text-warn" : "text-brand-700")}>{KIND[t.kind]}</span>
+                {what && (
+                  <>
+                    <span className="mx-1.5 text-ink-3" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className={cn("font-medium text-ink", ticked && "line-through decoration-ink-3")}>{what}</span>
+                  </>
+                )}
               </p>
-              {t.detail && <p className={cn("t-body mt-0.5", ticked ? "text-ink-3" : "text-ink-2")}>{t.detail}</p>}
+              {/* when: large figures, each time on its own chip when there are several */}
+              {when &&
+                (times ? (
+                  <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    {times.map((x, i) => (
+                      <span
+                        key={i}
+                        className={cn(
+                          "rounded-lg px-2 py-0.5 text-[1.2rem] leading-snug font-semibold tabular-nums",
+                          ticked ? "bg-surface-2 text-ink-2" : "bg-brand-50 text-brand-800",
+                        )}
+                      >
+                        {x}
+                      </span>
+                    ))}
+                  </p>
+                ) : (
+                  <p className={cn("mt-1 flex items-center gap-1.5 text-[1.2rem] leading-snug font-semibold tabular-nums", ticked ? "text-ink-2" : "text-ink")}>
+                    <Clock className={cn("h-[1.1rem] w-[1.1rem] shrink-0", ticked ? "text-ink-3" : "text-brand-600")} aria-hidden="true" />
+                    <span className={cn("[word-break:keep-all]", t.kind === "followup" && ticked && "line-through decoration-ink-3")}>{when}</span>
+                  </p>
+                ))}
+              {note && <p className="t-body mt-1 text-ink-2">{note}</p>}
             </div>
             {r && (
               <button
@@ -97,12 +151,19 @@ export function TodoList({ now }: { now: number }) {
                 aria-checked={r.enabled}
                 aria-label={`提醒：${t.title}`}
                 onClick={() => storeActions.updateReminder(r.id, (x) => ({ ...x, enabled: !x.enabled }))}
-                className="press flex min-h-12 shrink-0 items-center gap-2 rounded-xl px-1 text-base font-medium text-ink-2 max-sm:ml-[3.75rem] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                className="press mt-1 flex min-h-12 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-base font-medium text-ink-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
-                {r.enabled ? "提醒开" : "提醒关"}
-                <span className={cn("relative h-8 w-14 rounded-full transition-colors duration-300", r.enabled ? "bg-brand-600" : "bg-line-strong")}>
-                  <span className={cn("absolute top-0.5 h-7 w-7 rounded-full bg-white shadow-[0_2px_6px_rgba(20,38,47,0.25),0_0_0_0.5px_rgba(20,38,47,0.06)] transition-all duration-300", r.enabled ? "left-[26px]" : "left-0.5")} />
+                <span
+                  className={cn("relative h-[1.9rem] w-[3.1rem] rounded-full transition-colors duration-300", r.enabled ? "bg-brand-600" : "bg-line-strong/55")}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-[0.15rem] h-[1.6rem] w-[1.6rem] rounded-full bg-white shadow-[0_2px_6px_rgba(13,59,64,0.22),0_0_0_0.5px_rgba(13,59,64,0.06)] transition-all duration-300",
+                      r.enabled ? "left-[1.35rem]" : "left-[0.15rem]",
+                    )}
+                  />
                 </span>
+                <span className={cn("leading-none", r.enabled && "text-brand-700")}>{r.enabled ? "提醒开" : "提醒关"}</span>
               </button>
             )}
           </li>

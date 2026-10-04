@@ -8,9 +8,9 @@ import { IconTile, Spinner } from "@/components/ui";
 
 type Phase = { kind: "idle" } | { kind: "recording"; seconds: number } | { kind: "working"; done: number; total: number };
 
-/** Compact, flat entry rows shared by recording and uploading. */
+/** The big entry buttons shared by recording and uploading: a full-width white sheet, a large tile in front, the name in title type. */
 export const bigTileCls =
-  "press lift group relative flex min-h-20 w-full items-center gap-3 overflow-hidden rounded-card border border-line/60 px-4 py-3 text-left text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:pointer-events-none disabled:opacity-60";
+  "press lift group relative flex min-h-24 w-full items-center gap-4 overflow-hidden rounded-card border border-line/60 px-5 py-4 text-left text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:pointer-events-none disabled:opacity-60";
 
 /** The sound bars beside the clock while recording: a visual pulse only, there is no meter behind it. */
 function SoundBars() {
@@ -100,20 +100,20 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
         <span aria-hidden="true" className="relative flex shrink-0 items-center justify-center">
           {recording && (
             <>
-              <span className="absolute -inset-2.5 animate-pulse rounded-[26px] bg-danger/10" />
+              <span className="absolute -inset-2.5 animate-pulse rounded-[28px] bg-danger/10" />
               <span className="absolute -inset-1.5 rounded-[24px] border border-danger/25" />
             </>
           )}
           {working ? (
-            <IconTile tone="brand" size="md">
+            <IconTile tone="brand" size="xl">
               <Spinner className="h-8 w-8" />
             </IconTile>
           ) : recording ? (
-            <IconTile tone="solidDanger" size="md" className="relative">
+            <IconTile tone="solidDanger" size="xl" className="relative">
               <Square className="fill-current" />
             </IconTile>
           ) : (
-            <IconTile tone="solid" size="md" className="animate-breathe transition-transform duration-300 group-hover:scale-105">
+            <IconTile tone="solid" size="xl" className="animate-breathe transition-transform duration-300 group-hover:scale-105">
               <Mic strokeWidth={2.2} />
             </IconTile>
           )}
@@ -122,7 +122,7 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
         {working ? (
           <span className="t-heading text-brand-800 tabular-nums">{progressText(phase.done, phase.total)}</span>
         ) : recording ? (
-          <span className="flex min-w-0 flex-col items-start gap-1 sm:items-center">
+          <span className="flex min-w-0 flex-col items-start gap-1">
             <span className="text-base leading-snug font-medium text-danger">录音中</span>
             <span className="flex items-center gap-3">
               <span className="t-number text-danger">{clockText(phase.seconds)}</span>
@@ -131,10 +131,10 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
             <span className="text-lg leading-snug font-medium text-ink">点一下停止</span>
           </span>
         ) : (
-          <span className="t-heading">录音</span>
+          <span className="t-title">录音</span>
         )}
       </button>
-      <p className="mt-3 px-1 text-base leading-relaxed text-ink-2">录医生说话前，请先征得医生同意。最长 60 分钟，录音不保存，只留整理出的文字。</p>
+      <p className="mt-2.5 px-1 text-base leading-relaxed text-ink-2">录医生说话前，请先征得医生同意。最长 60 分钟，录音不保存，只留整理出的文字。</p>
       {problem && (
         <div role="alert" className="mt-3 flex animate-fade-up items-start gap-3.5 rounded-card border border-warn/20 bg-warn-bg px-5 py-4">
           <IconTile tone="warn" size="sm" className="mt-0.5 bg-surface shadow-edge">

@@ -37,7 +37,7 @@ import { BodyMap } from "@/components/chat/BodyMap";
  * short fade.
  */
 
-const bubble = "max-w-[90%] rounded-2xl px-4 py-3 whitespace-pre-wrap";
+const bubble = "max-w-[85%] rounded-[20px] px-4 py-2.5 whitespace-pre-wrap";
 /** The patient: solid blue on the right, with readable white text. */
 const mine = "rounded-br-[6px] bg-brand-600 text-base leading-relaxed text-white";
 /** the assistant, earlier: a white sheet on the left with a hairline edge */
@@ -80,7 +80,7 @@ function OpenQuestion({ text, chips, onChip, opening }: { text: string; chips?: 
               type="button"
               onClick={() => onChip(c)}
               className={cn(
-                "press bg-surface min-h-11 rounded-lg border border-line/70 px-4 text-base font-semibold text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+                "press bg-surface min-h-12 rounded-xl border border-line/70 px-4 text-base font-semibold text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
                 ["rise-1", "rise-2", "rise-3", "rise-4"][Math.min(i, 3)],
               )}
             >
@@ -144,7 +144,7 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
 
   const draft = item.state === "draft";
   return (
-    <Card tone={draft ? "raised" : "plain"} className={cn("p-6", draft ? "animate-pop" : "animate-fade-up")}>
+    <Card tone={draft ? "raised" : "plain"} className={cn("p-5", draft ? "animate-pop" : "animate-fade-up")}>
       <CardHead
         icon={<ClipboardList />}
         title={<>病情描述 · {episode.title}</>}
@@ -176,7 +176,7 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
       )}
       <Link
         href={`/doctor/${episode.id}`}
-        className="press -mx-2 -mb-2 mt-4 flex min-h-14 items-center gap-3 rounded-2xl px-2 text-lg font-medium text-brand-800 transition duration-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+        className="press -mx-2 -mb-2 mt-4 flex min-h-14 items-center gap-3 rounded-xl px-2 text-lg font-medium text-brand-800 transition duration-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
       >
         <IconTile size="sm">
           <FileText />
@@ -203,7 +203,7 @@ function TriageCard({ item }: { item: Extract<ThreadItem, { kind: "triage" }> })
   const emergency = t.level === "emergency";
   return (
     <div
-      className={cn("rounded-card p-6 shadow-card", tone.cls, emergency ? "animate-pop shadow-float" : "animate-fade-up")}
+      className={cn("rounded-card p-5 shadow-card", tone.cls, emergency ? "animate-pop shadow-float" : "animate-fade-up")}
       role={emergency ? "alert" : undefined}
     >
       <div className="flex items-center gap-3">
@@ -228,12 +228,12 @@ function TriageCard({ item }: { item: Extract<ThreadItem, { kind: "triage" }> })
   );
 }
 
-/** One line of what the doctor wrote: the label above on a phone, in a column beside it where there is room (the way Health lays out details). */
+/** One line of what the doctor wrote: the label above, the words under it (the way Health lays out details on a phone). */
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="py-3.5 first:pt-0 last:pb-0 sm:grid sm:grid-cols-[7.5rem_1fr] sm:gap-4">
-      <dt className="text-base font-medium text-ink-2 sm:pt-0.5">{label}</dt>
-      <dd className="mt-1 text-lg leading-relaxed text-ink sm:mt-0">{children}</dd>
+    <div className="py-3.5 first:pt-0 last:pb-0">
+      <dt className="text-base font-medium text-ink-2">{label}</dt>
+      <dd className="mt-1 text-lg leading-relaxed text-ink">{children}</dd>
     </div>
   );
 }
@@ -244,7 +244,7 @@ function OrdersCard({ item, busy }: { item: Extract<ThreadItem, { kind: "orders"
   if (item.state === "discarded") return <Note>这次的医嘱没有保存。</Note>;
   const draft = item.state === "draft";
   return (
-    <Card tone={draft ? "raised" : "plain"} className={cn("p-6", draft ? "animate-pop" : "animate-fade-up")}>
+    <Card tone={draft ? "raised" : "plain"} className={cn("p-5", draft ? "animate-pop" : "animate-fade-up")}>
       <CardHead icon={<Stethoscope />} title="医嘱整理" aside={item.state === "saved" && <Badge tone="good">已保存</Badge>} />
       <dl className="mt-5 divide-y divide-line border-t border-line pt-5">
         {(r.date || r.hospital || r.department) && <Row label="时间和地点">{[r.date, r.hospital, r.department].filter(Boolean).join(" · ")}</Row>}
@@ -338,7 +338,7 @@ export function Thread({ items, busy, onChip, opening }: { items: ThreadItem[]; 
                         <Link
                           key={i}
                           href={s.href}
-                          className="press inline-flex min-h-11 items-center gap-1 rounded-full bg-brand-50 px-4 font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                          className="press inline-flex min-h-12 items-center gap-1 rounded-full bg-brand-50 px-4 font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
                         >
                           {s.label}
                           <ChevronRight className="h-4 w-4" />
@@ -367,7 +367,7 @@ export function Thread({ items, busy, onChip, opening }: { items: ThreadItem[]; 
       {busy && (
         <div className="flex animate-fade-up items-end gap-2.5">
           <Mark />
-          <div className="material rounded-[22px] rounded-bl-[6px] border border-line/80 bg-surface px-5 py-4">
+          <div className="rounded-[20px] rounded-bl-[6px] bg-surface px-4 py-3.5">
             <TypingDots />
           </div>
         </div>

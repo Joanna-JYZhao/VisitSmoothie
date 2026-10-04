@@ -81,7 +81,7 @@ function MetricCard({
 
   return (
     <Card className={cn("overflow-hidden", className)}>
-      <div className="p-5 sm:p-6">
+      <div className="p-4">
         <div className="flex items-start gap-3.5">
           <IconTile tone={tone} size="lg">
             {icon}
@@ -128,7 +128,7 @@ function MetricCard({
       </div>
 
       {all.length > 0 && (
-        <div className="border-t border-line px-5 pt-5 pb-5 sm:px-6">
+        <div className="border-t border-line p-4">
           {inRange.length === 0 ? (
             <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">这段时间没有记录，把上面的时间调长一点看看。</p>
           ) : view === "chart" ? (
@@ -240,7 +240,7 @@ export default function MetricsPage() {
   // with readings on the page the same choices sit quietly at the foot
   const hero = visible.length === 0;
   const chooser = (
-    <Card tone={hero ? "raised" : "plain"} className={hero ? "animate-pop p-6 text-center sm:p-8" : "p-5 sm:p-6"}>
+    <Card tone={hero ? "raised" : "plain"} className={hero ? "animate-pop px-5 py-8 text-center" : "p-4"}>
       {hero && (
         <IconTile size="xl" tone="solid" className="mx-auto mb-6 animate-breathe">
           <Activity />
@@ -262,7 +262,7 @@ export default function MetricsPage() {
                 "press inline-flex min-h-12 items-center gap-1.5 rounded-full text-lg transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
                 on
                   ? "bg-brand-50 pr-5 pl-3.5 font-medium text-brand-800 ring-[1.5px] ring-brand-600 ring-inset"
-                  : "bg-surface px-5 text-ink-2 shadow-edge hover:bg-surface-2 hover:text-ink",
+                  : "bg-surface px-5 text-ink-2 ring-1 ring-line-strong/60 ring-inset hover:bg-surface-2 hover:text-ink",
               )}
             >
               {on && <Check className="h-5 w-5" aria-hidden="true" />}
@@ -275,7 +275,7 @@ export default function MetricsPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 pb-2">
       <PageHeader
         back={{ href: "/me", label: "我的档案" }}
         title="健康指标"
@@ -295,7 +295,7 @@ export default function MetricsPage() {
           </div>
 
           {insights.length > 0 && (
-            <Card className="rise-2 p-5 sm:p-6">
+            <Card className="rise-2 p-4">
               <SectionTitle>医伴看到的</SectionTitle>
               <InsightList insights={insights} />
             </Card>

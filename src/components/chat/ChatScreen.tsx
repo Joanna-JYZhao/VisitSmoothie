@@ -132,38 +132,38 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   const opening = !state.thread.some((t) => t.kind === "user");
 
   /*
-   * One reading column, like a Messages thread: the title at the top, the conversation in the
-   * middle, and at the bottom a sheet the conversation scrolls under, holding the one way to answer.
+   * A phone chat, like Messages: the title at the top, the conversation in the middle, and docked
+   * right on top of the tab bar the one way to answer (with the report one tap away above it). The
+   * screen fills the column from the header down to the tab bar (flex-1, and -mb-9 takes back the
+   * room <main> keeps under its content), so the dock always sits flush on the tab bar and the
+   * thread scrolls up under it.
    */
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-10rem)] w-full max-w-2xl flex-col">
+    <div className="-mb-9 flex min-w-0 flex-1 flex-col">
       {/* while the page is an invitation the name of the page steps back and the question is the headline */}
-      <h1 className={cn("mb-6 animate-fade-up transition-all duration-500", opening ? "t-heading text-center text-ink-2" : "t-display text-ink")}>看医生之前</h1>
-      <div className={cn("flex flex-1 flex-col pb-6", opening ? "justify-center" : "justify-end")}>
-        <div className="space-y-5">
-          <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
-          <div ref={end} aria-hidden="true" className="h-px" />
-        </div>
+      <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-center text-ink-2" : "t-title mb-4 text-ink")}>看医生之前</h1>
+      <div className={cn("flex flex-1 flex-col pt-2 pb-5", opening ? "justify-center" : "justify-end")}>
+        <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
+        {/* scrolled to with room for the dock and the tab bar below it (the page simply stops at its end) */}
+        <div ref={end} aria-hidden="true" className="h-px" style={{ scrollMarginBottom: "calc(var(--tab-bar) + 12rem)" }} />
       </div>
-      {/* the sheet: part of the page, not pasted on — a fade above it, a raised surface, the report one tap away inside it */}
-      <div className="sticky bottom-0 z-10 -mx-4 px-4 pb-3 sm:-mx-2 sm:px-2">
-        <div aria-hidden="true" className="pointer-events-none h-8 bg-linear-to-t from-canvas to-canvas/0" />
-        <div className="space-y-3 rounded-2xl border border-line bg-surface p-2.5">
-          {report && (
-            <button
-              type="button"
-              onClick={() => router.push(report)}
-              className="press flex min-h-12 w-full items-center gap-3 rounded-lg bg-brand-50 py-1 pr-4 pl-1.5 text-left text-base font-medium text-brand-800 transition duration-200 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
-            >
-              <IconTile size="sm" tone="brand">
-                <FileText />
-              </IconTile>
-              <span className="min-w-0 flex-1 truncate">给医生看的报告（{reportTitle}）</span>
-              <ChevronRight className="h-5 w-5 shrink-0 text-brand-600" />
-            </button>
-          )}
-          <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
-        </div>
+      {/* the dock: frosted, edge to edge across the column, sitting on the tab bar; the deeper bottom
+          padding keeps the tab bar's raised round mark clear of the input row */}
+      <div className="glass sticky z-20 -mx-4 space-y-2.5 px-4 pt-2.5 pb-8 shadow-[0_-1px_0_var(--color-line)]" style={{ bottom: "var(--tab-bar)" }}>
+        {report && (
+          <button
+            type="button"
+            onClick={() => router.push(report)}
+            className="press flex min-h-12 w-full items-center gap-3 rounded-xl bg-brand-50 py-1 pr-3 pl-1.5 text-left text-base font-medium text-brand-800 transition duration-200 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+          >
+            <IconTile size="sm" tone="solid">
+              <FileText />
+            </IconTile>
+            <span className="min-w-0 flex-1 truncate">给医生看的报告（{reportTitle}）</span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-brand-700" />
+          </button>
+        )}
+        <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
       </div>
     </div>
   );

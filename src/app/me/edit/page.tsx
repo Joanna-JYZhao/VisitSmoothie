@@ -61,12 +61,12 @@ export default function EditProfilePage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 pb-2">
       <PageTitle sub="这些内容给医生看的时候会带上（学历除外）。">修改资料</PageTitle>
 
       {/* the card being edited keeps the tile it has on the profile page, so the form reads as the same thing opened up */}
       <Card tone="raised" className="rise-1 overflow-hidden">
-        <div className="light flex items-center gap-4 border-b border-line px-5 py-5 sm:px-6">
+        <div className="light flex items-center gap-3.5 border-b border-line px-4 py-4">
           <IconTile tone="solid" size="lg">
             <IdCard />
           </IconTile>
@@ -74,7 +74,7 @@ export default function EditProfilePage() {
             {state.profile.name}
           </span>
         </div>
-        <div className="p-5 sm:p-6">
+        <div className="p-4">
           <RegisterFields
             nameLocked
             draft={reg}
@@ -88,7 +88,7 @@ export default function EditProfilePage() {
         </div>
       </Card>
 
-      <Card className="rise-2 p-5 sm:p-6">
+      <Card className="rise-2 p-4">
         <div className="flex items-start gap-3.5">
           <IconTile tone="info">
             <Pill />
@@ -104,7 +104,7 @@ export default function EditProfilePage() {
       </Card>
 
       <div ref={contact} id="contact" className="rise-3 scroll-mt-24">
-        <Card className="p-5 sm:p-6">
+        <Card className="p-4">
           <div className="flex items-start gap-3.5">
             <IconTile tone="good">
               <Phone />
@@ -121,7 +121,7 @@ export default function EditProfilePage() {
       </div>
 
       {error && (
-        <div role="alert" className="flex animate-pop items-center gap-3.5 rounded-card border border-danger/15 bg-danger-bg px-5 py-4 shadow-card">
+        <div role="alert" className="flex animate-pop items-center gap-3.5 rounded-card border border-danger/15 bg-danger-bg px-4 py-4">
           <IconTile tone="danger">
             <CircleAlert />
           </IconTile>
@@ -130,7 +130,7 @@ export default function EditProfilePage() {
       )}
 
       <div className="rise-4 grid grid-cols-2 gap-3">
-        <Button variant="secondary" size="lg" className="press" onClick={() => router.push("/me")}>
+        <Button variant="outline" size="lg" className="press" onClick={() => router.push("/me")}>
           不改了
         </Button>
         <Button size="lg" className="press" onClick={save}>

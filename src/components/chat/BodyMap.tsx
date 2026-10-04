@@ -119,11 +119,12 @@ function Figure({ zones, onZone }: { zones: Zone[]; onZone: (z: Zone) => void })
     <svg viewBox="0 0 200 400" className="mx-auto block h-auto w-full max-w-[280px]" role="group" aria-label="身体图">
       <defs>
         <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
-          <stop stopColor="#f7fbf9" />
-          <stop offset="1" stopColor="#dfede6" />
+          {/* the theme's own tints (a CSS variable only works in style, not in the attribute) */}
+          <stop style={{ stopColor: "var(--color-surface)" }} />
+          <stop offset="1" style={{ stopColor: "var(--color-brand-100)" }} />
         </linearGradient>
         <filter id={`${id}-shadow`} x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodColor="#173c35" floodOpacity="0.12" />
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" style={{ floodColor: "var(--color-ink)", floodOpacity: 0.12 }} />
         </filter>
       </defs>
       {zones.map((z) => (

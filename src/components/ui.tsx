@@ -35,9 +35,9 @@ const btnVariants = {
   dangerGhost: "text-danger hover:bg-danger-bg",
 } as const;
 const btnSizes = {
-  sm: "min-h-11 px-4 text-base",
-  md: "min-h-11 px-5 text-base",
-  lg: "min-h-12 px-5 text-base",
+  sm: "min-h-12 px-4 text-base",
+  md: "min-h-12 px-5 text-base",
+  lg: "min-h-13 px-5 text-base",
   /** an answer to tap: as tall as `lg`, but with little side padding so three fit on a phone */
   tile: "min-h-12 rounded-xl px-1.5 text-base",
 } as const;
@@ -361,7 +361,7 @@ export function Field({
 }
 
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(inputCls, "h-11", className)} {...props} />;
+  return <input className={cn(inputCls, "h-12", className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
@@ -371,7 +371,7 @@ export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<H
 export function Select({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div className="relative">
-      <select className={cn(inputCls, "h-11 appearance-none pr-11", className)} {...props}>
+      <select className={cn(inputCls, "h-12 appearance-none pr-11", className)} {...props}>
         {children}
       </select>
       <ChevronDown className="pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-ink-3" />
@@ -382,7 +382,7 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
 /** The look of one option inside a segmented control (also used by tab bars built from links). */
 export const segmentCls = (selected: boolean) =>
   cn(
-    "min-h-11 rounded-lg px-4 text-base font-medium whitespace-nowrap transition duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
+    "min-h-12 rounded-lg px-4 text-base font-medium whitespace-nowrap transition duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
     selected ? "bg-surface text-ink shadow-pill" : "text-ink-2 hover:text-ink",
   );
 
@@ -414,6 +414,26 @@ export function Segmented<T extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * The switch itself, the iOS shape: a pill in the theme accent when on, a quiet grey when off.
+ * Purely visual; the button around it carries role="switch" and aria-checked.
+ */
+export function SwitchTrack({ on, className }: { on: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn("relative ml-1 inline-block h-8 w-[3.25rem] shrink-0 rounded-full transition-colors duration-300", on ? "bg-brand-600" : "bg-line-strong", className)}
+    >
+      <span
+        className={cn(
+          "absolute top-0.5 left-0.5 h-7 w-7 rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.2),0_0_0_0.5px_rgba(0,0,0,0.05)] transition-transform duration-300",
+          on && "translate-x-5",
+        )}
+      />
+    </span>
   );
 }
 
@@ -451,15 +471,18 @@ export function Toggle({
         <span className="block text-lg font-medium text-ink">{label}</span>
         {detail && <span className="mt-0.5 block text-base leading-relaxed text-ink-2">{detail}</span>}
       </span>
-      <span className={cn("relative ml-1 h-8 w-14 shrink-0 rounded-full transition-colors duration-300", checked ? "bg-brand-600" : "bg-line-strong")}>
-        <span className={cn("absolute top-0.5 h-7 w-7 rounded-full bg-white shadow-[0_2px_6px_rgba(20,38,47,0.25),0_0_0_0.5px_rgba(20,38,47,0.06)] transition-all duration-300", checked ? "left-[26px]" : "left-0.5")} />
-      </span>
+      <SwitchTrack on={checked} />
     </button>
   );
 }
 
 /* ---------- overlays ---------- */
 
+/**
+ * A bottom sheet, the phone way: it rises from the foot of the column, covers the tab bar, and keeps
+ * its last button clear of the home indicator. Tapping the shade or pressing Escape closes it.
+ * Footer buttons stack full width, the main one on top (pass them cancel first, main last).
+ */
 export function Modal({
   open,
   title,
@@ -487,23 +510,28 @@ export function Modal({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-ink/40 p-3 backdrop-blur-[6px] sm:items-center sm:p-4"
+      // it slides up as it appears (@starting-style); a browser without that simply shows it in place
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 transition-colors duration-300 starting:bg-ink/0"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full max-w-md animate-rise rounded-sheet bg-surface p-6 shadow-float"
+        className={cn(
+          "flex max-h-[calc(100dvh-2.5rem)] w-full max-w-[var(--phone-w)] flex-col rounded-t-sheet bg-surface shadow-float transition-transform duration-300 ease-out-soft starting:translate-y-full",
+        )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="t-title text-ink">{title}</h3>
+        {/* the grabber, so it reads as a sheet */}
+        <span aria-hidden="true" className="mx-auto mt-2 block h-1.5 w-10 shrink-0 rounded-full bg-surface-3" />
+        <div className="flex shrink-0 items-start justify-between gap-3 px-5 pt-2">
+          <h3 className="t-title min-w-0 pt-1.5 text-ink">{title}</h3>
           <button
             type="button"
             onClick={onClose}
             className={cn(
-              "-mt-1.5 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-2 transition hover:bg-surface-2 hover:text-ink",
+              "-mr-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-ink-2 transition hover:bg-surface-2 hover:text-ink",
               focusRing,
             )}
             aria-label={L("关闭", "Close")}
@@ -511,8 +539,20 @@ export function Modal({
             <X className="h-6 w-6" />
           </button>
         </div>
-        <div className="mt-3 text-base leading-relaxed text-ink-2">{children}</div>
-        {footer && <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{footer}</div>}
+        <div
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-2 text-base leading-relaxed text-ink-2"
+          style={footer ? undefined : { paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))" }}
+        >
+          {children}
+        </div>
+        {footer && (
+          <div
+            className="flex shrink-0 flex-col-reverse gap-2 px-5 pt-5 [&>*]:w-full"
+            style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+          >
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -543,12 +583,13 @@ export function BackButton({ href, children = L("返回", "Back") }: { href: str
   );
 }
 
-const titleCls = "t-display text-balance text-ink";
+/* a phone large title: one fixed size, not one that grows with the window */
+const titleCls = "text-[1.75rem] leading-tight font-bold tracking-[-0.03em] text-balance text-ink";
 const subCls = "t-body mt-2 text-ink-2";
 
 export function PageTitle({ children, sub, className }: { children: React.ReactNode; sub?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("mb-7 animate-fade-up", className)}>
+    <div className={cn("mb-5 animate-fade-up", className)}>
       <h1 className={titleCls}>{children}</h1>
       {sub && <p className={subCls}>{sub}</p>}
     </div>
