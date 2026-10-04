@@ -138,6 +138,12 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   // question sits in the middle of the page, and the ways to answer sit right under it.
   const opening = !state.thread.some((t) => t.kind === "user");
 
+  // 给医生看的话（描述卡）生成之后，页面最下面才出现 next·post：看完医生直接去 post 整理。
+  // 回主页还是底部栏中间那个图标（或左上角 logo）。
+  const descReady =
+    state.thread.some((t) => t.kind === "description" && (t.state === "draft" || t.state === "saved")) ||
+    state.episodes.some((e) => e.done || e.summary != null);
+
   /*
    * A phone chat, like Messages: the title at the top, the conversation in the middle, and docked
    * right on top of the tab bar the one way to answer (with the report one tap away above it). The
@@ -148,21 +154,7 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   return (
     <div className="-mb-9 flex min-w-0 flex-1 flex-col">
       {/* while the page is an invitation the name of the page steps back and the question is the headline */}
-      {/* the page name and the shortcut to post share one row, so they can never overlap on a narrow phone */}
-      <div className={cn("flex items-center justify-between gap-3", !opening && "mb-4")}>
-        <h1 className={cn("min-w-0 animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-ink-2" : "t-title text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
-        {/* 看完医生直接跳到 post；回主页还是底部栏中间那个图标（或左上角 logo） */}
-        <LinkButton
-          href="/post"
-          variant="soft"
-          size="sm"
-          aria-label={L("看完医生了？去 post 整理", "Seen the doctor? Go to post")}
-          className="press shrink-0 gap-1 rounded-full"
-        >
-          {L("下一步：看病后", "next · post")}
-          <ArrowRight className="h-4.5 w-4.5" aria-hidden="true" />
-        </LinkButton>
-      </div>
+      <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-ink-2" : "t-title mb-4 text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
       <div className={cn("flex flex-1 flex-col pt-2 pb-5", opening ? "justify-center" : "justify-end")}>
         <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
         {/* scrolled to with room for the dock and the tab bar below it (the page simply stops at its end) */}
@@ -187,6 +179,18 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
         {/* the assistant still answers in Chinese: said once, quietly, where its replies arrive */}
         {getLang() === "en" && <p className="text-center text-base leading-snug text-ink-2">AI replies are in Chinese for now.</p>}
         <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
+        {descReady && (
+          <LinkButton
+            href="/post"
+            variant="primary"
+            size="lg"
+            aria-label={L("看完医生了？去 post 整理", "Seen the doctor? Go to post")}
+            className="press w-full gap-1"
+          >
+            {L("下一步：看病后", "next · post")}
+            <ArrowRight className="h-4.5 w-4.5" aria-hidden="true" />
+          </LinkButton>
+        )}
       </div>
     </div>
   );

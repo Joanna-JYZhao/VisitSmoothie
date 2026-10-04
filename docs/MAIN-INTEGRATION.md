@@ -71,3 +71,11 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 | 浏览器（390 像素手机宽度，中英文各一遍） | 欢迎、登录、注册（服务端账号、错密码、开发者开关下空表单）、林叔中英文、首页 to do、问 AI 展开收起、pre（身体图多选、next·post）、post、report、给医生看、set、我的资料、设置、应急；截图在 `docs/手机版截图/` 和 `docs/手机版截图-英文/` |
 
 没验证到的：真实的照片整理和 Clinical Plan 实际结果（AI Key 现在被拒，照片整理走不通）；真实麦克风。
+
+## 2026-10-04 改动：pre 的 next·post 挪到页面底部、引导文案「就诊计划」改「医嘱行动」（Nancy，直接推 main）
+
+- `src/components/chat/ChatScreen.tsx`：删掉标题行右侧的 next·post 按钮；改为只在「给医生看的话」生成之后（对话里出现描述卡，或就诊事项已完成/已有摘要）在页面最底部（输入栏下方、底栏上方）出现的主色大按钮，文案沿用中英双语 `下一步：看病后 / next · post`。回主页入口不变（底栏中间 logo、左上角品牌标）。
+- `src/components/GuideTour.tsx`：新手引导 post 一步的正文「就诊计划」改为「医嘱行动」（英文同步改为 action items）。
+
+验证：`npm test`（三个组件全部通过）、`npm run lint`、`npx tsc --noEmit` 通过；生产构建用 `npx next build --webpack` 通过（本机沙箱拦住 Turbopack 构建时 PostCSS 子进程绑端口，与代码无关）。浏览器验证：新账号空对话时按钮不出现；林叔（问诊已完成）pre 页底部出现按钮并跳转 /post。
+
