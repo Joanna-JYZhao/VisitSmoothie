@@ -159,7 +159,7 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
           aria-label={L("看完医生了？去 post 整理", "Seen the doctor? Go to post")}
           className="press shrink-0 gap-1 rounded-full"
         >
-          next · post
+          {L("下一步：看病后", "next · post")}
           <ArrowRight className="h-4.5 w-4.5" aria-hidden="true" />
         </LinkButton>
       </div>

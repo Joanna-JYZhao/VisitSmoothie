@@ -27,17 +27,27 @@ check("以往病史：9 月 22 日写明缬沙坦、新增氨氯地平", p.condi
 check("以往病史：吸烟约 20 年，每天约 10 支（自己添加）", p.conditions.some((c) => /吸烟约 20 年/.test(c) && /每天约 10 支/.test(c) && /2026-09-15/.test(c)));
 check("手术：2008-06 阑尾切除术（自己添加）", p.surgeries.length === 1 && /^2008-06 阑尾切除术/.test(p.surgeries[0]) && /2026-09-15/.test(p.surgeries[0]));
 
-const [knee, may] = s.episodes;
-check("旧记录：5 月 12 日左膝不适，已缓解", may.title === "左膝不适" && may.startedAt.startsWith("2026-05-1") && may.status === "resolved");
-check("旧记录没有明确诊断、没有用药记录", /没有明确诊断/.test(may.visit!.diagnosis) && /没有可核对的用药/.test(may.visit!.treatment));
-check("旧记录没有编轻重", may.entries.every((e) => e.severity === null));
-check("这次：左膝疼痛，三天前开始，引用了旧记录", knee.title === "左膝疼痛" && knee.relatedEpisodeIds.includes(may.id) && new Date(knee.startedAt).getDate() === 1);
-check("4 分是他自己说的", knee.entries[0].severity === 4 && knee.entries[0].exact === true);
-check("保留他的原话「像扭着疼」，没改成「绞痛」", knee.messages[0].content.includes("像扭着疼") && !JSON.stringify(knee).includes("绞痛"));
-check("医嘱：骨科，原因待查，不加药，不做检查", knee.visit!.department === "骨科" && /原因待查/.test(knee.visit!.diagnosis) && /未新增药物/.test(knee.visit!.treatment) && /未开具检查/.test(knee.visit!.treatment));
-const fu = new Date(knee.visit!.followUpAt!);
-check("复诊 10 月 11 日 09:30", fu.getMonth() === 9 && fu.getDate() === 11 && fu.getHours() === 9 && fu.getMinutes() === 30);
-check("看完医生继续跟踪", knee.status === "active");
+// 旧剧本的两条膝盖记录已由 R002（5 月）和 R010（10 月 3 日骨科）取代
+check("旧剧本的两条记录不在了", !s.episodes.some((e) => e.id === "lin-knee" || e.id === "lin-may"));
+check("就诊记录正好十条：R001–R010", s.episodes.length === 10 && s.episodes.every((e) => /^lin-r0(0[1-9]|10)$/.test(e.id)));
+check("两个提醒都挂在 R010 上", s.reminders.every((r) => r.episodeId === "lin-r010"));
+
+// 规则引擎的几条老检查，用测试自己的两条记录（原来演示里的左膝，内容照旧）
+const iso = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).toISOString();
+const may = {
+  id: "t-may", title: "左膝不适", tags: ["膝盖"], status: "resolved", startedAt: new Date(2026, 4, 12, 8).toISOString(), createdAt: new Date(2026, 4, 12, 20).toISOString(),
+  updatedAt: new Date(2026, 4, 12, 20).toISOString(), lastCheckInAt: new Date(2026, 4, 12, 20).toISOString(),
+  entries: [{ id: "t-may-e1", at: new Date(2026, 4, 12, 20).toISOString(), severity: null, note: "走路后左膝不舒服", location: "左膝", source: "user" }],
+  messages: [], done: true, relatedEpisodeIds: [],
+  visit: { date: "2026-05-12", diagnosis: "没有明确诊断", treatment: "没有可核对的用药记录", recordedAt: new Date(2026, 4, 12, 20).toISOString() },
+} as unknown as import("../../src/lib/types").Episode;
+const knee = {
+  id: "t-knee", title: "左膝疼痛", tags: ["膝盖"], status: "active", startedAt: iso(1, 9), createdAt: iso(4, 8, 10), updatedAt: iso(4, 12), lastCheckInAt: iso(4, 8, 30),
+  entries: [{ id: "t-knee-e1", at: iso(4, 8, 30), severity: 4, exact: true, note: "左膝内侧（靠另一条腿那边），像被拉着的酸痛，上楼时像扭着疼", location: "左膝内侧", source: "user" }],
+  messages: [{ id: "t-knee-m1", role: "user", content: "我左边膝盖这几天不太舒服，上楼时像扭着疼，坐下来会好一点。", at: iso(4, 8, 10), kind: "intake" }],
+  done: true, relatedEpisodeIds: ["t-may"],
+  visit: { date: "2026-10-04", department: "骨科", diagnosis: "左膝疼痛，原因待查", treatment: "本次未新增药物；本次未开具检查", recordedAt: iso(4, 12) },
+} as unknown as import("../../src/lib/types").Episode;
 
 check("两个提醒，都是单次", s.reminders.length === 2 && s.reminders.every((r) => r.frequency === "once" && r.enabled));
 const r1 = new Date(s.reminders[0].at!);
@@ -102,5 +112,24 @@ const eve = todos.find((x) => x.text === "准备病历和药盒");
 check("医嘱：复诊前一晚 20:00 提醒准备病历和药盒", eve != null && new Date(eve.at!).getDate() === 10 && new Date(eve.at!).getHours() === 20, todos);
 check("医嘱：复诊当天有提醒", todos.some((x) => x.kind === "followup" && new Date(x.at!).getDate() === 11));
 check("医嘱：没加药就没有吃药提醒", todos.every((x) => x.kind !== "medicine"));
+
+// 队友更新版的十份报告 R001–R010（日期以 2026-10-04 12:00 为准，按打开那天整天平移）
+{
+  const at = (st: typeof s, id: string) => st.episodes.find((e) => e.id === id)!;
+  const r = s.episodes.filter((e) => e.id.startsWith("lin-r"));
+  const ymd = (iso: string) => { const d = new Date(iso); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+  check("十份报告，id lin-r001…lin-r010", r.length === 10 && ["001", "002", "003", "004", "005", "006", "007", "008", "009", "010"].every((n) => r.some((e) => e.id === `lin-r${n}`)));
+  check("R001 2025-11-19 起，2025-11-20 全科", ymd(at(s, "lin-r001").startedAt) === "2025-11-19" && at(s, "lin-r001").visit!.date === "2025-11-20" && at(s, "lin-r001").visit!.department === "全科");
+  check("R002 5 月左膝：看过医生、当次医嘱没有保存（列表不会说「没有看医生」）", /左膝/.test(at(s, "lin-r002").title) && ymd(at(s, "lin-r002").startedAt) === "2026-5-9" && at(s, "lin-r002").visit?.diagnosis === "当次医嘱没有保存");
+  check("R009 去过消化内科，单据没有上传", at(s, "lin-r009").visit?.department === "消化内科" && /单据没有上传/.test(at(s, "lin-r009").visit!.diagnosis));
+  check("R005 只有就医前整理：不说「自己好了」，保持打开但不追问", at(s, "lin-r005").status === "active" && at(s, "lin-r005").visit == null && at(s, "lin-r005").snoozedUntil != null);
+  check("R008 9 月 22 日全科，药名剂量照病历", at(s, "lin-r008").visit!.date === "2026-09-22" && /缬沙坦胶囊 80 mg/.test(at(s, "lin-r008").visit!.treatment) && /苯磺酸氨氯地平片 5 mg/.test(at(s, "lin-r008").visit!.treatment));
+  check("R010 10 月 3 日骨科：左膝骨关节炎（早期）", at(s, "lin-r010").visit!.date === "2026-10-03" && at(s, "lin-r010").visit!.department === "骨科" && /左膝骨关节炎（早期）/.test(at(s, "lin-r010").visit!.diagnosis));
+  check("R005（只有就医前整理）和 R008–R010 还在跟踪，其余已结束", r.filter((e) => e.status === "active").map((e) => e.id).sort().join() === "lin-r005,lin-r008,lin-r009,lin-r010");
+  check("报告里没有编轻重和体温", r.every((e) => e.entries.every((x) => x.severity === null && x.temp == null)));
+  const later = buildLinState(new Date(2026, 9, 7, 9, 0));
+  check("10 月 7 日打开：日期整体后移 3 天，钟点不变", at(later, "lin-r010").visit!.date === "2026-10-06" && ymd(at(later, "lin-r001").startedAt) === "2025-11-22" && new Date(at(later, "lin-r001").startedAt).getHours() === 20);
+  check("今天打开：今天开始跟踪的追问不会马上冒出来", r.filter((e) => e.status === "active").every((e) => new Date(e.lastCheckInAt).getTime() <= now.getTime() + 3 * 3600_000 + 1));
+}
 
 finish("demo-lin");

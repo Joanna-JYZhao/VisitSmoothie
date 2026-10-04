@@ -15,9 +15,9 @@ import { L } from "@/lib/lang";
 
 type RangeKey = "30d" | "90d" | "1y";
 const ranges = (): { value: RangeKey; label: string }[] => [
-  { value: "30d", label: L("30 天", "30 days") },
-  { value: "90d", label: L("3 个月", "3 months") },
-  { value: "1y", label: L("一年", "1 year") },
+  { value: "30d", get label() { return L("30 天", "30 days"); } },
+  { value: "90d", get label() { return L("3 个月", "3 months"); } },
+  { value: "1y", get label() { return L("一年", "1 year"); } },
 ];
 const DAY = 86_400_000;
 

@@ -52,7 +52,7 @@ export default function LoginPage() {
           <section className="registration-card login-card" aria-labelledby="login-heading">
             <header className="registration-card-header">
               <div>
-                <p className="registration-eyebrow">WELCOME BACK</p>
+                <p className="registration-eyebrow">{L("欢迎回来", "WELCOME BACK")}</p>
                 <h1 id="login-heading">{L("欢迎回来。", "Welcome back.")}</h1>
                 <p className="guide-description">{L("使用姓名和密码，打开你的个人档案。", "Use your name and password to open your profile.")}</p>
               </div>

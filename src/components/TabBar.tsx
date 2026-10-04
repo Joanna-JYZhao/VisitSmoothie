@@ -16,18 +16,19 @@ import { L } from "@/lib/lang";
 
 interface Tab {
   href: string;
-  label: string;
+  /** Chinese and English; picked when drawn, so the bar follows the language switch */
+  label: [string, string];
   guide: string;
   Icon: typeof Camera;
 }
 
 const LEFT: Tab[] = [
-  { href: "/pre", label: "pre", guide: "pre", Icon: MessageCircle },
-  { href: "/post", label: "post", guide: "post", Icon: Camera },
+  { href: "/pre", label: ["看病前", "pre"], guide: "pre", Icon: MessageCircle },
+  { href: "/post", label: ["看病后", "post"], guide: "post", Icon: Camera },
 ];
 const RIGHT: Tab[] = [
-  { href: "/report", label: "report", guide: "report", Icon: FileText },
-  { href: "/set", label: "set", guide: "profile", Icon: Settings },
+  { href: "/report", label: ["记录", "report"], guide: "report", Icon: FileText },
+  { href: "/set", label: ["设置", "set"], guide: "profile", Icon: Settings },
 ];
 
 function TabItem({ tab, active }: { tab: Tab; active: boolean }) {
@@ -43,7 +44,7 @@ function TabItem({ tab, active }: { tab: Tab; active: boolean }) {
       )}
     >
       <tab.Icon className="h-6 w-6" strokeWidth={active ? 2.3 : 1.9} aria-hidden="true" />
-      <span className={cn("leading-tight", active && "font-semibold")}>{tab.label}</span>
+      <span className={cn("leading-tight", active && "font-semibold")}>{L(...tab.label)}</span>
     </Link>
   );
 }

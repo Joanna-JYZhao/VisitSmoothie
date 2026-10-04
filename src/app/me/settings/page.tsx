@@ -12,16 +12,16 @@ import { L } from "@/lib/lang";
 
 type Perm = NotificationPermission | "unsupported";
 const intervals = () => [
-  { hours: 12, label: L("一天两次", "Twice a day") },
-  { hours: 24, label: L("每天一次", "Once a day") },
-  { hours: 48, label: L("两天一次", "Every two days") },
+  { hours: 12, get label() { return L("一天两次", "Twice a day"); } },
+  { hours: 24, get label() { return L("每天一次", "Once a day"); } },
+  { hours: 48, get label() { return L("两天一次", "Every two days"); } },
 ];
 const metricCadence = () => [
-  { hours: 24, label: L("每天", "Every day") },
-  { hours: 48, label: L("两天一次", "Every two days") },
-  { hours: 72, label: L("三天一次", "Every three days") },
-  { hours: 168, label: L("每周", "Every week") },
-  { hours: 0, label: L("不提醒", "Never") },
+  { hours: 24, get label() { return L("每天", "Every day"); } },
+  { hours: 48, get label() { return L("两天一次", "Every two days"); } },
+  { hours: 72, get label() { return L("三天一次", "Every three days"); } },
+  { hours: 168, get label() { return L("每周", "Every week"); } },
+  { hours: 0, get label() { return L("不提醒", "Never"); } },
 ];
 
 /** One row of a settings group, the way iOS Settings lays one out: tile, title, detail, then the control under it. */
@@ -106,7 +106,7 @@ export default function SettingsPage() {
     setHealth(h);
     setPinging(false);
     if (h.ok) toast.show(L(`连接正常，用了 ${((h.latencyMs ?? 0) / 1000).toFixed(1)} 秒`, `Connected in ${((h.latencyMs ?? 0) / 1000).toFixed(1)} s`), "good");
-    else toast.show(h.configured ? L("没连上，请检查 Key 和网络", "Not connected. Check the Key and the network") : L("还没有配置 API Key", "No API Key set up yet"), "danger");
+    else toast.show(h.configured ? L("没连上，请检查密钥和网络", "Not connected. Check the Key and the network") : L("还没有配置密钥", "No API Key set up yet"), "danger");
   };
 
   const download = () => {
@@ -287,11 +287,11 @@ export default function SettingsPage() {
                   {health.speechModel}
                   {health.ok === true && health.latencyMs != null && L(`。刚才测试用了 ${(health.latencyMs / 1000).toFixed(1)} 秒`, `. The last test took ${(health.latencyMs / 1000).toFixed(1)} s`)}
                   {health.ok === false && L("。刚才测试没连上，对话会先用内置规则顶上", ". The last test failed; built-in rules answer for now")}
-                  {L("。Key 和模型名在项目根目录的 .env.local 里改。", ". Change the Key and model names in .env.local at the project root.")}
+                  {L("。密钥和模型名在项目根目录的配置文件 .env.local 里改。", ". Change the Key and model names in .env.local at the project root.")}
                 </>
               ) : (
                 L(
-                  "还没有配置 GLM API Key。现在用内置规则回答，不能听语音、认照片。把 Key 填进 .env.local 再重启就可以了。",
+                  "还没有配置智谱的密钥。现在用内置规则回答，不能听语音、认照片。把密钥填进配置文件 .env.local 再重启就可以了。",
                   "No GLM API Key set up yet. Built-in rules answer for now; voice and photos don't work. Put the Key in .env.local and restart.",
                 )
               )

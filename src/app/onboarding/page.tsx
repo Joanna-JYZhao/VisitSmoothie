@@ -443,7 +443,7 @@ export default function OnboardingPage() {
           <section className="registration-card jade-edge" aria-labelledby="profile-title">
             <header className="registration-card-header">
               <div>
-                <p className="registration-eyebrow">LET’S GET TO KNOW YOU</p>
+                <p className="registration-eyebrow">{L("先认识一下你", "LET’S GET TO KNOW YOU")}</p>
                 <h2 id="profile-title">{L("建立个人档案", "Make your profile")}</h2>
               </div>
               <button

@@ -239,7 +239,7 @@ export function AskBox({ now }: { now: number }) {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={L("问 AI", "Ask AI")}
+            aria-label={L("问一问", "Ask AI")}
             className={cn("ask-sheet phone-fixed", closing && "is-closing")}
             onAnimationEnd={(e) => e.target === e.currentTarget && onSlidDown()}
           >
@@ -263,7 +263,7 @@ export function AskBox({ now }: { now: number }) {
                 <span className="flex items-center gap-2 text-ink">
                   <LogoMark className="h-8 w-8" />
                   <span className="flex flex-col leading-tight">
-                    <span className="t-heading leading-tight">{L("问 AI", "Ask AI")}</span>
+                    <span className="t-heading leading-tight">{L("问一问", "Ask AI")}</span>
                     <span className="text-base font-medium text-ink-2">VisitSmoothie</span>
                   </span>
                 </span>

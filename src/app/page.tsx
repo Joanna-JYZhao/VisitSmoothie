@@ -94,7 +94,7 @@ export default function HomePage() {
         className="rise-1 flex max-h-[52dvh] min-h-0 flex-col overflow-hidden rounded-[1.1rem] bg-surface shadow-[0_0_0_0.5px_var(--color-line)]"
       >
         <div className="px-4 pt-4 pb-1">
-          <HalfTitle icon={<ListChecks />}>to do &amp; tips</HalfTitle>
+          <HalfTitle icon={<ListChecks />}>{L("待办和提醒", "to do & tips")}</HalfTitle>
         </div>
         <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-4 pb-3">
           <TodoList now={now} />
@@ -131,7 +131,7 @@ export default function HomePage() {
       {/* bottom half: ask anything; it grows into the whole screen once a question is being asked */}
       <section className="rise-2 flex flex-1 flex-col rounded-[1.1rem] bg-surface p-4 shadow-[0_0_0_0.5px_var(--color-line)]">
         <div className="mb-3">
-          <HalfTitle icon={<MessageCircleQuestion />}>{L("问 AI", "Ask AI")}</HalfTitle>
+          <HalfTitle icon={<MessageCircleQuestion />}>{L("问一问", "Ask AI")}</HalfTitle>
         </div>
         <AskBox now={now} />
       </section>

@@ -193,7 +193,7 @@ export function ClinicalPlan({ result, onSave, saving }: { result: AfterResult; 
             <IconTile tone="brand" size="sm">
               <ClipboardList className="h-5 w-5" />
             </IconTile>
-            {L("Clinical Plan · 治疗计划", "Clinical Plan")}
+            {L("治疗计划", "Clinical Plan")}
           </p>
           {where && (
             <p className="mt-3 flex items-center gap-2 text-base text-ink-2">

@@ -25,7 +25,7 @@ export default function SetPage() {
 
   return (
     <div className="space-y-6 pb-2">
-      <PageHeader title="set" />
+      <PageHeader title={L("设置", "set")} />
 
       {/* the person: one tap opens the whole 我的档案 */}
       <Card tone="raised" className="animate-pop overflow-hidden">
