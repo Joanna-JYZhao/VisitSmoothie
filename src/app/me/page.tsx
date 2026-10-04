@@ -71,15 +71,13 @@ export default function MePage() {
         }
       />
 
-      {/* The Medical ID card: the person in the serif voice on a glossy tile, then the facts in hairline rows. */}
+      {/* Identity and medical facts form one plain, grouped list. */}
       <Card tone="raised" className="animate-pop overflow-hidden">
         <div className="relative px-4 pt-5 pb-4 sm:px-5 sm:pt-6 sm:pb-5">
-          {/* a quiet brand glow behind the tile, the way a Health card is lit */}
-          <span aria-hidden="true" className="pointer-events-none absolute -top-16 -left-10 h-48 w-48 rounded-full bg-brand-200/25 blur-3xl" />
           <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3.5 sm:gap-x-5">
             <span
               aria-hidden="true"
-              className="tile-brand flex h-13 w-13 shrink-0 items-center justify-center rounded-[16px] text-[1.6rem] leading-none font-semibold text-white sm:row-span-2"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#7056bf] text-[1.4rem] leading-none font-semibold text-white sm:row-span-2"
             >
               {Array.from(profile.name.trim())[0] ?? ""}
             </span>

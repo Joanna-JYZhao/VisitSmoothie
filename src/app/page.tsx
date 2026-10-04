@@ -12,14 +12,10 @@ import { GuideTour, TOUR_FLAG } from "@/components/GuideTour";
 import { unsavedCards } from "@/lib/drafts";
 import { cn } from "@/lib/utils";
 
-/*
- * One door: a compact row — the app-icon tile on the left, the word and its one sentence beside it,
- * a quiet chevron at the end. It lifts to the hand and gives under the finger. Small enough that both
- * doors and a good part of the to-do list share the first screen of a phone.
- */
+/* Compact entry rows above the grouped to-do list. */
 const doorCls =
-  "lift press group jade-edge flex min-h-25 items-center gap-3.5 rounded-[20px] border border-line/70 px-4 py-3.5 text-left material sm:min-h-28 sm:gap-4 sm:px-5 sm:py-5 hover:border-brand-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
-const iconCls = "flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] text-white transition-transform duration-300 ease-[cubic-bezier(0.34,1.3,0.64,1)] group-hover:scale-105";
+  "lift press group flex min-h-20 items-center gap-3 rounded-xl bg-surface px-4 py-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
+const iconCls = "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white";
 
 const ITEM_TONE = {
   red: { row: "bg-danger-bg", tile: "solidDanger" as const, Icon: AlertTriangle },
@@ -79,36 +75,36 @@ export default function HomePage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      {/* the two doors: one compact row each, still the first things to move when the page opens */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+      <h1 className="t-display text-ink">就诊助手</h1>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Link href="/pre" data-guide="pre" className={cn(doorCls, "rise-1")}>
           <span className={cn(iconCls, "tile-brand")}>
             <MessageCircle className="h-5 w-5" strokeWidth={2} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[1.5rem] leading-none font-bold tracking-[-0.03em] text-ink">pre</span>
-            <span className="t-body mt-1 block text-ink-2">看医生之前：哪里不舒服，跟我说</span>
+            <span className="block text-lg leading-snug font-semibold text-ink">pre</span>
+            <span className="t-body mt-0.5 block text-ink-2">看医生之前：哪里不舒服，跟我说</span>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
         </Link>
         <Link href="/post" data-guide="post" className={cn(doorCls, "rise-2")}>
-          <span className={cn(iconCls, "tile-ink")}>
+          <span className={cn(iconCls, "bg-[#b96514]")}>
             <Camera className="h-5 w-5" strokeWidth={2} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[1.5rem] leading-none font-bold tracking-[-0.03em] text-ink">post</span>
-            <span className="t-body mt-1 block text-ink-2">看完医生：把医嘱拍给我</span>
+            <span className="block text-lg leading-snug font-semibold text-ink">post</span>
+            <span className="t-body mt-0.5 block text-ink-2">看完医生：把医嘱拍给我</span>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
         </Link>
       </div>
 
-      <section data-guide="todo" className="rise-3 material-raised rounded-[28px] border border-line/70 p-4 sm:p-6">
+      <section data-guide="todo" className="rise-3 rounded-xl bg-surface p-4 sm:p-5">
         <div className="flex items-center gap-3">
-          <IconTile tone="solid" size="lg">
+          <IconTile tone="good" size="sm">
             <ListChecks />
           </IconTile>
-          <h2 className="t-title text-ink">to do &amp; tips</h2>
+          <h2 className="t-title text-good">to do &amp; tips</h2>
         </div>
         <TodoList now={now} />
         {items.length > 0 && (

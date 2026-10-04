@@ -11,7 +11,7 @@ import { cn, fmtISODate } from "@/lib/utils";
 
 const DONE_KEY = "yiban.doneToday";
 const KIND: Record<HomeTodo["kind"], string> = { medicine: "吃药", care: "要做的", followup: "下次复诊", caution: "注意" };
-/* each kind has its own icon and tint, so a row is told at a glance, the way iOS Health does it */
+/* Kind icons supplement, rather than replace, the written labels. */
 const KIND_ICON: Record<HomeTodo["kind"], { Icon: typeof Pill; tone: IconTone }> = {
   medicine: { Icon: Pill, tone: "brand" },
   care: { Icon: ClipboardCheck, tone: "info" },
@@ -51,8 +51,8 @@ export function TodoList({ now }: { now: number }) {
 
   if (!todos.length) {
     return (
-      <div className="mt-5 flex animate-fade-up items-center gap-4 rounded-[22px] border border-line/80 bg-surface-2/50 px-5 py-5">
-        <IconTile tone="brand" size="lg" className="animate-breathe">
+      <div className="mt-4 flex items-center gap-3 border-t border-line px-1 py-5">
+        <IconTile tone="neutral" size="sm">
           <Sparkles />
         </IconTile>
         <p className="t-body text-ink">看完医生，在 post 里录音或上传，吃药和复诊会自动放到这里。</p>
@@ -60,13 +60,13 @@ export function TodoList({ now }: { now: number }) {
     );
   }
   return (
-    <ul className="mt-5 overflow-hidden rounded-[22px] border border-line/80 bg-surface-2/50 divide-y divide-line">
+    <ul className="mt-3 divide-y divide-line border-t border-line">
       {todos.map((t) => {
         const ticked = keys.includes(t.key);
         const r = t.reminder;
         const k = KIND_ICON[t.kind];
         return (
-          <li key={t.key} className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-3.5 transition-colors duration-300 sm:px-4", !ticked && "bg-surface")}>
+          <li key={t.key} className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 py-2 transition-colors duration-150", !ticked && "bg-surface")}>
             <button
               type="button"
               role="checkbox"
@@ -75,7 +75,7 @@ export function TodoList({ now }: { now: number }) {
               onClick={() => tick(t.key)}
               className="press flex min-h-12 min-w-12 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
-              <span className={cn("flex h-8 w-8 items-center justify-center rounded-full border-[1.5px] transition-all duration-300", ticked ? "tile-brand scale-105 border-transparent text-white" : "border-line-strong bg-surface")}>
+              <span className={cn("flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] transition-all duration-300", ticked ? "bg-brand-600 border-transparent text-white" : "border-line-strong bg-surface")}>
                 {ticked && <Check className="h-5 w-5 animate-pop" strokeWidth={2.5} />}
               </span>
             </button>
@@ -84,7 +84,7 @@ export function TodoList({ now }: { now: number }) {
             </IconTile>
             {/* on a phone the text gets the whole width; the switch wraps under it */}
             <div className="min-w-0 flex-1 transition duration-300 max-sm:basis-[calc(100%-3.75rem)]">
-              <p className={cn("text-lg leading-snug font-medium", ticked ? "text-ink-3 line-through decoration-ink-3" : "text-ink")}>
+              <p className={cn("text-base leading-snug font-medium", ticked ? "text-ink-3 line-through decoration-ink-3" : "text-ink")}>
                 <span className={cn("mr-2 font-semibold", ticked ? "text-ink-3" : "text-brand-700")}>{KIND[t.kind]}</span>
                 {t.title}
               </p>
