@@ -19,6 +19,7 @@ import {
   SheetList,
   SheetPairs,
   SheetSection,
+  SheetSkeleton,
 } from "@/components/DoctorSheet";
 import { TrendChart, type TrendPoint } from "@/components/TrendChart";
 import { BackButton, LinkButton, Notice } from "@/components/ui";
@@ -39,7 +40,7 @@ export default function DoctorYearPage() {
 
   const facts = useMemo(() => annualFacts(state), [state]);
   const instant = useMemo(() => instantAnnual(state), [state]);
-  if (!profile) return null;
+  if (!profile) return <SheetSkeleton />;
 
   if (!enough) {
     return (
@@ -62,7 +63,7 @@ export default function DoctorYearPage() {
       : instant
         ? { ...instant, generatedAt: nowISO(), mode: "fallback", periodStart: facts.periodStart, periodEnd: facts.periodEnd }
         : null;
-  if (!view) return null;
+  if (!view) return <SheetSkeleton />;
 
   const active = state.episodes.find((e) => e.status === "active");
   const start = new Date(facts.periodStart).getTime();
@@ -75,15 +76,16 @@ export default function DoctorYearPage() {
     const mid = new Date(Math.max(start, Math.min(new Date(y, mo - 1, 15, 12).getTime(), end)));
     return { id: m.month, t: mid.getTime(), at: mid.toISOString(), v: m.avg, note: L(`${m.count} 次，${m.min.toFixed(1)} 到 ${m.max.toFixed(1)}`, `${m.count} ${m.count === 1 ? "reading" : "readings"}, ${m.min.toFixed(1)} to ${m.max.toFixed(1)}`) };
   });
+  const working = busy || stale;
 
   return (
-    <div className="space-y-4">
-      <div className="no-print">
+    <div className="space-y-5">
+      <div className="no-print -mb-2">
         <BackButton href="/" />
       </div>
       <DoctorTabs current="year" episodeHref={active ? `/doctor/${active.id}` : null} yearHref="/doctor/year" />
 
-      <GlanceSheet profile={profile} subject={L("这一年", "This year")} lines={view.glance} generatedAt={view.generatedAt} busy={busy || stale} />
+      <GlanceSheet profile={profile} subject={L("这一年", "This year")} lines={view.glance} generatedAt={view.generatedAt} busy={working} />
 
       <SheetDetails>
         <SheetSection
@@ -92,8 +94,8 @@ export default function DoctorYearPage() {
             `${fmtDate(view.periodStart, { year: true })} to ${fmtDate(view.periodEnd, { year: true })}`,
           )}
         >
-          <p className="font-semibold">{view.headline}</p>
-          <p className="mt-1">{view.overview}</p>
+          <p className="text-xl leading-snug font-semibold tracking-[-0.01em]">{view.headline}</p>
+          <p className="mt-2">{view.overview}</p>
         </SheetSection>
         {view.currentConcerns.length > 0 && (
           <SheetSection title={L("目前需要医生关注", "Needs the doctor's attention now")}>
@@ -104,8 +106,8 @@ export default function DoctorYearPage() {
           <SheetSection title={L("指标变化", "How the readings changed")}>
             <SheetPairs rows={view.metricTrends.map((m) => ({ head: m.name, body: m.trend }))} />
             {a1c.length >= 2 && (
-              <div className="mt-4">
-                <p className="mb-1 text-base font-medium text-ink-2">{L("糖化血红蛋白（%）", "HbA1c (%)")}</p>
+              <figure className="mt-7 print:break-inside-avoid">
+                <figcaption className="mb-3 text-base font-semibold text-ink print:text-black">{L("糖化血红蛋白（%）", "HbA1c (%)")}</figcaption>
                 <TrendChart
                   points={a1c}
                   unit="%"
@@ -116,11 +118,13 @@ export default function DoctorYearPage() {
                   height={190}
                   ariaLabel={L("过去一年糖化血红蛋白的变化", "HbA1c over the past year")}
                 />
-              </div>
+              </figure>
             )}
             {fbg.length >= 2 && (
-              <div className="mt-4">
-                <p className="mb-1 text-base font-medium text-ink-2">{L("空腹血糖，每月平均（mmol/L）", "Fasting glucose, monthly average (mmol/L)")}</p>
+              <figure className="mt-7 print:break-inside-avoid">
+                <figcaption className="mb-3 text-base font-semibold text-ink print:text-black">
+                  {L("空腹血糖，每月平均（mmol/L）", "Fasting glucose, monthly average (mmol/L)")}
+                </figcaption>
                 <TrendChart
                   points={fbg}
                   unit="mmol/L"
@@ -132,7 +136,7 @@ export default function DoctorYearPage() {
                   dateLabel={(p) => L(`${new Date(p.at).getMonth() + 1}月平均`, `${MONTHS_EN[new Date(p.at).getMonth()]} average`)}
                   ariaLabel={L("过去一年每月空腹血糖平均值的变化", "Monthly average fasting glucose over the past year")}
                 />
-              </div>
+              </figure>
             )}
           </SheetSection>
         )}
@@ -158,7 +162,7 @@ export default function DoctorYearPage() {
         )}
       </SheetDetails>
 
-      {!(busy || stale) && <QuestionsCard questions={view.questionsForDoctor} />}
+      {!working && <QuestionsCard questions={view.questionsForDoctor} />}
       <SheetActions text={() => annualToText(view, profile, facts)} onRefresh={() => void refreshAnnual()} busy={busy} />
       <SheetFootnote />
     </div>

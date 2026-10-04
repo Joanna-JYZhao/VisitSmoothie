@@ -7,7 +7,14 @@ import { METRICS, METRIC_ORDER, dayKey, evaluateMeasurement, findHighStreaks, fo
 import { toLocalInputValue } from "@/lib/utils";
 import { HintBanner } from "./HintBanner";
 import { useToast } from "./Toast";
-import { Button, Field, Input, Modal, Select, TextButton } from "./ui";
+import { Button, Field, IconTile, Input, Modal, Select, TextButton } from "./ui";
+import { CircleAlert, Clock3 } from "lucide-react";
+
+/* the box a reading is typed into: the number big and tabular, centred, the way a Health entry is */
+const readingCls = "t-title min-w-0 text-center tabular-nums placeholder:text-lg placeholder:font-normal placeholder:tracking-normal";
+/* the browser's own calendar button inside a time box: quiet until the hand reaches it */
+const dateCls =
+  "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:rounded-lg [&::-webkit-calendar-picker-indicator]:p-1 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:transition [&::-webkit-calendar-picker-indicator]:hover:bg-brand-50 [&::-webkit-calendar-picker-indicator]:hover:opacity-100";
 
 /** Saves one reading and returns it together with what, if anything, the user should be told. */
 export function useRecordMetric() {
@@ -79,11 +86,13 @@ export function ReadingInputs({
         aria-label={type === "bp" ? "高压" : `${def.label}（${def.unit}）`}
         autoFocus={autoFocus}
         onKeyDown={(e) => e.key === "Enter" && onEnter?.()}
-        className="min-w-0"
+        className={readingCls}
       />
       {type === "bp" && (
         <>
-          <span className="text-xl text-ink-2">/</span>
+          <span aria-hidden="true" className="t-title font-light text-ink-3">
+            /
+          </span>
           <Input
             type="number"
             inputMode="numeric"
@@ -92,7 +101,7 @@ export function ReadingInputs({
             placeholder="低压"
             aria-label="低压"
             onKeyDown={(e) => e.key === "Enter" && onEnter?.()}
-            className="min-w-0"
+            className={readingCls}
           />
         </>
       )}
@@ -201,7 +210,7 @@ function RecordMetricForm({
         </>
       }
     >
-      <div className="grid gap-4 text-ink">
+      <div className="grid gap-5 text-ink">
         <Field label="记什么">
           <Select
             value={type}
@@ -241,24 +250,35 @@ function RecordMetricForm({
         {more ? (
           <>
             <Field label="什么时候测的">
-              <Input type="datetime-local" value={at} max={toLocalInputValue(new Date())} onChange={(e) => setAt(e.target.value)} />
+              <Input type="datetime-local" value={at} max={toLocalInputValue(new Date())} onChange={(e) => setAt(e.target.value)} className={dateCls} />
             </Field>
             <Field label="备注">
               <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="可以不填，比如：聚餐后" />
             </Field>
           </>
         ) : (
-          <TextButton onClick={() => setMore(true)} className="-my-2 justify-self-start">
+          <TextButton onClick={() => setMore(true)} className="-my-2 -ml-2 justify-self-start">
+            <Clock3 className="mr-1 h-5 w-5" aria-hidden="true" />
             不是刚测的，或者想加备注
           </TextButton>
         )}
-        {error && <p className="text-base font-medium text-danger">{error}</p>}
+        {error && (
+          <p role="alert" className="flex animate-fade-up items-center gap-1.5 text-base font-medium text-danger">
+            <CircleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
+            {error}
+          </p>
+        )}
         {doubt && (
-          <div className="rounded-2xl border border-warn/30 bg-warn-bg px-4 py-3.5" role="alert">
-            <p className="text-lg leading-relaxed font-medium text-ink">{doubt}</p>
-            <Button className="mt-2.5 w-full" onClick={() => save(true)}>
-              没错，记下
-            </Button>
+          <div className="flex animate-pop items-start gap-3.5 rounded-2xl bg-warn-bg px-4 py-4" role="alert">
+            <IconTile tone="warn" size="sm" className="mt-0.5">
+              <CircleAlert />
+            </IconTile>
+            <div className="min-w-0 flex-1">
+              <p className="t-lead font-medium text-ink">{doubt}</p>
+              <Button className="press mt-4 w-full" onClick={() => save(true)}>
+                没错，记下
+              </Button>
+            </div>
           </div>
         )}
       </div>

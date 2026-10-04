@@ -6,15 +6,14 @@ import { cn } from "@/lib/utils";
 /**
  * The brand, as the user supplied it: one PNG, used exactly as it is — never redrawn, recoloured or
  * re-encoded. Its ground is white, so it is multiplied onto the page: the white takes on the paper
- * behind it (the jade-white canvas, or the faint celadon wash at the top of a page) while the teal,
- * turquoise and orange of the mark stay untouched.
+ * behind it while the teal, turquoise and orange of the mark stay untouched.
  *
- * It is sized by width (`.brand-logo`: ~300px, ~256px on a tablet, ~240px on a phone) with
+ * It is sized by width (`.brand-logo`: ~298px, ~256px on a tablet, ~238px on a phone) with
  * `height: auto`, so the 2172×724 lockup always keeps its 3:1 proportions and is never stretched.
- * `max-width: 100%` on the image and a shrinkable parent anchor mean a fixed size can never widen
- * the header: where the column is narrower than the artwork, the artwork follows the column.
+ * `max-width: 100%` on the image and a shrinkable parent anchor mean a fixed size can never widen a
+ * header: where the column is narrower than the artwork, the artwork follows the column.
  */
-export function BrandLogo({ className }: { className?: string }) {
+export function BrandLogo({ className, preload = true }: { className?: string; preload?: boolean }) {
   return (
     <Image
       src="/visit-smoothie-logo.png"
@@ -24,7 +23,7 @@ export function BrandLogo({ className }: { className?: string }) {
       /* the mark renders ~240–300px wide; saying so keeps the browser from fetching a
          full-width rendition of the artwork */
       sizes="(max-width: 430px) 240px, (max-width: 760px) 256px, 300px"
-      preload
+      preload={preload}
       className={cn("brand-logo", className)}
     />
   );
@@ -44,6 +43,7 @@ export function LogoMark({ className }: { className?: string }) {
         </linearGradient>
       </defs>
       <rect width="40" height="40" rx="11" fill={`url(#${id})`} />
+      <rect x="0.5" y="0.5" width="39" height="39" rx="10.5" fill="none" stroke="rgba(255,255,255,0.28)" />
       <path
         d="M8 21h6l3-7 5 13 3-8 2 2h5"
         fill="none"

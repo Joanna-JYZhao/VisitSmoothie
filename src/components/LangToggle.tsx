@@ -23,7 +23,7 @@ export function LangToggle({ className }: { className?: string }) {
       title={english ? "切换到中文" : "Switch to English"}
       className={cn(
         // as tall as the two places beside it, and quiet: it is used once, not every day
-        "no-print inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-line-strong bg-surface/70 px-2.5 text-base font-medium whitespace-nowrap text-ink-2 transition hover:border-brand-400 hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+        "press no-print material inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded-full border border-line/80 px-4 text-base font-semibold tracking-[0.01em] whitespace-nowrap text-ink-2 transition duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
         className,
       )}
     >

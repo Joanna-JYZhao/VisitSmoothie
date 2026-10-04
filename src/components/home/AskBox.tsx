@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { ask, usePendingAsk } from "@/lib/ask";
 import { homeTodos, suggestedTodoQuestions } from "@/lib/reminders";
-import { Button, Spinner } from "@/components/ui";
+import { Button, IconTile, Spinner } from "@/components/ui";
+import { AlertCircle, BookOpen, MessageCircleQuestion } from "lucide-react";
 import { HintBanner } from "@/components/HintBanner";
 
 /* 提问框: a question about one's medicines or visit, answered from the records (问医伴). */
@@ -36,25 +37,28 @@ export function AskBox({ now }: { now: number }) {
           void send(text);
         }}
       >
+        <IconTile tone="brand" size="lg" className="hidden shrink-0 self-center sm:flex">
+          <MessageCircleQuestion />
+        </IconTile>
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="对吃药或就诊有疑问？问我"
           aria-label="对吃药或就诊有疑问？问我"
-          className="min-h-14 min-w-0 flex-1 rounded-2xl border-2 border-line-strong bg-surface px-4 text-lg text-ink placeholder:text-ink-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+          className="min-h-14 min-w-0 flex-1 rounded-full border-[1.5px] border-line-strong bg-surface px-5 text-lg max-sm:px-4 max-sm:text-[17px] text-ink shadow-[inset_0_1px_2px_rgba(20,38,47,0.05)] transition duration-200 placeholder:text-ink-2 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
         />
-        <Button type="submit" size="lg" disabled={!text.trim() || pending != null}>
+        <Button type="submit" size="lg" className="h-14 w-14 shrink-0 px-0 text-xl" disabled={!text.trim() || pending != null}>
           问
         </Button>
       </form>
       {suggestions.length > 0 && !pending && (
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {suggestions.map((q) => (
             <button
               key={q}
               type="button"
               onClick={() => void send(q)}
-              className="min-h-11 rounded-full border-2 border-line-strong bg-surface px-4 text-base text-ink hover:border-brand-400 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+              className="press material min-h-12 rounded-full border border-line/80 px-4 text-base font-medium text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
               {q}
             </button>
@@ -62,28 +66,43 @@ export function AskBox({ now }: { now: number }) {
         </div>
       )}
       {pending && (
-        <p className="mt-3 flex items-center gap-2 text-lg text-ink" role="status">
-          <Spinner className="h-5 w-5" />
-          正在查你的记录，回答「{pending.question}」……
+        <div className="mt-4 animate-fade-up rounded-2xl bg-surface-2/70 px-5 py-4" role="status">
+          <p className="flex items-center gap-3 text-lg text-ink">
+            <Spinner className="h-6 w-6" />
+            正在查你的记录，回答「{pending.question}」……
+          </p>
+          <div className="mt-4 space-y-2.5">
+            <span className="skeleton block h-4 w-11/12" />
+            <span className="skeleton block h-4 w-3/4" />
+            <span className="skeleton block h-4 w-1/2" />
+          </div>
+        </div>
+      )}
+      {failed && (
+        <p className="mt-4 flex animate-fade-up items-center gap-3 rounded-2xl bg-warn-bg px-5 py-4 text-lg text-ink" role="alert">
+          <IconTile tone="warn" size="md">
+            <AlertCircle />
+          </IconTile>
+          这次没问成，再问一遍试试。
         </p>
       )}
-      {failed && <p className="mt-3 text-lg text-ink">这次没问成，再问一遍试试。</p>}
       {recent.length > 0 && (
         <ul className="mt-3 space-y-3">
           {recent.map((t) => (
-            <li key={t.id} className="rounded-xl bg-surface-2 px-4 py-3">
-              <p className="text-lg font-semibold text-ink">{t.question}</p>
+            <li key={t.id} className="material animate-pop rounded-[20px] border border-line/80 px-5 py-5">
+              <p className="t-heading text-ink">{t.question}</p>
               {t.hint && (
                 <div className="mt-2">
                   <HintBanner hint={t.hint} />
                 </div>
               )}
-              <p className="mt-1 text-lg leading-relaxed whitespace-pre-wrap text-ink">{t.answer}</p>
+              <p className="t-body mt-2 whitespace-pre-wrap text-ink">{t.answer}</p>
               {t.sources.length > 0 && (
-                <p className="mt-1 text-base text-ink">
+                <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line pt-3 text-base text-ink-2">
+                  <BookOpen className="h-5 w-5 text-ink-3" aria-hidden="true" />
                   依据：
                   {t.sources.map((s, i) => (
-                    <Link key={i} href={s.href} className="mr-3 inline-flex min-h-11 items-center font-medium text-brand-700 underline underline-offset-4">
+                    <Link key={i} href={s.href} className="press inline-flex min-h-11 items-center rounded-full bg-brand-50 px-3 font-medium text-brand-800 transition hover:bg-brand-100">
                       {s.label}
                     </Link>
                   ))}

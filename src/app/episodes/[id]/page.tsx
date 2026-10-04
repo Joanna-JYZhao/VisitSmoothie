@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useLayoutEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronRight, FileSearch, History } from "lucide-react";
+import { ChevronRight, CircleCheck, FileSearch, History } from "lucide-react";
 import type { ChatMessage, Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { requestReply, sendMessage, useRelatedEpisodes, useReplyPending } from "@/lib/episodeAI";
@@ -10,7 +10,7 @@ import { cn, episodeLine, fmtDate, fmtTime, textOverlap } from "@/lib/utils";
 import { HintBanner } from "@/components/HintBanner";
 import { SpeakInput } from "@/components/SpeakInput";
 import { useToast } from "@/components/Toast";
-import { Button, LinkButton, Notice, PageHeader, TextButton, TextLink, TypingDots } from "@/components/ui";
+import { Button, Card, IconTile, LinkButton, Notice, PageHeader, TextButton, TextLink, TypingDots } from "@/components/ui";
 
 export default function ConversationPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +28,10 @@ export default function ConversationPage() {
 
 const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
 
+/*
+ * The bubbles: what the patient said sits on the right in the brand gradient, what Yiban said on
+ * the left as a white sheet. The time runs small under each, the way a messaging app sets it.
+ */
 function Bubble({ m }: { m: ChatMessage }) {
   const mine = m.role === "user";
   const checkin = m.content.startsWith("【定时记录】");
@@ -36,12 +40,14 @@ function Bubble({ m }: { m: ChatMessage }) {
     <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[86%] rounded-3xl px-4 py-3 text-lg leading-relaxed whitespace-pre-wrap",
-          mine ? "rounded-br-lg bg-brand-600 text-white shadow-edge" : "rounded-bl-lg border border-line bg-surface text-ink shadow-card",
+          "max-w-[86%] animate-fade-up rounded-[22px] px-4.5 py-3 text-lg leading-relaxed whitespace-pre-wrap",
+          mine
+            ? "rounded-br-md bg-linear-to-b from-brand-600 to-brand-650 text-white shadow-btn"
+            : "material rounded-bl-md border border-line/80 text-ink",
         )}
       >
         {text}
-        <span className={cn("mt-1 block text-base tabular-nums", mine ? "text-white" : "text-ink-2")}>
+        <span className={cn("mt-1 block text-base tabular", mine ? "text-white/90" : "text-ink-2")}>
           {checkin ? "回答追问 · " : ""}
           {fmtTime(m.at)}
         </span>
@@ -108,7 +114,7 @@ function Conversation({ episode: e }: { episode: Episode }) {
   return (
     <div>
       <PageHeader
-        className="mb-4"
+        className="mb-5"
         back={{ href: "/" }}
         action={
           <TextLink href={`/episodes/${e.id}/detail`} className="-mr-2">
@@ -130,40 +136,42 @@ function Conversation({ episode: e }: { episode: Episode }) {
         <TextLink
           href={`/episodes/${prior.id}/detail`}
           tone="plain"
-          className="mb-4 flex w-full items-start gap-3 rounded-2xl border border-info/20 bg-info-bg px-4 py-3 hover:no-underline"
+          className="press mb-6 flex w-full items-start gap-3 rounded-2xl bg-info-bg px-4 py-3.5 hover:no-underline"
         >
-          <History className="mt-0.5 h-6 w-6 shrink-0 text-info" />
-          <span className="min-w-0 flex-1 text-base leading-relaxed font-normal">
+          <IconTile tone="info" size="sm" className="bg-transparent!">
+            <History />
+          </IconTile>
+          <span className="min-w-0 flex-1 pt-1 text-base leading-relaxed font-normal">
             你以前有过类似的情况：{fmtDate(prior.startedAt, { year: true })}「{prior.title}」，{episodeLine(prior)}。
           </span>
-          <ChevronRight className="mt-0.5 h-5 w-5 shrink-0 text-ink-3" />
+          <ChevronRight className="mt-2 h-5 w-5 shrink-0 text-ink-3" />
         </TextLink>
       )}
 
-      <div className="space-y-3" aria-live="polite">
+      <div className="space-y-3.5" aria-live="polite">
         {e.messages.map((m, i) => (
           <Fragment key={m.id}>
             {(i === 0 || !sameDay(e.messages[i - 1].at, m.at)) && (
-              <p className="mx-auto mt-1 w-fit rounded-full bg-ink/5 px-3.5 py-0.5 text-base text-ink-2">{fmtDate(m.at, { weekday: true })}</p>
+              <p className="mx-auto mt-4 mb-2 w-fit rounded-full bg-surface-3/80 px-4 py-1 text-base font-medium text-ink-2">{fmtDate(m.at, { weekday: true })}</p>
             )}
             <Bubble m={m} />
           </Fragment>
         ))}
         {pending && (
           <div className="flex justify-start">
-            <div className="rounded-3xl rounded-bl-lg border border-line bg-surface px-5 py-4 shadow-card">
+            <div className="material animate-pop rounded-[22px] rounded-bl-md border border-line/80 px-5 py-4">
               <TypingDots />
             </div>
           </div>
         )}
       </div>
 
-      {showHint && e.lastHint && <HintBanner hint={e.lastHint} className="mt-4" />}
+      {showHint && e.lastHint && <HintBanner hint={e.lastHint} className="mt-5" />}
 
       {quick.length > 0 && (
-        <div className="mt-4 grid grid-cols-2 gap-2" aria-label="可以直接点的回答">
-          {quick.map((q) => (
-            <Button key={q} variant="secondary" size="tile" onClick={() => void sendMessage(e.id, q)}>
+        <div className="mt-5 grid grid-cols-2 gap-2.5" aria-label="可以直接点的回答">
+          {quick.map((q, i) => (
+            <Button key={q} variant="secondary" size="tile" className={cn("animate-rise", `rise-${Math.min(i + 1, 4)}`)} onClick={() => void sendMessage(e.id, q)}>
               {q}
             </Button>
           ))}
@@ -171,11 +179,11 @@ function Conversation({ episode: e }: { episode: Episode }) {
       )}
 
       {finished && (
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <LinkButton href={`/doctor/${e.id}`} variant={serious ? "primary" : "secondary"} size="lg">
+        <div className="mt-5 grid animate-fade-up grid-cols-2 gap-2.5">
+          <LinkButton href={`/doctor/${e.id}`} variant={serious ? "primary" : "secondary"} size="lg" className="press">
             给医生看
           </LinkButton>
-          <LinkButton href="/" variant={serious ? "secondary" : "primary"} size="lg">
+          <LinkButton href="/" variant={serious ? "secondary" : "primary"} size="lg" className="press">
             回到首页
           </LinkButton>
           <div className="col-span-2 flex justify-center">
@@ -186,29 +194,39 @@ function Conversation({ episode: e }: { episode: Episode }) {
 
       {active ? (
         <>
-          <div className="h-32" aria-hidden="true" />
-          <div className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-line bg-canvas/95 backdrop-blur">
-            <div className="mx-auto w-full max-w-[36rem] px-4 pt-3 pb-4">
+          {/*
+           * The dock: a frosted pill held near the foot of the window while the conversation scrolls
+           * under it. Sticky rather than fixed, so it stays in the page's own column and keeps working
+           * inside an animated or transformed ancestor.
+           */}
+          <div className="no-print sticky bottom-4 z-20 mt-6 sm:bottom-5">
+            <div className="glass mx-auto w-full max-w-[36rem] rounded-[30px] border border-white/70 p-1.5 shadow-float">
               <SpeakInput
                 placeholder={finished ? "还想补充什么，说或者打字" : "说一句或打一句"}
                 ariaLabel="对医伴说"
                 onSubmit={(t) => void sendMessage(e.id, t)}
                 disabled={pending}
-                className="shadow-float"
               />
             </div>
           </div>
         </>
       ) : (
-        <div className="mt-5 rounded-card bg-good-bg p-5">
-          <p className="text-xl font-semibold text-ink">
-            这次已经好了{e.resolvedAt ? `（${fmtDate(e.resolvedAt)}）` : ""}。
-          </p>
-          <p className="mt-1 text-lg text-ink-2">又不舒服了？可以接着这次的记录继续。</p>
-          <Button variant="secondary" className="mt-3" onClick={() => setStatus(e.id, "active")}>
+        <Card className="mt-8 animate-fade-up p-5 sm:p-6">
+          <div className="flex items-start gap-4">
+            <IconTile tone="good" size="lg">
+              <CircleCheck />
+            </IconTile>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <p className="t-heading text-ink">
+                这次已经好了{e.resolvedAt ? `（${fmtDate(e.resolvedAt)}）` : ""}。
+              </p>
+              <p className="t-body mt-1.5 text-ink-2">又不舒服了？可以接着这次的记录继续。</p>
+            </div>
+          </div>
+          <Button variant="secondary" className="press mt-5 w-full sm:w-auto" onClick={() => setStatus(e.id, "active")}>
             又不舒服了，接着记
           </Button>
-        </div>
+        </Card>
       )}
     </div>
   );

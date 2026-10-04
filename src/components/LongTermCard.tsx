@@ -9,7 +9,8 @@ import { fmtTime, nowISO, relativeTime } from "@/lib/utils";
 import { HintBanner } from "./HintBanner";
 import { ReadingInputs, RecordMetricModal, parseReading, useRecordMetric } from "./RecordMetricModal";
 import { useToast } from "./Toast";
-import { Button, Card, TextButton, TextLink } from "./ui";
+import { Activity, CircleAlert, ListChecks } from "lucide-react";
+import { Button, Card, IconTile, TextButton, TextLink } from "./ui";
 
 const daily = (t: MetricType) => t === "fbg" || t === "ppg";
 
@@ -95,13 +96,20 @@ export function LongTermCard({ now, onAlert }: { now: number; onAlert: (h: Hint)
   };
 
   return (
-    <Card className="p-5">
+    <Card className="p-5 sm:p-6">
       {!tracked.length ? (
-        <>
-          <p className="text-xl font-semibold text-ink">{L("还没选要记的指标", "Nothing chosen to track yet")}</p>
-          <p className="mt-1 text-lg text-ink-2">{L("选好以后，这里每次只问你一个数。", "Once you choose, I'll ask for one number at a time here.")}</p>
-          <TextLink href="/me/metrics">{L("去选", "Choose")}</TextLink>
-        </>
+        <div className="flex items-start gap-4">
+          <IconTile size="lg" className="animate-breathe">
+            <ListChecks />
+          </IconTile>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <p className="t-heading text-ink">{L("还没选要记的指标", "Nothing chosen to track yet")}</p>
+            <p className="t-body mt-1 text-ink-2">{L("选好以后，这里每次只问你一个数。", "Once you choose, I'll ask for one number at a time here.")}</p>
+            <TextLink href="/me/metrics" className="-ml-2 mt-1">
+              {L("去选", "Choose")}
+            </TextLink>
+          </div>
+        </div>
       ) : type ? (
         <form
           onSubmit={(ev) => {
@@ -109,12 +117,15 @@ export function LongTermCard({ now, onAlert }: { now: number; onAlert: (h: Hint)
             save();
           }}
         >
-          <label className="block text-xl font-semibold text-ink">
+          <label className="t-heading flex items-center gap-3 text-ink">
+            <IconTile tone="solid">
+              <Activity />
+            </IconTile>
             {editing
               ? L(`把${METRICS[type].label} ${formatValue(editing)} 改成`, `${METRICS[type].label} ${formatValue(editing)}: change to`)
               : L(`${daily(type) ? "今天的" : "这周的"}${METRICS[type].label}`, `${METRICS[type].label} ${daily(type) ? "today" : "this week"}`)}
           </label>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2">
             <ReadingInputs
               type={type}
               raw={raw}
@@ -126,7 +137,7 @@ export function LongTermCard({ now, onAlert }: { now: number; onAlert: (h: Hint)
                 setDoubt(null);
               }}
             />
-            <Button type="submit" className="shrink-0">
+            <Button type="submit" className="press shrink-0">
               {editing ? L("改好了", "Done") : L("记下", "Save")}
             </Button>
           </div>
@@ -135,22 +146,34 @@ export function LongTermCard({ now, onAlert }: { now: number; onAlert: (h: Hint)
               {L("不改了", "Leave it as it was")}
             </TextButton>
           )}
-          {error && <p className="mt-2 text-base font-medium text-danger">{error}</p>}
+          {error && (
+            <p role="alert" className="mt-3 flex animate-fade-up items-center gap-1.5 text-base font-medium text-danger">
+              <CircleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
+              {error}
+            </p>
+          )}
           {doubt && (
-            <div className="mt-3 rounded-2xl border border-warn/30 bg-warn-bg px-4 py-3.5" role="alert">
-              <p className="text-lg leading-relaxed font-medium text-ink">{doubt}</p>
-              <div className="mt-2.5 grid grid-cols-2 gap-2">
-                <Button variant="secondary" onClick={() => setDoubt(null)}>
-                  {L("填错了，重填", "Wrong, re-enter")}
-                </Button>
-                <Button onClick={() => save(true)}>{L("没错，记下", "It's right, save")}</Button>
+            <div className="mt-4 flex animate-pop items-start gap-3.5 rounded-2xl bg-warn-bg px-4 py-4" role="alert">
+              <IconTile tone="warn" size="sm" className="mt-0.5">
+                <CircleAlert />
+              </IconTile>
+              <div className="min-w-0 flex-1">
+                <p className="t-lead font-medium text-ink">{doubt}</p>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Button variant="secondary" className="press" onClick={() => setDoubt(null)}>
+                    {L("填错了，重填", "Wrong, re-enter")}
+                  </Button>
+                  <Button className="press" onClick={() => save(true)}>
+                    {L("没错，记下", "It's right, save")}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </form>
       ) : (
         <div className="flex items-center justify-between gap-3">
-          <p className="min-w-0 text-lg leading-relaxed text-ink">
+          <p className="t-body min-w-0 text-ink">
             {lastOfFirst
               ? L(
                   `上次记的：${METRICS[lastOfFirst.type].label} ${formatValue(lastOfFirst)}（${relativeTime(lastOfFirst.at, now)}）`,
@@ -158,19 +181,19 @@ export function LongTermCard({ now, onAlert }: { now: number; onAlert: (h: Hint)
                 )
               : L("现在没有要记的。", "Nothing to record right now.")}
           </p>
-          <Button variant="secondary" size="sm" className="shrink-0" onClick={() => setModal(true)}>
+          <Button variant="secondary" size="sm" className="press shrink-0" onClick={() => setModal(true)}>
             {L("再记一个数", "Add a reading")}
           </Button>
         </div>
       )}
 
       {today.length > 0 && (
-        <ul className="mt-4 divide-y divide-line rounded-2xl bg-surface-2 px-4">
+        <ul className="mt-5 divide-y divide-line rounded-2xl bg-surface-2/70 px-4 ring-1 ring-line/60 ring-inset">
           {today.map((m) => (
-            <li key={m.id} className="flex items-center gap-3 py-1.5">
-              <span className="min-w-0 flex-1 text-base text-ink">
+            <li key={m.id} className="flex items-center gap-3 py-2">
+              <span className="min-w-0 flex-1 text-base text-ink-2">
                 {L(`今天 ${fmtTime(m.at)} 记了${METRICS[m.type].label}`, `Today ${fmtTime(m.at)}: ${METRICS[m.type].label}`)}{" "}
-                <span className="font-semibold tabular-nums">{formatValue(m)}</span>
+                <span className="text-lg font-semibold text-ink tabular-nums">{formatValue(m)}</span>
               </span>
               <TextButton
                 className="-mr-2 shrink-0"
@@ -193,9 +216,9 @@ export function LongTermCard({ now, onAlert }: { now: number; onAlert: (h: Hint)
       )}
 
       {note && <HintBanner hint={note} className="mt-4" />}
-      {conclusion && <p className="mt-4 text-lg leading-relaxed text-ink">{conclusion}</p>}
+      {conclusion && <p className="t-lead mt-5 text-ink">{conclusion}</p>}
 
-      <div className="mt-1 flex flex-wrap items-center justify-between">
+      <div className="mt-2 flex flex-wrap items-center justify-between">
         <TextLink href="/me/metrics">{L("看变化和以前的记录", "Trends and history")}</TextLink>
         {type && <TextButton onClick={() => setModal(true)}>{L("记别的数", "Other reading")}</TextButton>}
       </div>

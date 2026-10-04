@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, ImageUp, X } from "lucide-react";
+import { AudioLines, Camera, ChevronDown, CircleCheck, ImageUp, TriangleAlert, X } from "lucide-react";
 import type { AfterResult, AiMode, Episode } from "@/lib/types";
 import { getState, useStore } from "@/lib/store";
 import { PhotoError, organizeVisit } from "@/lib/ai/client";
@@ -9,11 +9,12 @@ import { saveAfter } from "@/lib/after";
 import { buildTodos, setReminders } from "@/lib/reminders";
 import { clipText, type LongTranscript } from "@/lib/audio";
 import { compressImage } from "@/lib/image";
-import { Recorder } from "@/components/post/Recorder";
+import { Recorder, bigTileCls } from "@/components/post/Recorder";
 import { VisitResult } from "@/components/post/VisitResult";
 import { Questions } from "@/components/post/Questions";
 import { filedLine } from "@/components/post/filed";
-import { Button, Card, PageTitle, Spinner, TextButton } from "@/components/ui";
+import { Button, Card, IconTile, PageTitle, Skeleton, Spinner, TextButton, focusRing } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 const MAX_PHOTOS = 6;
 /** Prescriptions have small print: photos are sent larger than elsewhere. */
@@ -24,6 +25,18 @@ const latestActive = (episodes: Episode[]) =>
   [...episodes].filter((e) => e.status === "active").sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] ?? null;
 
 type Done = { result: AfterResult; mode: AiMode; line: string };
+
+/** A problem, in a quiet amber card with a tile in front, the same wherever one appears on this page. */
+function Problem({ children }: { children: React.ReactNode }) {
+  return (
+    <div role="alert" className="flex animate-fade-up items-start gap-3.5 rounded-card border border-warn/20 bg-warn-bg px-5 py-4">
+      <IconTile tone="warn" size="sm" className="mt-0.5 bg-surface shadow-edge">
+        <TriangleAlert className="h-5 w-5" />
+      </IconTile>
+      <p className="min-w-0 flex-1 text-lg leading-relaxed text-ink">{children}</p>
+    </div>
+  );
+}
 
 /** post: after seeing the doctor. Record the visit or photograph the papers; the rest is done here. */
 export default function PostPage() {
@@ -86,28 +99,64 @@ export default function PostPage() {
 
   if (done) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-8">
         <PageTitle sub="从录音和照片里整理出来的，已经存进就诊记录。">这次看医生的结果</PageTitle>
-        <p className="rounded-2xl border border-good/30 bg-good-bg px-4 py-3.5 text-lg font-medium text-ink">{done.line}</p>
-        <VisitResult result={done.result} />
-        <Questions result={done.result} />
+        <div className="rise-1 flex items-center gap-4 rounded-card border border-good/15 bg-good-bg px-5 py-4">
+          <IconTile tone="good" size="lg" className="bg-surface shadow-edge">
+            <CircleCheck />
+          </IconTile>
+          <p className="min-w-0 flex-1 text-lg leading-relaxed font-medium text-ink">{done.line}</p>
+        </div>
+        <div className="rise-2">
+          <VisitResult result={done.result} />
+        </div>
+        <div className="rise-3">
+          <Questions result={done.result} />
+        </div>
       </div>
     );
   }
 
   if (working) {
+    // the sheet taking shape: a spinner on top, and the outline of the result shimmering under it
     return (
-      <Card className="flex flex-col items-center gap-3 px-5 py-12 text-center" role="status">
-        <Spinner className="h-10 w-10" />
-        <p className="text-xl font-semibold text-ink">正在整理医生说的和单子上写的</p>
-        <p className="text-lg text-ink-2">大约半分钟到一分钟，请等一下。</p>
-      </Card>
+      <div className="space-y-6">
+        <Card tone="raised" className="flex animate-fade-up flex-col items-center gap-4 px-6 py-12 text-center" role="status">
+          <IconTile tone="brand" size="xl" className="mb-1 bg-surface shadow-glow">
+            <Spinner className="h-8 w-8" />
+          </IconTile>
+          <p className="t-heading text-balance text-ink">正在整理医生说的和单子上写的</p>
+          <p className="t-body text-ink-2">大约半分钟到一分钟，请等一下。</p>
+        </Card>
+        <Card aria-hidden="true" className="divide-y divide-line overflow-hidden">
+          <div className="space-y-4 px-6 pt-7 pb-6">
+            <Skeleton className="h-4 max-w-40" />
+            <Skeleton className="h-9 max-w-[60%]" />
+          </div>
+          <div className="space-y-3 px-6 py-6">
+            <Skeleton className="h-4 max-w-24" />
+            <div className="flex items-center gap-4 pt-1">
+              <Skeleton className="h-10 max-w-10 shrink-0" />
+              <Skeleton className="h-5 max-w-[50%]" />
+            </div>
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-10 max-w-10 shrink-0" />
+              <Skeleton className="h-5 max-w-[40%]" />
+            </div>
+          </div>
+          <div className="space-y-3 px-6 py-6">
+            <Skeleton className="h-4 max-w-20" />
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 max-w-[80%]" />
+          </div>
+        </Card>
+      </div>
     );
   }
 
   const ready = photos.length > 0 || Boolean(transcript?.text);
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <PageTitle sub="看病时录音，或者拍下病历、处方、医嘱。两样做一样就行。">看完医生了</PageTitle>
 
       <input
@@ -134,77 +183,90 @@ export default function PostPage() {
         }}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Recorder
-          onBusy={setRecording}
-          onText={(t) => {
-            setTranscript(t);
-            setProblem(null);
-          }}
-        />
-        <div>
-          <button
-            type="button"
-            disabled={recording || photos.length >= MAX_PHOTOS}
-            onClick={() => cameraRef.current?.click()}
-            className="flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-card border-2 border-brand-300 bg-brand-50 px-4 py-5 text-center text-brand-800 transition hover:border-brand-500 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:opacity-60"
-          >
-            <Camera className="h-9 w-9" />
-            <span className="text-xl font-semibold">上传</span>
+      {/* the two doors, side by side: record, or photograph */}
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="rise-1">
+          <Recorder
+            onBusy={setRecording}
+            onText={(t) => {
+              setTranscript(t);
+              setProblem(null);
+            }}
+          />
+        </div>
+        <div className="rise-2">
+          <button type="button" disabled={recording || photos.length >= MAX_PHOTOS} onClick={() => cameraRef.current?.click()} className={bigTileCls}>
+            <IconTile tone="solid" size="xl" className="animate-breathe transition-transform duration-300 group-hover:scale-105" >
+              <Camera strokeWidth={2.2} />
+            </IconTile>
+            <span className="t-heading">上传</span>
           </button>
-          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2">
-            <TextButton onClick={() => albumRef.current?.click()} disabled={recording || photos.length >= MAX_PHOTOS}>
-              <ImageUp className="h-5 w-5" /> 从相册选
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1">
+            <TextButton className="-ml-2" onClick={() => albumRef.current?.click()} disabled={recording || photos.length >= MAX_PHOTOS}>
+              <ImageUp className="mr-1 h-5 w-5" /> 从相册选
             </TextButton>
-            <span className="text-base text-ink">最多 {MAX_PHOTOS} 张，照片认完就丢</span>
+            <span className="text-base leading-relaxed text-ink-2">最多 {MAX_PHOTOS} 张，照片认完就丢</span>
           </div>
         </div>
       </div>
 
       {photos.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {photos.map((src, i) => (
-            <div key={i} className="relative h-24 w-20 overflow-hidden rounded-xl border border-line">
+            <li key={i} className="relative aspect-[3/4] animate-pop overflow-hidden rounded-2xl bg-surface-2 shadow-card ring-1 ring-line/80">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt={`第 ${i + 1} 张`} className="h-full w-full object-cover" />
               <button
                 type="button"
                 aria-label={`去掉第 ${i + 1} 张`}
                 onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                className="absolute top-0.5 right-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-ink/70 text-white"
+                className={cn(
+                  "press absolute top-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-ink/65 text-white shadow-edge backdrop-blur-md transition hover:bg-ink/85 after:absolute after:-inset-2",
+                  focusRing,
+                )}
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {transcript?.text && (
-        <Card className="p-5">
-          <p className="text-lg font-semibold text-ink">录音转成了 {transcript.text.length} 字</p>
-          {transcript.failed > 0 && <p className="mt-1 text-lg text-ink">有 {transcript.failed} 段（共 {transcript.total} 段）没听清，已跳过。</p>}
-          {transcript.text.length > 4000 && <p className="mt-1 text-lg text-ink">太长了，整理时只用开头和结尾各一半。</p>}
-          <details className="mt-2">
-            <summary className="min-h-11 cursor-pointer py-2 text-lg font-medium text-brand-700">看转出来的字</summary>
-            <p className="max-h-64 overflow-y-auto text-lg leading-relaxed whitespace-pre-line text-ink">{transcript.text}</p>
+        <Card className="animate-rise overflow-hidden">
+          <div className="flex items-start gap-4 px-6 pt-6 pb-5">
+            <IconTile tone="brand" size="lg">
+              <AudioLines />
+            </IconTile>
+            <div className="min-w-0 flex-1 pt-1">
+              <p className="t-heading text-ink tabular-nums">录音转成了 {transcript.text.length} 字</p>
+              {transcript.failed > 0 && <p className="t-body mt-2 text-ink">有 {transcript.failed} 段（共 {transcript.total} 段）没听清，已跳过。</p>}
+              {transcript.text.length > 4000 && <p className="t-body mt-2 text-ink">太长了，整理时只用开头和结尾各一半。</p>}
+            </div>
+          </div>
+          <details className="group border-t border-line">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-6 py-3 text-lg font-medium text-brand-700 transition hover:bg-surface-2/70 [&::-webkit-details-marker]:hidden">
+              看转出来的字
+              <ChevronDown className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-300 group-open:rotate-180" aria-hidden="true" />
+            </summary>
+            <p className="scroll-thin mx-6 mb-5 max-h-64 overflow-y-auto rounded-2xl bg-surface-2 px-4 py-3 text-lg leading-relaxed whitespace-pre-line text-ink">
+              {transcript.text}
+            </p>
           </details>
-          <TextButton className="-ml-2" onClick={() => setTranscript(null)}>
-            不要这段录音
-          </TextButton>
+          <div className="border-t border-line px-4 py-1">
+            <TextButton onClick={() => setTranscript(null)}>不要这段录音</TextButton>
+          </div>
         </Card>
       )}
 
-      {problem && (
-        <p role="alert" className="rounded-2xl border border-warn/30 bg-warn-bg px-4 py-3.5 text-lg text-ink">
-          {problem}
-        </p>
-      )}
+      {problem && <Problem>{problem}</Problem>}
 
-      <Button size="lg" className="w-full" disabled={!ready || recording} onClick={() => void organize()}>
-        开始整理
-      </Button>
-      {!ready && <p className="text-center text-lg text-ink-2">录一段音或者传一张照片，就能开始整理。</p>}
+      <div className="space-y-3">
+        <Button size="lg" className="press w-full" disabled={!ready || recording} onClick={() => void organize()}>
+          开始整理
+        </Button>
+        {!ready && <p className="t-body text-center text-ink-2">录一段音或者传一张照片，就能开始整理。</p>}
+      </div>
     </div>
   );
 }

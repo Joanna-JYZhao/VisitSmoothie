@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChartLine, Pencil, Plus, Table2, Trash2 } from "lucide-react";
+import { Activity, ChartLine, Check, Droplets, FlaskConical, HeartPulse, Pencil, Plus, Scale, Table2, Trash2 } from "lucide-react";
 import type { Measurement, MetricType } from "@/lib/types";
 import { useNow, useStore } from "@/lib/store";
 import { GLUCOSE_LOW, METRICS, METRIC_ORDER, detectInsights, formatValue, isOutOfRange, measurementsOf, plainConclusion } from "@/lib/metrics";
@@ -10,7 +10,7 @@ import { InsightList } from "@/components/InsightList";
 import { RecordMetricModal } from "@/components/RecordMetricModal";
 import { useToast } from "@/components/Toast";
 import { TrendChart, type TrendPoint } from "@/components/TrendChart";
-import { Badge, Button, Card, PageHeader, SectionTitle, Segmented, focusRing } from "@/components/ui";
+import { Badge, Button, Card, IconTile, PageHeader, SectionTitle, Segmented, Stat, focusRing, type IconTone } from "@/components/ui";
 
 type RangeKey = "30d" | "90d" | "1y";
 const RANGES: { value: RangeKey; label: string }[] = [
@@ -20,6 +20,15 @@ const RANGES: { value: RangeKey; label: string }[] = [
 ];
 const DAY = 86_400_000;
 
+/* one icon per kind of reading, the way Health tells its categories apart */
+const METRIC_ICON: Record<MetricType, { icon: React.ReactNode; tone: IconTone }> = {
+  fbg: { icon: <Droplets />, tone: "info" },
+  ppg: { icon: <Droplets />, tone: "info" },
+  hba1c: { icon: <FlaskConical />, tone: "brand" },
+  weight: { icon: <Scale />, tone: "good" },
+  bp: { icon: <HeartPulse />, tone: "danger" },
+};
+
 function MetricCard({
   type,
   all,
@@ -28,6 +37,7 @@ function MetricCard({
   now,
   onRecord,
   onEdit,
+  className,
 }: {
   type: MetricType;
   all: Measurement[];
@@ -36,6 +46,7 @@ function MetricCard({
   now: number;
   onRecord: () => void;
   onEdit: (m: Measurement) => void;
+  className?: string;
 }) {
   const { deleteMeasurement, addMeasurement } = useStore();
   const toast = useToast();
@@ -66,56 +77,79 @@ function MetricCard({
     toast.show(`已删除 ${formatValue(m)}`, "neutral", { label: "撤销", onClick: () => addMeasurement(rest) });
   };
 
+  const { icon, tone } = METRIC_ICON[type];
+
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-ink">{def.label}</h2>
-          {def.targetText && <p className="mt-0.5 text-base text-ink-2">{def.targetText}</p>}
+    <Card className={cn("overflow-hidden", className)}>
+      <div className="p-5 sm:p-6">
+        <div className="flex items-start gap-3.5">
+          <IconTile tone={tone} size="lg">
+            {icon}
+          </IconTile>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h2 className="t-heading text-ink">{def.label}</h2>
+            {def.targetText && <p className="mt-0.5 text-base text-ink-2">{def.targetText}</p>}
+          </div>
         </div>
-        <Button size="sm" variant="soft" className="shrink-0" onClick={onRecord}>
-          <Plus className="h-5 w-5" />
-          记一个
-        </Button>
+
+        {/* the latest reading big and tabular, the way Health shows one; the way to add another beside it */}
+        <div className="mt-6 flex items-end justify-between gap-4">
+          {latest ? (
+            <Stat value={formatValue(latest)} unit={def.unit} tone={out === "low" ? "danger" : out === "high" ? "warn" : "ink"} />
+          ) : (
+            <div className="flex min-w-0 items-center gap-3.5">
+              <span aria-hidden="true" className="flex h-10 shrink-0 items-end gap-1 opacity-60">
+                {[14, 22, 18, 28, 20].map((h, i) => (
+                  <span key={i} className="w-1.5 rounded-full bg-line-strong" style={{ height: h }} />
+                ))}
+              </span>
+              <p className="text-lg text-ink-2">还没有记录。</p>
+            </div>
+          )}
+          <Button size="sm" variant="soft" className="press shrink-0" onClick={onRecord}>
+            <Plus className="h-5 w-5" />
+            记一个
+          </Button>
+        </div>
+        {latest && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            {def.target &&
+              (out ? (
+                <Badge tone={out === "low" ? "danger" : "warn"}>{out === "low" ? "低于一般范围" : "高于一般范围"}</Badge>
+              ) : (
+                <Badge tone="good">
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                  在一般范围内
+                </Badge>
+              ))}
+            <span className="text-base text-ink-2">{relativeTime(latest.at, now)}</span>
+          </div>
+        )}
       </div>
 
-      {latest ? (
-        <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span className="text-[2rem] leading-none font-semibold tracking-tight text-ink tabular-nums">{formatValue(latest)}</span>
-          <span className="text-base text-ink-2">{def.unit}</span>
-          {def.target &&
-            (out ? (
-              <Badge tone={out === "low" ? "danger" : "warn"}>{out === "low" ? "低于一般范围" : "高于一般范围"}</Badge>
-            ) : (
-              <Badge tone="good">在一般范围内</Badge>
-            ))}
-          <span className="text-base text-ink-2">{relativeTime(latest.at, now)}</span>
-        </p>
-      ) : (
-        <p className="mt-3 text-lg text-ink-2">还没有记录。</p>
-      )}
-
       {all.length > 0 && (
-        <div className="mt-4">
+        <div className="border-t border-line px-5 pt-5 pb-5 sm:px-6">
           {inRange.length === 0 ? (
-            <p className="rounded-2xl bg-surface-2 px-4 py-6 text-center text-lg text-ink-2">这段时间没有记录，把上面的时间调长一点看看。</p>
+            <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">这段时间没有记录，把上面的时间调长一点看看。</p>
           ) : view === "chart" ? (
-            <TrendChart
-              points={points}
-              unit={def.unit}
-              decimals={def.decimals}
-              start={start}
-              end={end}
-              band={def.target}
-              dual={type === "bp" ? { first: "高压", second: "低压" } : undefined}
-              showTime={type === "ppg"}
-              ariaLabel={`${def.label}的变化，共 ${inRange.length} 条记录`}
-            />
+            <div className="animate-fade-up">
+              <TrendChart
+                points={points}
+                unit={def.unit}
+                decimals={def.decimals}
+                start={start}
+                end={end}
+                band={def.target}
+                dual={type === "bp" ? { first: "高压", second: "低压" } : undefined}
+                showTime={type === "ppg"}
+                ariaLabel={`${def.label}的变化，共 ${inRange.length} 条记录`}
+              />
+            </div>
           ) : (
-            <ul className="max-h-80 divide-y divide-line overflow-y-auto">
+            <ul className="scroll-thin max-h-80 animate-fade-up divide-y divide-line overflow-y-auto rounded-2xl border border-line bg-surface">
               {[...inRange].reverse().map((m) => (
-                <li key={m.id} className="flex items-center gap-3 py-2">
-                  <span className="w-16 shrink-0 text-lg font-semibold text-ink tabular-nums">{formatValue(m)}</span>
+                <li key={m.id} className="flex items-center gap-3 py-2 pr-2 pl-4">
+                  <span className="w-20 shrink-0 text-lg font-semibold text-ink tabular-nums">{formatValue(m)}</span>
                   <span className="min-w-0 flex-1 text-base text-ink-2">
                     {fmtDate(m.at, { year: true, time: true })}
                     {m.note ? ` · ${m.note}` : ""}
@@ -125,7 +159,7 @@ function MetricCard({
                     onClick={() => onEdit(m)}
                     aria-label={`改 ${fmtDate(m.at)} 的 ${formatValue(m)}`}
                     className={cn(
-                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-2 transition hover:bg-brand-50 hover:text-brand-700",
+                      "press flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-2 transition hover:bg-brand-50 hover:text-brand-700",
                       focusRing,
                     )}
                   >
@@ -136,7 +170,7 @@ function MetricCard({
                     onClick={() => remove(m)}
                     aria-label={`删除 ${fmtDate(m.at)} 的 ${formatValue(m)}`}
                     className={cn(
-                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-2 transition hover:bg-danger-bg hover:text-danger",
+                      "press flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-2 transition hover:bg-danger-bg hover:text-danger",
                       focusRing,
                     )}
                   >
@@ -146,11 +180,11 @@ function MetricCard({
               ))}
             </ul>
           )}
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-            <span className="text-base whitespace-nowrap text-ink-2">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <span className="text-base whitespace-nowrap text-ink-2 tabular-nums">
               这段时间 {inRange.length} 条，一共 {all.length} 条
             </span>
-            <div className="ml-auto inline-flex shrink-0 rounded-xl bg-surface-2 p-1" role="radiogroup" aria-label="显示方式">
+            <div className="ml-auto inline-flex shrink-0 gap-1 rounded-[18px] bg-surface-3/80 p-1" role="radiogroup" aria-label="显示方式">
               {(
                 [
                   { v: "chart", label: "图", Icon: ChartLine },
@@ -164,7 +198,7 @@ function MetricCard({
                   aria-checked={view === v}
                   onClick={() => setView(v)}
                   className={cn(
-                    "inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3.5 text-base font-medium whitespace-nowrap transition",
+                    "inline-flex min-h-11 items-center gap-1.5 rounded-[14px] px-3.5 text-base font-medium whitespace-nowrap transition duration-200",
                     focusRing,
                     view === v ? "bg-surface text-ink shadow-pill" : "text-ink-2 hover:text-ink",
                   )}
@@ -202,11 +236,19 @@ export default function MetricsPage() {
   const toggle = (t: MetricType) =>
     updateSettings({ trackedMetrics: tracked.includes(t) ? tracked.filter((x) => x !== t) : [...tracked, t] });
 
+  // before anything is chosen it is the one card on the screen, the icon breathing over the choices;
+  // with readings on the page the same choices sit quietly at the foot
+  const hero = visible.length === 0;
   const chooser = (
-    <Card className="p-5">
-      <SectionTitle>要记哪些</SectionTitle>
-      <p className="mb-3 text-base leading-relaxed text-ink-2">点亮的会出现在首页，每天只问你一个数。</p>
-      <div className="flex flex-wrap gap-2">
+    <Card tone={hero ? "raised" : "plain"} className={hero ? "animate-pop p-6 text-center sm:p-8" : "p-5 sm:p-6"}>
+      {hero && (
+        <IconTile size="xl" tone="solid" className="mx-auto mb-6 animate-breathe">
+          <Activity />
+        </IconTile>
+      )}
+      <h2 className="t-heading text-ink">要记哪些</h2>
+      <p className={cn("t-body mt-1 mb-5 text-ink-2", hero && "mx-auto mb-6 max-w-sm")}>点亮的会出现在首页，每天只问你一个数。</p>
+      <div className={cn("flex flex-wrap gap-2.5", hero && "justify-center")}>
         {METRIC_ORDER.map((t) => {
           const on = tracked.includes(t);
           return (
@@ -217,10 +259,13 @@ export default function MetricsPage() {
               aria-checked={on}
               onClick={() => toggle(t)}
               className={cn(
-                "min-h-12 rounded-full border-2 px-4 text-lg transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
-                on ? "border-brand-500 bg-brand-50 font-medium text-brand-800" : "border-line-strong bg-surface text-ink-2 shadow-edge hover:bg-surface-2",
+                "press inline-flex min-h-12 items-center gap-1.5 rounded-full text-lg transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+                on
+                  ? "bg-brand-50 pr-5 pl-3.5 font-medium text-brand-800 ring-[1.5px] ring-brand-600 ring-inset"
+                  : "bg-surface px-5 text-ink-2 shadow-edge hover:bg-surface-2 hover:text-ink",
               )}
             >
+              {on && <Check className="h-5 w-5" aria-hidden="true" />}
               {METRICS[t].label}
             </button>
           );
@@ -230,45 +275,50 @@ export default function MetricsPage() {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <PageHeader
         back={{ href: "/me", label: "我的档案" }}
         title="健康指标"
         sub={conclusion || "血糖、血压、体重都记在这里，复诊时一起给医生看。"}
       />
 
-      {visible.length === 0 ? (
+      {hero ? (
         chooser
       ) : (
         <>
-          <Button size="lg" onClick={() => setRecording({})} className="w-full">
-            <Plus className="h-6 w-6" />
-            记一个数
-          </Button>
-          <Segmented options={RANGES} value={range} onChange={setRange} label="看多长时间" className="flex w-full" />
+          <div className="rise-1 space-y-4">
+            <Button size="lg" onClick={() => setRecording({})} className="press w-full">
+              <Plus className="h-6 w-6" />
+              记一个数
+            </Button>
+            <Segmented options={RANGES} value={range} onChange={setRange} label="看多长时间" className="flex w-full" />
+          </div>
 
           {insights.length > 0 && (
-            <Card className="p-5">
+            <Card className="rise-2 p-5 sm:p-6">
               <SectionTitle>医伴看到的</SectionTitle>
               <InsightList insights={insights} />
             </Card>
           )}
 
-          {visible.map((t) => (
-            <MetricCard
-              key={t}
-              type={t}
-              all={measurementsOf(state.measurements, t)}
-              start={start}
-              end={end}
-              now={now}
-              onRecord={() => setRecording({ type: t })}
-              onEdit={(m) => setRecording({ editing: m })}
-            />
-          ))}
+          <div className="space-y-6">
+            {visible.map((t, i) => (
+              <MetricCard
+                key={t}
+                type={t}
+                all={measurementsOf(state.measurements, t)}
+                start={start}
+                end={end}
+                now={now}
+                onRecord={() => setRecording({ type: t })}
+                onEdit={(m) => setRecording({ editing: m })}
+                className={i < 3 ? `rise-${i + 2}` : undefined}
+              />
+            ))}
+          </div>
 
           {chooser}
-          <p className="text-center text-base leading-relaxed text-ink-2">这里说的范围是一般的标准，你自己的目标听医生的。</p>
+          <p className="t-body text-center text-ink-2">这里说的范围是一般的标准，你自己的目标听医生的。</p>
         </>
       )}
 

@@ -251,8 +251,19 @@ function markSessionGone() {
   listeners.forEach((l) => l());
 }
 
+/** 正在进行的那一次拉取：再次调用时等它完成，而不是立刻返回（否则启动时会先用空数据渲染，把人跳回首页）。 */
+let inflight: Promise<void> | null = null;
+
 /** 从服务端拉取当前账号的数据并灌进内存（登录后、应用启动时调用）。 */
-export async function hydrateFromServer(): Promise<void> {
+export function hydrateFromServer(): Promise<void> {
+  if (inflight) return inflight;
+  inflight = pullFromServer().finally(() => {
+    inflight = null;
+  });
+  return inflight;
+}
+
+async function pullFromServer(): Promise<void> {
   const id = currentAccountId();
   if (!id || isDemoAccountId(id) || pulling) return;
   pulling = true;

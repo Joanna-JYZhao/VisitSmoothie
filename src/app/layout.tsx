@@ -24,9 +24,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full">
         <StoreProvider>
           <ToastProvider>
+            <div className="px-3 pt-2 md:contents">
+              <DevSwitch />
+            </div>
             <AppShell>{children}</AppShell>
             <CheckInScheduler />
-            <DevSwitch />
           </ToastProvider>
         </StoreProvider>
       </body>

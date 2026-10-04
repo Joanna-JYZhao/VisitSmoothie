@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Bell, BellOff, Download, Droplets, HardDrive, Info, Play, Sparkles, Timer, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { aiHealth, type AiHealth } from "@/lib/ai/client";
-import { fmtISODate } from "@/lib/utils";
+import { cn, fmtISODate } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
-import { Button, Card, LinkButton, Modal, PageHeader, SectionTitle, Select, Toggle } from "@/components/ui";
+import { Button, Card, IconTile, LinkButton, Modal, PageHeader, SectionTitle, Select, Spinner, Toggle, type IconTone } from "@/components/ui";
 
 type Perm = NotificationPermission | "unsupported";
 const INTERVALS = [
@@ -22,12 +23,36 @@ const METRIC_CADENCE = [
   { hours: 0, label: "不提醒" },
 ];
 
-function Block({ title, detail, children }: { title: string; detail?: React.ReactNode; children?: React.ReactNode }) {
+/** One row of a settings group, the way iOS Settings lays one out: tile, title, detail, then the control under it. */
+function Block({
+  title,
+  detail,
+  icon,
+  iconTone = "brand",
+  mark,
+  children,
+}: {
+  title: string;
+  detail?: React.ReactNode;
+  icon: React.ReactNode;
+  iconTone?: IconTone;
+  /** a small mark beside the title, like a status light */
+  mark?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="px-5 py-4">
-      <p className="text-lg font-medium text-ink">{title}</p>
-      {detail && <p className="mt-0.5 text-base leading-relaxed text-ink-2">{detail}</p>}
-      {children && <div className="mt-3">{children}</div>}
+    <div className="flex items-start gap-3 px-5 py-4.5 sm:px-6">
+      <IconTile tone={iconTone} className="mt-0.5">
+        {icon}
+      </IconTile>
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-2.5 text-lg font-medium text-ink">
+          {title}
+          {mark}
+        </p>
+        {detail && <p className="t-body mt-1 text-ink-2">{detail}</p>}
+        {children && <div className="mt-4">{children}</div>}
+      </div>
     </div>
   );
 }
@@ -94,14 +119,24 @@ export default function SettingsPage() {
     toast.show("备份文件已经下载", "good");
   };
 
+  // the AI row glows by its state: checking, connected, not reachable, not set up
+  const aiTone: IconTone = !health ? "neutral" : health.configured && health.ok !== false ? "solid" : health.configured ? "warn" : "neutral";
+  const aiLight = !health
+    ? "bg-line-strong"
+    : health.configured && health.ok !== false
+      ? "bg-good shadow-[0_0_0_3px_var(--color-good-bg)]"
+      : health.configured
+        ? "bg-warn shadow-[0_0_0_3px_var(--color-warn-bg)]"
+        : "bg-line-strong";
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader back={{ href: "/me", label: "我的档案" }} title="设置" />
 
-      <section>
+      <section className="rise-1">
         <SectionTitle>提醒</SectionTitle>
         <Card className="divide-y divide-line overflow-hidden">
-          <Block title="多久问我一次" detail="有不舒服在跟踪时，我按这个节奏在首页问你怎么样了。拖了两周以上的，改成每周问一次。">
+          <Block icon={<Timer />} title="多久问我一次" detail="有不舒服在跟踪时，我按这个节奏在首页问你怎么样了。拖了两周以上的，改成每周问一次。">
             <Select
               value={String(interval)}
               aria-label="多久问我一次"
@@ -118,7 +153,7 @@ export default function SettingsPage() {
             </Select>
           </Block>
           {state.settings.longTerm && (
-            <Block title="多久提醒我记血糖" detail="血压和体重最多每周提醒一次。">
+            <Block icon={<Droplets />} iconTone="info" title="多久提醒我记血糖" detail="血压和体重最多每周提醒一次。">
               <Select
                 value={String(state.settings.metricReminderHours)}
                 aria-label="多久提醒我记血糖"
@@ -137,6 +172,8 @@ export default function SettingsPage() {
           )}
           {perm === "unsupported" || perm === "denied" ? (
             <Block
+              icon={<BellOff />}
+              iconTone="neutral"
               title="弹出提醒"
               detail={
                 perm === "unsupported"
@@ -148,6 +185,8 @@ export default function SettingsPage() {
             <Toggle
               checked={notifyOn}
               onChange={(v) => void toggleNotify(v)}
+              icon={<Bell />}
+              iconTone={notifyOn ? "solid" : "brand"}
               label="弹出提醒"
               detail="网页开着的时候，到时间会弹出一条通知。关掉网页就不会提醒了。"
             />
@@ -155,40 +194,54 @@ export default function SettingsPage() {
         </Card>
       </section>
 
-      <section>
+      <section className="rise-2">
         <SectionTitle>我的数据</SectionTitle>
         <Card className="divide-y divide-line overflow-hidden">
-          <Block title="数据存在哪里" detail="档案和记录只存在这台设备的浏览器里，每个账号分开存。只有在你和医伴说话、整理给医生看的内容、认照片和语音的时候，相关内容才会发给 AI 模型。" />
-          <Block title="备份" detail="把档案和全部记录存成一个文件。">
-            <Button variant="secondary" onClick={download}>
+          <Block
+            icon={<HardDrive />}
+            iconTone="neutral"
+            title="数据存在哪里"
+            detail="档案和记录只存在这台设备的浏览器里，每个账号分开存。只有在你和医伴说话、整理给医生看的内容、认照片和语音的时候，相关内容才会发给 AI 模型。"
+          />
+          <Block icon={<Download />} title="备份" detail="把档案和全部记录存成一个文件。">
+            <Button variant="secondary" className="press" onClick={download}>
+              <Download className="h-5 w-5" />
               下载备份
             </Button>
           </Block>
-          <Block title="看看演示" detail="林叔是虚构的病人，有一次左膝痛的记录。打开演示会先退出你的账号，你的档案和记录不受影响。">
-            <LinkButton href="/demo/lin" variant="secondary">
+          <Block icon={<Play />} iconTone="info" title="看看演示" detail="林叔是虚构的病人，有一次左膝痛的记录。打开演示会先退出你的账号，你的档案和记录不受影响。">
+            <LinkButton href="/demo/lin" variant="secondary" className="press">
               林叔的演示
             </LinkButton>
           </Block>
-          <Block title="全部清空" detail="删掉这个账号的档案和所有记录，从头开始。账号本身还在。">
-            <Button variant="dangerSoft" onClick={() => setConfirm("reset")}>
+          <Block icon={<Trash2 />} iconTone="danger" title="全部清空" detail="删掉这个账号的档案和所有记录，从头开始。账号本身还在。">
+            <Button variant="dangerSoft" className="press" onClick={() => setConfirm("reset")}>
               全部清空
             </Button>
           </Block>
         </Card>
       </section>
 
-      <section>
+      <section className="rise-3">
         <SectionTitle>关于</SectionTitle>
         <Card className="divide-y divide-line overflow-hidden">
           <Block
+            icon={<Info />}
+            iconTone="neutral"
             title="使用须知"
             detail="医伴只帮你记录、整理和提醒，不做诊断，不建议用药。指标的范围是一般的标准，你自己的目标听医生的。胸痛、喘不上气、神志不清、大出血这类急事，请立即拨打 120。"
           />
           <Block
+            icon={<Sparkles />}
+            iconTone={aiTone}
             title="AI 连接"
+            mark={<span aria-hidden="true" className={cn("inline-block h-2.5 w-2.5 rounded-full transition-all duration-300", aiLight, !health && "animate-breathe")} />}
             detail={
               !health ? (
-                "正在检查…"
+                <span className="inline-flex items-center gap-2.5">
+                  <Spinner className="h-5 w-5" />
+                  正在检查…
+                </span>
               ) : health.configured ? (
                 <>
                   已连接智谱 GLM。对话 {health.model}，认照片 {health.visionModel}，听语音 {health.speechModel}
@@ -201,7 +254,7 @@ export default function SettingsPage() {
               )
             }
           >
-            <Button variant="secondary" onClick={ping} loading={pinging}>
+            <Button variant="secondary" className="press" onClick={ping} loading={pinging}>
               测试连接
             </Button>
           </Block>
@@ -230,7 +283,12 @@ export default function SettingsPage() {
           </>
         }
       >
-        档案、全部记录和对话都会删掉，找不回来。
+        <div className="flex items-start gap-3.5">
+          <IconTile tone="solidDanger" size="lg">
+            <Trash2 />
+          </IconTile>
+          <p className="t-lead pt-1.5 text-ink">档案、全部记录和对话都会删掉，找不回来。</p>
+        </div>
       </Modal>
     </div>
   );

@@ -19,7 +19,9 @@ import { DRAFT_CHOICES, draftPrompt, isDraftPrompt, unsavedCards } from "@/lib/d
 import { Thread } from "@/components/chat/Thread";
 import { Composer } from "@/components/chat/Composer";
 import { useToast } from "@/components/Toast";
-import { FileText } from "lucide-react";
+import { IconTile } from "@/components/ui";
+import { ChevronRight, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const MAX_PHOTOS = 4;
 
@@ -125,26 +127,43 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
     }
   };
 
+  // Before the patient has said anything the screen is an invitation, not a thread: the opening
+  // question sits in the middle of the page, and the ways to answer sit right under it.
+  const opening = !state.thread.some((t) => t.kind === "user");
+
+  /*
+   * One reading column, like a Messages thread: the title at the top, the conversation in the
+   * middle, and at the bottom a sheet the conversation scrolls under, holding the one way to answer.
+   */
   return (
-    <div className="flex min-h-[calc(100dvh-9rem)] flex-col">
-      <h1 className="mb-3 text-2xl font-semibold text-ink">看医生之前</h1>
-      <div className="flex-1 space-y-3 pb-4">
-        <Thread items={state.thread} busy={busy} onChip={say} />
-        <div ref={end} aria-hidden="true" className="h-px" />
+    <div className="mx-auto flex min-h-[calc(100dvh-10rem)] w-full max-w-2xl flex-col">
+      {/* while the page is an invitation the name of the page steps back and the question is the headline */}
+      <h1 className={cn("mb-6 animate-fade-up transition-all duration-500", opening ? "t-heading text-center text-ink-2" : "t-display text-ink")}>看医生之前</h1>
+      <div className={cn("flex flex-1 flex-col pb-6", opening ? "justify-center" : "justify-end")}>
+        <div className="space-y-5">
+          <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
+          <div ref={end} aria-hidden="true" className="h-px" />
+        </div>
       </div>
-      {/* stays at the bottom edge while the conversation scrolls above it */}
-      <div className="sticky bottom-0 z-10 space-y-2 border-t border-line bg-canvas/95 pt-2.5 pb-3 backdrop-blur">
-        {report && (
-          <button
-            type="button"
-            onClick={() => router.push(report)}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-brand-50 px-4 text-lg font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
-          >
-            <FileText className="h-5 w-5" />
-            给医生看的报告（{reportTitle}）
-          </button>
-        )}
-        <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
+      {/* the sheet: part of the page, not pasted on — a fade above it, a raised surface, the report one tap away inside it */}
+      <div className="sticky bottom-0 z-10 -mx-4 px-4 pb-3 sm:-mx-2 sm:px-2">
+        <div aria-hidden="true" className="pointer-events-none h-8 bg-linear-to-t from-canvas to-canvas/0" />
+        <div className="material-raised space-y-3 rounded-[32px] border border-line/70 p-3">
+          {report && (
+            <button
+              type="button"
+              onClick={() => router.push(report)}
+              className="press flex min-h-14 w-full items-center gap-3 rounded-full bg-brand-50 py-1 pr-4 pl-1.5 text-left text-lg font-medium text-brand-800 transition duration-200 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+            >
+              <IconTile size="lg" tone="solid" className="rounded-full">
+                <FileText />
+              </IconTile>
+              <span className="min-w-0 flex-1 truncate">给医生看的报告（{reportTitle}）</span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-brand-600" />
+            </button>
+          )}
+          <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
+        </div>
       </div>
     </div>
   );

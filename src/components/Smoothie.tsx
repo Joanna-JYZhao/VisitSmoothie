@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandLogo } from "./Logo";
+import { BrandLogo, LogoMark } from "./Logo";
 
 /* The Visit Smoothie header and footer, shared by the welcome screen and the registration screen. */
 
@@ -27,4 +27,12 @@ export function SmoothieFooter() {
       <span>档案保存在这台电脑上。</span>
     </footer>
   );
+}
+
+/**
+ * The app's own mark above the login card: the same celadon tile the rest of the app uses, rather
+ * than a second, different fragment of the wordmark on the same screen.
+ */
+export function SmoothieAppMark() {
+  return <LogoMark className="login-mark-tile" />;
 }

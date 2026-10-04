@@ -1,12 +1,35 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic, Square } from "lucide-react";
+import { Mic, Square, TriangleAlert } from "lucide-react";
 import { VISIT_MAX_SECONDS, canRecord, clockText, progressText, startRecording, transcribeLong, type ActiveRecording, type LongTranscript } from "@/lib/audio";
 import { cn } from "@/lib/utils";
-import { Spinner } from "@/components/ui";
+import { IconTile, Spinner } from "@/components/ui";
 
 type Phase = { kind: "idle" } | { kind: "recording"; seconds: number } | { kind: "working"; done: number; total: number };
+
+/**
+ * The look shared by the two big tiles on the page (this one and the camera): a raised sheet with a
+ * glossy app-icon tile in it. On a phone the icon sits beside the word; from `sm` up the tile is a square.
+ */
+export const bigTileCls =
+  "press lift group relative flex min-h-24 w-full items-center gap-5 overflow-hidden rounded-card border border-line/60 material-raised light px-5 py-5 text-left text-ink sm:min-h-60 sm:flex-col sm:justify-center sm:gap-4 sm:px-6 sm:py-7 sm:text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:pointer-events-none disabled:opacity-60";
+
+/** The sound bars beside the clock while recording: a visual pulse only, there is no meter behind it. */
+function SoundBars() {
+  return (
+    <span aria-hidden="true" className="flex h-8 items-end gap-1">
+      <style>{`@keyframes rec-bar{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}`}</style>
+      {[0.9, 0.55, 1, 0.7, 0.45].map((d, i) => (
+        <span
+          key={i}
+          className="block w-1.5 origin-bottom rounded-full bg-danger"
+          style={{ height: `${8 + i * 2 + (i === 2 ? 14 : i === 1 || i === 3 ? 10 : 6)}px`, animation: `rec-bar ${d}s ease-in-out ${i * 0.1}s infinite` }}
+        />
+      ))}
+    </span>
+  );
+}
 
 /**
  * 录音: the whole visit, up to an hour. Tap to start, tap again to stop. The recording is turned
@@ -66,6 +89,7 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
   };
 
   const recording = phase.kind === "recording";
+  const working = phase.kind === "working";
   return (
     <div>
       <button
@@ -73,21 +97,54 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
         disabled={disabled || phase.kind === "working"}
         onClick={() => void (recording ? stop() : start())}
         aria-pressed={recording}
-        className={cn(
-          "flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-card border-2 px-4 py-5 text-center transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:opacity-60",
-          recording ? "border-danger bg-danger-bg text-danger" : "border-brand-300 bg-brand-50 text-brand-800 hover:border-brand-500 hover:bg-brand-100",
-        )}
+        className={cn(bigTileCls, recording && "border-danger/30 bg-danger-bg/40 text-danger ring-4 ring-danger/10")}
       >
-        {phase.kind === "working" ? <Spinner className="h-9 w-9" /> : recording ? <Square className="h-9 w-9" /> : <Mic className="h-9 w-9" />}
-        <span className="text-xl font-semibold">
-          {phase.kind === "working" ? progressText(phase.done, phase.total) : recording ? `录音中 ${clockText(phase.seconds)}，点一下停止` : "录音"}
+        {/* the tile: the brand icon at rest, a red square with rings while recording, the spinner while transcribing */}
+        <span aria-hidden="true" className="relative flex shrink-0 items-center justify-center">
+          {recording && (
+            <>
+              <span className="absolute -inset-2.5 animate-pulse rounded-[26px] bg-danger/10" />
+              <span className="absolute -inset-1.5 rounded-[24px] border border-danger/25" />
+            </>
+          )}
+          {working ? (
+            <IconTile tone="brand" size="xl">
+              <Spinner className="h-8 w-8" />
+            </IconTile>
+          ) : recording ? (
+            <IconTile tone="solidDanger" size="xl" className="relative">
+              <Square className="fill-current" />
+            </IconTile>
+          ) : (
+            <IconTile tone="solid" size="xl" className="animate-breathe transition-transform duration-300 group-hover:scale-105">
+              <Mic strokeWidth={2.2} />
+            </IconTile>
+          )}
         </span>
+
+        {working ? (
+          <span className="t-heading text-brand-800 tabular-nums">{progressText(phase.done, phase.total)}</span>
+        ) : recording ? (
+          <span className="flex min-w-0 flex-col items-start gap-1 sm:items-center">
+            <span className="text-base leading-snug font-medium text-danger">录音中</span>
+            <span className="flex items-center gap-3">
+              <span className="t-number text-danger">{clockText(phase.seconds)}</span>
+              <SoundBars />
+            </span>
+            <span className="text-lg leading-snug font-medium text-ink">点一下停止</span>
+          </span>
+        ) : (
+          <span className="t-heading">录音</span>
+        )}
       </button>
-      <p className="mt-2 text-base leading-relaxed text-ink">录医生说话前，请先征得医生同意。最长 60 分钟，录音不保存，只留整理出的文字。</p>
+      <p className="mt-3 px-1 text-base leading-relaxed text-ink-2">录医生说话前，请先征得医生同意。最长 60 分钟，录音不保存，只留整理出的文字。</p>
       {problem && (
-        <p role="alert" className="mt-2 rounded-2xl border border-warn/30 bg-warn-bg px-4 py-3 text-lg text-ink">
-          {problem}
-        </p>
+        <div role="alert" className="mt-3 flex animate-fade-up items-start gap-3.5 rounded-card border border-warn/20 bg-warn-bg px-5 py-4">
+          <IconTile tone="warn" size="sm" className="mt-0.5 bg-surface shadow-edge">
+            <TriangleAlert className="h-5 w-5" />
+          </IconTile>
+          <p className="min-w-0 flex-1 text-lg leading-relaxed text-ink">{problem}</p>
+        </div>
       )}
     </div>
   );

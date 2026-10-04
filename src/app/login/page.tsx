@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { AlertCircle, ChevronLeft } from "lucide-react";
 import { reloadAccount, useStore } from "@/lib/store";
 import { lastAuthError, loginHere } from "@/lib/accounts";
 import { isDev } from "@/lib/dev";
-import { SmoothieFooter, SmoothieHeader } from "@/components/Smoothie";
+import { SmoothieAppMark, SmoothieFooter, SmoothieHeader } from "@/components/Smoothie";
 import "../welcome/smoothie.css";
 
 /** 登录: the teammate's "欢迎回来" card. Name and password, checked in this browser. */
@@ -43,10 +43,11 @@ export default function LoginPage() {
       <SmoothieHeader />
       <main className="onboarding-main is-register">
         <Link href="/welcome" className="onboarding-back">
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
           返回
         </Link>
         <div className="login-layout">
+          <SmoothieAppMark />
           <section className="registration-card login-card" aria-labelledby="login-heading">
             <header className="registration-card-header">
               <div>
@@ -92,7 +93,8 @@ export default function LoginPage() {
               </div>
               {error && (
                 <p role="alert" className="smoothie-alert">
-                  {error}
+                  <AlertCircle aria-hidden="true" />
+                  <span>{error}</span>
                 </p>
               )}
               <button className="smoothie-button" type="submit" disabled={busy}>

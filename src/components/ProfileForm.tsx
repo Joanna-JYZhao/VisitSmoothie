@@ -9,8 +9,13 @@ import {
   type RegisterDraft,
   type RequiredField,
 } from "@/app/me/profile-data";
+import { CircleAlert } from "lucide-react";
 import { ChipsInput } from "./ChipsInput";
 import { Field, Input, Segmented, Select, Textarea } from "./ui";
+
+/* the browser's own calendar button inside a date box: quiet until the hand reaches it */
+const dateCls =
+  "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:rounded-lg [&::-webkit-calendar-picker-indicator]:p-1 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:transition [&::-webkit-calendar-picker-indicator]:hover:bg-brand-50 [&::-webkit-calendar-picker-indicator]:hover:opacity-100";
 
 export {
   addPastHistory,
@@ -304,25 +309,27 @@ function Item({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="mb-2 flex flex-wrap items-center gap-2 text-lg font-medium text-ink">
+      <label htmlFor={htmlFor} className="mb-2 flex flex-wrap items-center gap-2 text-lg font-semibold tracking-[-0.01em] text-ink">
         {skippable && (
-          <span className="rounded-full border border-brand-300 bg-brand-50 px-3 py-0.5 text-base font-semibold text-brand-800">可跳过</span>
+          <span className="rounded-full bg-brand-50 px-3 py-0.5 text-base font-semibold text-brand-800 ring-1 ring-brand-200 ring-inset">可跳过</span>
         )}
         {label}
         {required ? <span className="text-danger">*</span> : !skippable && <span className="text-base font-normal text-ink-2">（选填）</span>}
       </label>
       {children}
       {missing && (
-        <p role="alert" className="mt-1.5 text-base font-medium text-danger">
+        <p role="alert" className="mt-2 flex animate-fade-up items-center gap-1.5 text-base font-medium text-danger">
+          <CircleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
           请填写{label}
         </p>
       )}
-      {hint && <p className="mt-1.5 text-base leading-relaxed text-ink-2">{hint}</p>}
+      {hint && <p className="t-body mt-2 text-ink-2">{hint}</p>}
     </div>
   );
 }
 
-const bad = (on: boolean | undefined) => (on ? "border-danger focus:border-danger" : "");
+/* a required box left empty: a red edge and a faint red halo, which the brand halo takes over on focus */
+const bad = (on: boolean | undefined) => (on ? "border-danger bg-danger-bg/40 ring-4 ring-danger/10 focus:border-danger focus:ring-danger/15" : "");
 
 /**
  * 姓名、出生日期、性别、学历（必填）和基础病、家族遗传病、过敏史（选填）。
@@ -382,11 +389,21 @@ export function RegisterFields({
           min={isoDay(oldest)}
           max={isoDay(today)}
           onChange={(e) => set("birthDate", e.target.value)}
-          className={bad(has("birthDate"))}
+          className={cn(dateCls, bad(has("birthDate")))}
         />
         {draft.birthDate && (
-          <p className="mt-2 text-xl font-semibold text-brand-800" aria-live="polite">
-            {age != null && age <= 120 ? `${age} 岁` : "这个日期不对，请再选一下"}
+          <p className="mt-3 animate-fade-up" aria-live="polite">
+            {age != null && age <= 120 ? (
+              <span className="inline-flex items-baseline gap-1.5 rounded-2xl bg-brand-50 px-4 py-2 text-brand-800">
+                <span className="t-title tabular-nums">{age}</span>
+                <span className="text-lg font-medium">岁</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-lg font-medium text-danger">
+                <CircleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />
+                这个日期不对，请再选一下
+              </span>
+            )}
           </p>
         )}
       </Item>
@@ -415,7 +432,7 @@ export function RegisterFields({
           </Select>
         </Item>
       </div>
-      <p className="-mt-3 text-base leading-relaxed text-ink-2">学历只用来决定我解释时说得多细，不会给医生看。</p>
+      <p className="t-body -mt-3 text-ink-2">学历只用来决定我解释时说得多细，不会给医生看。</p>
 
       <Item
         label="基础病"

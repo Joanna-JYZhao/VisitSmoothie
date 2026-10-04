@@ -6,7 +6,7 @@ import { SmoothieFooter, SmoothieHeader } from "@/components/Smoothie";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, ChevronLeft, ScanText, X } from "lucide-react";
+import { AlertCircle, Camera, ChevronLeft, ChevronRight, Images, Info, ScanText, X } from "lucide-react";
 import type { CheckupResult, Gender, MetricType, Profile } from "@/lib/types";
 import { reloadAccount, useStore } from "@/lib/store";
 import { placeholderName } from "@/lib/dev";
@@ -27,7 +27,7 @@ import {
   type RegisterDraft,
 } from "@/components/ProfileForm";
 import type { RequiredField } from "@/app/me/profile-data";
-import { Button, Card, Spinner, TextButton } from "@/components/ui";
+import { Button, Card, IconTile, Skeleton, Spinner, TextButton } from "@/components/ui";
 
 const MAX_PHOTOS = 6;
 /** A report page has small print: it is sent larger than other photos, or rows of a tilted table get mixed up. */
@@ -205,15 +205,31 @@ export default function OnboardingPage() {
   if (stage.kind === "reading") {
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-[36rem] flex-col justify-center px-4 py-8">
-        <Card className="flex flex-col items-center gap-3 px-5 py-12 text-center" role="status">
-          <Spinner className="h-10 w-10" />
-          <p className="text-xl font-semibold text-ink">{L("正在认体检报告上的字", "Reading your check-up report")}</p>
-          <p className="text-lg leading-relaxed text-ink-2">
-            {L(
-              `${stage.count > 1 ? `一共 ${stage.count} 张，` : ""}大约要半分钟到一分钟，请等一下。`,
-              `${stage.count > 1 ? `${stage.count} photos. ` : ""}This takes about half a minute to a minute. Please wait.`,
-            )}
-          </p>
+        <Card tone="raised" className="animate-pop overflow-hidden" role="status">
+          <div className="flex flex-col items-center gap-4 px-6 pt-12 pb-8 text-center">
+            <span className="relative flex h-20 w-20 items-center justify-center">
+              <Spinner className="absolute inset-0 h-20 w-20 border-4" />
+              <IconTile tone="solid" size="lg" className="animate-breathe">
+                <ScanText />
+              </IconTile>
+            </span>
+            <p className="t-heading text-ink">{L("正在认体检报告上的字", "Reading your check-up report")}</p>
+            <p className="t-body max-w-sm text-ink-2">
+              {L(
+                `${stage.count > 1 ? `一共 ${stage.count} 张，` : ""}大约要半分钟到一分钟，请等一下。`,
+                `${stage.count > 1 ? `${stage.count} photos. ` : ""}This takes about half a minute to a minute. Please wait.`,
+              )}
+            </p>
+          </div>
+          {/* the shape of what is coming: the rows of the report, shimmering quietly */}
+          <div className="divide-y divide-line border-t border-line" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="space-y-2.5 px-6 py-5">
+                <Skeleton className="h-4 max-w-24" />
+                <Skeleton className={i === 1 ? "h-5 max-w-[60%]" : "h-5 max-w-[80%]"} />
+              </div>
+            ))}
+          </div>
         </Card>
       </div>
     );
@@ -241,7 +257,7 @@ export default function OnboardingPage() {
 
   if (stage.kind === "report") {
     return (
-      <div className="mx-auto w-full max-w-[36rem] px-4 pt-6 pb-12">
+      <div className="page-enter mx-auto w-full max-w-[36rem] px-4 pt-6 pb-12">
         <button
           type="button"
           onClick={() => {
@@ -255,9 +271,12 @@ export default function OnboardingPage() {
         </button>
 
         {problem && (
-          <p role="alert" className="mt-3 rounded-2xl border border-warn/30 bg-warn-bg px-4 py-3.5 text-lg leading-relaxed text-ink">
-            {problemText(problem)}
-          </p>
+          <div role="alert" className="mt-3 flex animate-fade-up items-start gap-3 rounded-card border border-warn/20 bg-warn-bg px-4 py-4">
+            <IconTile tone="warn" size="sm">
+              <AlertCircle />
+            </IconTile>
+            <p className="t-body min-w-0 flex-1 pt-1 text-ink">{problemText(problem)}</p>
+          </div>
         )}
 
         <input
@@ -284,14 +303,14 @@ export default function OnboardingPage() {
           }}
         />
 
-        <Card className="mt-3 p-5">
-          <div className="flex items-start gap-3">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
-              <ScanText className="h-6 w-6" aria-hidden="true" />
-            </span>
+        <Card tone="raised" className="mt-3 p-6">
+          <div className="flex items-start gap-4">
+            <IconTile tone="solid" size="lg">
+              <ScanText />
+            </IconTile>
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-semibold text-ink">{L("用体检报告建档", "Use a check-up report")}</h1>
-              <p className="mt-0.5 text-lg leading-relaxed text-ink-2">
+              <h1 className="t-title text-ink">{L("用体检报告建档", "Use a check-up report")}</h1>
+              <p className="t-body mt-2 text-ink-2">
                 {canRead
                   ? L("拍一下最近一次的体检报告，我把档案填好，你看一眼就行。", "Photograph your latest check-up report. I fill in your record, and you just look it over.")
                   : L("这台设备现在认不了照片。可以先用示例报告看看是什么样。", "Photos cannot be read right now. You can try the sample report to see how it works.")}
@@ -300,16 +319,16 @@ export default function OnboardingPage() {
           </div>
 
           {photos.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-wrap gap-3">
               {photos.map((src, i) => (
-                <div key={i} className="relative h-24 w-20 overflow-hidden rounded-xl border border-line">
+                <div key={i} className="animate-pop relative h-28 w-[5.5rem] overflow-hidden rounded-2xl border border-line bg-surface-2 shadow-edge">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={src} alt={L(`第 ${i + 1} 页`, `Page ${i + 1}`)} className="h-full w-full object-cover" />
                   <button
                     type="button"
                     aria-label={L(`去掉第 ${i + 1} 页`, `Remove page ${i + 1}`)}
                     onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                    className="absolute top-0.5 right-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-ink/70 text-white"
+                    className="press glass absolute top-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-full text-ink shadow-pill focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -320,7 +339,7 @@ export default function OnboardingPage() {
 
           {canRead &&
             (photos.length > 0 ? (
-              <div className="mt-4 space-y-2">
+              <div className="mt-6 space-y-3">
                 <Button size="lg" className="w-full" onClick={() => void recognize(photos)}>
                   {L(`开始整理（${photos.length} 张）`, `Read ${photos.length} ${photos.length === 1 ? "photo" : "photos"}`)}
                 </Button>
@@ -332,25 +351,35 @@ export default function OnboardingPage() {
                 )}
               </div>
             ) : (
+              /* the one thing to do here: a big lit tile with the camera on it */
               <button
                 type="button"
                 onClick={() => cameraRef.current?.click()}
-                className="mt-4 flex min-h-28 w-full flex-col items-center justify-center gap-2 rounded-card border-2 border-brand-300 bg-brand-50 px-4 py-5 text-center text-brand-800 transition hover:border-brand-500 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                className="lift press light mt-6 flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-card border border-brand-200/70 px-4 py-7 text-center shadow-card transition hover:border-brand-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
-                <Camera className="h-9 w-9" />
-                <span className="text-xl font-semibold">{L("拍体检报告", "Photograph the report")}</span>
-                <span className="text-base text-ink">
+                <IconTile tone="solid" size="xl" className="animate-breathe">
+                  <Camera />
+                </IconTile>
+                <span className="t-heading text-ink">{L("拍体检报告", "Photograph the report")}</span>
+                <span className="t-body text-balance text-ink-2">
                   {L(`有好几页的话，一页一页拍，最多 ${MAX_PHOTOS} 张`, `For several pages, take one photo per page, up to ${MAX_PHOTOS}`)}
                 </span>
               </button>
             ))}
 
-          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3">
-            {canRead ? <TextButton onClick={() => albumRef.current?.click()}>{L("从相册选", "Choose photos")}</TextButton> : <span />}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3">
+            {canRead ? (
+              <TextButton onClick={() => albumRef.current?.click()}>
+                <Images className="mr-1.5 h-5 w-5" aria-hidden="true" />
+                {L("从相册选", "Choose photos")}
+              </TextButton>
+            ) : (
+              <span />
+            )}
             <TextButton onClick={() => void trySample()}>{L("用示例报告试试", "Try a sample")}</TextButton>
           </div>
           {canRead && (
-            <p className="mt-1 text-base leading-relaxed text-ink-2">
+            <p className="t-body mt-3 border-t border-line pt-4 text-ink-2">
               {L("照片只用来认字，认完就丢，不会保存。", "Photos are only used to read the text. They are thrown away afterwards and never saved.")}
             </p>
           )}
@@ -366,13 +395,13 @@ export default function OnboardingPage() {
       <SmoothieHeader />
       <main className="onboarding-main is-register">
         <Link href="/welcome" className="onboarding-back">
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
           返回
         </Link>
         <div className="registration-layout">
           {/*
-            建档的左栏：用户要求把这一栏做得极简 —— 一句「可跳过」的提示，加两个安静的入口。
-            原来这里的大标题、步骤说明和重复的解释文字都去掉了，表单因此成为主角。
+            建档的左栏 (user-requested simplification): 只留一句「可跳过」的提示，和两个现成的入口。
+            原来的大标题、步骤清单和重复的解释文字都去掉了，表单因此成为这一页的主角。
           */}
           <aside className="registration-guide">
             <p className="registration-eyebrow">个人档案</p>
@@ -387,7 +416,7 @@ export default function OnboardingPage() {
             </div>
           </aside>
 
-          <section className="registration-card" aria-labelledby="profile-title">
+          <section className="registration-card jade-edge" aria-labelledby="profile-title">
             <header className="registration-card-header">
               <div>
                 <p className="registration-eyebrow">LET’S GET TO KNOW YOU</p>
@@ -395,13 +424,17 @@ export default function OnboardingPage() {
               </div>
               <button
                 type="button"
-                className="onboarding-language"
+                className="report-row"
                 onClick={() => {
                   setError(null);
                   setStage({ kind: "report" });
                 }}
               >
-                有体检报告？拍一下，我帮你填
+                <span className="guide-tile" aria-hidden="true">
+                  <Camera />
+                </span>
+                <span>有体检报告？拍一下，我帮你填</span>
+                <ChevronRight aria-hidden="true" />
               </button>
             </header>
             <form
@@ -413,27 +446,31 @@ export default function OnboardingPage() {
             >
               {legacy && (
                 <p className="smoothie-note">
-                  {takeLegacy
-                    ? `这台电脑上原来有「${legacy.name}」的档案和记录，已经帮你填好。注册后，它们会接到这个新账号里。`
-                    : `「${legacy.name}」原来的档案留在这台电脑上，不接到新账号。`}{" "}
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={() => {
-                      const next = !takeLegacy;
-                      setTakeLegacy(next);
-                      setForm(next ? registerFromProfile(legacy) : emptyRegister());
-                    }}
-                  >
-                    {takeLegacy ? "不要接，从空白开始" : "还是接过来"}
-                  </button>
+                  <Info aria-hidden="true" />
+                  <span>
+                    {takeLegacy
+                      ? `这台电脑上原来有「${legacy.name}」的档案和记录，已经帮你填好。注册后，它们会接到这个新账号里。`
+                      : `「${legacy.name}」原来的档案留在这台电脑上，不接到新账号。`}{" "}
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => {
+                        const next = !takeLegacy;
+                        setTakeLegacy(next);
+                        setForm(next ? registerFromProfile(legacy) : emptyRegister());
+                      }}
+                    >
+                      {takeLegacy ? "不要接，从空白开始" : "还是接过来"}
+                    </button>
+                  </span>
                 </p>
               )}
               <RegisterFields draft={form} onChange={change} missing={missing} />
               {passwordFields}
               {error && (
-                <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger-bg px-4 py-3 text-base font-medium text-danger">
-                  {error}
+                <p role="alert" className="smoothie-alert mt-6">
+                  <AlertCircle aria-hidden="true" />
+                  <span>{error}</span>
                 </p>
               )}
               <div className="registration-submit">
@@ -520,32 +557,46 @@ function Confirm({
   };
 
   return (
-    <div className="mx-auto w-full max-w-[36rem] space-y-4 px-4 pt-8 pb-12">
-      <div>
-        <h1 className="text-[1.65rem] leading-tight font-semibold tracking-tight text-ink">我从体检报告里认出了这些</h1>
-        <p className="mt-1.5 text-lg leading-relaxed text-ink-2">看一眼对不对，再把下面带 * 的补上就能建档。</p>
-      </div>
+    <div className="page-enter mx-auto w-full max-w-[36rem] space-y-6 px-4 pt-8 pb-12">
+      <header className="animate-fade-up">
+        <IconTile tone="solid" size="lg" className="mb-4">
+          <ScanText />
+        </IconTile>
+        <h1 className="t-display text-ink">我从体检报告里认出了这些</h1>
+        <p className="t-lead mt-3 text-ink-2">看一眼对不对，再把下面带 * 的补上就能建档。</p>
+      </header>
 
       {sample && (
-        <p className="rounded-2xl border border-info/20 bg-info-bg px-4 py-3.5 text-lg leading-relaxed text-ink">这是示例体检报告，人物是虚构的。</p>
-      )}
-
-      {r.unclear.length > 0 && (
-        <div className="rounded-2xl border border-warn/30 bg-warn-bg px-4 py-3.5">
-          <p className="text-lg font-semibold text-ink">这几处我拿不准，请看一眼</p>
-          <ul className="mt-1 space-y-1 text-lg leading-relaxed text-ink">
-            {r.unclear.map((u, i) => (
-              <li key={i}>· {u}</li>
-            ))}
-          </ul>
+        <div className="flex items-start gap-3 rounded-card border border-info/15 bg-info-bg px-4 py-4">
+          <IconTile tone="info" size="sm">
+            <Info />
+          </IconTile>
+          <p className="t-body min-w-0 flex-1 pt-1 text-ink">这是示例体检报告，人物是虚构的。</p>
         </div>
       )}
 
-      <Card className="divide-y divide-line">
+      {r.unclear.length > 0 && (
+        <div className="flex items-start gap-3 rounded-card border border-warn/20 bg-warn-bg px-4 py-4">
+          <IconTile tone="warn" size="sm">
+            <AlertCircle />
+          </IconTile>
+          <div className="min-w-0 flex-1 pt-1">
+            <p className="text-lg font-semibold text-ink">这几处我拿不准，请看一眼</p>
+            <ul className="t-body mt-1 space-y-1 text-ink">
+              {r.unclear.map((u, i) => (
+                <li key={i}>· {u}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* the report as it was read: a typeset sheet, one labelled row per thing found */}
+      <Card tone="raised" className="divide-y divide-line">
         {who.length > 0 && (
           <Row label="报告上的你">
-            <span className="text-xl font-semibold">{who.join("，")}</span>
-            {body.length > 0 && <span className="block">{body.join("，")}</span>}
+            <span className="t-heading block text-ink">{who.join("，")}</span>
+            {body.length > 0 && <span className="mt-1 block">{body.join("，")}</span>}
           </Row>
         )}
         <Row label="长期吃的药">
@@ -584,29 +635,35 @@ function Confirm({
         )}
       </Card>
 
-      <Card className="p-5">
-        <p className="mb-4 text-lg font-semibold text-ink">你的资料（报告上有的已经填好，可以改）</p>
+      <Card className="smoothie-scope p-6">
+        <p className="t-heading mb-5 text-ink">你的资料（报告上有的已经填好，可以改）</p>
         <RegisterFields draft={draft} onChange={change} missing={missing} birthYearHint={r.birthYear} />
       </Card>
       {extra && (
-        <Card className="smoothie-scope p-5">
+        <Card className="smoothie-scope p-6">
           {extra}
         </Card>
       )}
 
       {error && (
-        <p role="alert" className="rounded-2xl border border-danger/30 bg-danger-bg px-4 py-3 text-lg font-medium text-danger">
-          {error}
-        </p>
+        <div role="alert" className="flex animate-fade-up items-start gap-3 rounded-card border border-danger/20 bg-danger-bg px-4 py-4">
+          <IconTile tone="danger" size="sm">
+            <AlertCircle />
+          </IconTile>
+          <p className="t-body min-w-0 flex-1 pt-1 font-medium text-danger">{error}</p>
+        </div>
       )}
 
-      <Button size="lg" className="w-full" onClick={confirm}>
-        对，建档
-      </Button>
-      <Button variant="secondary" size="lg" className="w-full" onClick={onRetake}>
-        重新拍
-      </Button>
-      <p className="text-center text-base leading-relaxed text-ink-2">
+      <div className="space-y-3">
+        <Button size="lg" className="w-full" onClick={confirm}>
+          对，建档
+        </Button>
+        <Button variant="secondary" size="lg" className="w-full" onClick={onRetake}>
+          <Camera className="h-5 w-5" aria-hidden="true" />
+          重新拍
+        </Button>
+      </div>
+      <p className="t-body text-center text-balance text-ink-2">
         基础病只照抄报告上「既往史」里写的，不会因为某个数偏高就替你写上一种病。
       </p>
     </div>
@@ -615,9 +672,9 @@ function Confirm({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="px-5 py-4">
-      <p className="text-base text-ink-2">{label}</p>
-      <div className="mt-0.5 text-lg leading-relaxed text-ink">{children}</div>
+    <div className="px-6 py-5">
+      <p className="text-base font-medium text-ink-2">{label}</p>
+      <div className="t-body mt-1 text-ink">{children}</div>
     </div>
   );
 }

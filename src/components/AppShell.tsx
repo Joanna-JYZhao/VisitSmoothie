@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronLeft, UserRound } from "lucide-react";
+import { ChevronLeft, FileText, Siren, UserRound } from "lucide-react";
 import { reloadAccount, useStore } from "@/lib/store";
 import { logoutHere } from "@/lib/accounts";
 import { L } from "@/lib/lang";
@@ -14,14 +14,14 @@ import { focusRing } from "./ui";
 function Splash() {
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-3 text-ink-2">
-        <LogoMark className="h-14 w-14 animate-pulse" />
-        <span className="text-base">{L("医伴", "Yiban")}</span>
+      <div className="flex animate-fade-up flex-col items-center gap-4 text-ink-2">
+        <LogoMark className="h-16 w-16 animate-breathe drop-shadow-[0_12px_24px_rgba(36,106,87,0.35)]" />
+        <span className="t-lead font-medium">{L("医伴", "Yiban")}</span>
+        <span className="spinner-ring h-6 w-6" aria-hidden="true" />
       </div>
     </div>
   );
 }
-
 
 /**
  * 应急: the one fixed way out, in the same corner of every page. Red so it is found at once, small
@@ -29,13 +29,21 @@ function Splash() {
  */
 function SosLink() {
   return (
-    <Link href="/sos" className={cn("rail-sos inline-flex min-h-11 items-center rounded-full", focusRing)}>
-      <span className="inline-flex min-h-9 items-center rounded-full bg-danger px-4 text-base font-semibold text-white shadow-edge transition hover:bg-[#952e35]">
+    <Link href="/sos" className={cn("press inline-flex min-h-12 items-center rounded-full", focusRing)}>
+      <span className="tile-danger inline-flex min-h-10 items-center gap-1.5 rounded-full px-4 text-base font-semibold whitespace-nowrap text-white transition duration-200 hover:brightness-110">
+        <Siren className="h-4.5 w-4.5" aria-hidden="true" />
         应急
       </span>
     </Link>
   );
 }
+
+/*
+ * The two doors in the bar on the right: a sheet of white lit from above, hairline edge, soft depth;
+ * they lift to the hand. On a phone they are small pills in a row above the title.
+ */
+const doorCls =
+  "lift press material flex min-h-12 flex-col items-center justify-center gap-1.5 rounded-full border border-line/80 px-3.5 text-base font-semibold whitespace-nowrap text-ink hover:border-brand-200 hover:text-brand-800 md:px-0";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { state, ready } = useStore();
@@ -70,31 +78,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // The wireframe: the title and a line across the top of the main area, and a bar on the right
   // with profile (round) and report (square). 应急 stays, small, at the bottom of that bar.
+  // On a phone the bar is a compact row above the title; the reading order stays the same.
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-6xl">
-      <div className="app-main min-w-0 flex-1">
-        <header className="app-header no-print mb-6 flex items-end justify-between gap-4 pb-2">
-          <Link href="/" className={cn("app-brand", focusRing)}>
+    <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col md:flex-row">
+      <div className="min-w-0 flex-1 px-4 pt-4 pb-16 sm:px-8 sm:pt-7 lg:px-12">
+        {/* the title and the line under it, the way the wireframe draws them */}
+        <header className="no-print mb-7 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-ink/15 pb-3 sm:mb-10">
+          <Link href="/" className={cn("app-brand rounded-lg", focusRing)} aria-label="VisitSmoothie">
             <BrandLogo />
           </Link>
           {!home && (
-            <Link href="/" className={cn("app-back inline-flex items-center text-base font-medium text-brand-700", focusRing)}>
+            <Link
+              href="/"
+              className={cn("press -mr-2 inline-flex min-h-12 items-center rounded-full pr-4 pl-2 text-base font-medium text-brand-700 transition hover:bg-brand-50", focusRing)}
+            >
               <ChevronLeft className="h-5 w-5" />
               回首页
             </Link>
           )}
         </header>
-        <main>{children}</main>
+        {/* a new page settles into place */}
+        <main key={pathname} className="page-enter">
+          {children}
+        </main>
       </div>
-      <aside className="app-rail no-print sticky top-0 flex h-screen shrink-0 flex-col items-center overflow-y-auto">
-        <Link href="/me" className={cn("rail-profile", focusRing)}>
-          <UserRound className="rail-icon text-brand-600" />
+      {/* the bar on the right: a composed column — the two doors at the top, the mark resting in the middle, the way out at the foot */}
+      <aside className="app-rail no-print order-first flex shrink-0 flex-wrap items-center justify-between gap-1.5 border-b border-line px-2 py-2 sm:gap-2 sm:px-3 md:sticky md:top-0 md:z-30 md:order-none md:h-screen md:w-56 md:flex-col md:flex-nowrap md:justify-start md:gap-7 md:border-b-0 md:border-l md:border-ink/15 md:px-0 md:py-0 md:pt-10">
+        <Link href="/me" className={cn(doorCls, "md:h-32 md:w-32 md:rounded-full", focusRing)}>
+          <span className="tile-brand hidden h-11 w-11 items-center justify-center rounded-[13px] text-white md:flex">
+            <UserRound className="h-6 w-6" />
+          </span>
           profile
         </Link>
-        <Link href="/report" className={cn("rail-report", focusRing)}>
+        <Link href="/report" className={cn(doorCls, "md:h-28 md:w-32 md:rounded-[24px]", focusRing)}>
+          <span className="tile-ink hidden h-11 w-11 items-center justify-center rounded-[13px] text-white md:flex">
+            <FileText className="h-6 w-6" />
+          </span>
           report
         </Link>
-        <div className="rail-foot mt-auto mb-8 flex flex-col items-center gap-4">
+        <div aria-hidden="true" className="hidden flex-1 items-center justify-center self-stretch select-none md:flex">
+          <BrandLogo className="rail-watermark" preload={false} />
+        </div>
+        <div className="flex items-center gap-1 md:mb-8 md:flex-col md:gap-3">
           <SosLink />
           {/* log out: this account's records stay saved for the next login */}
           <button
@@ -104,7 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               reloadAccount();
               router.replace("/welcome");
             }}
-            className={cn("rail-logout min-h-12 text-base font-medium text-ink-2 underline underline-offset-4 hover:text-ink", focusRing)}
+            className={cn("press min-h-12 rounded-full px-2 text-base font-medium whitespace-nowrap text-ink-2 underline decoration-line-strong underline-offset-4 transition hover:text-ink sm:px-3", focusRing)}
           >
             退出登录
           </button>

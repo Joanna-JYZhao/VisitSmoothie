@@ -10,8 +10,9 @@ import "./smoothie.css";
 
 /*
  * 登录界面: the teammate's Visit Smoothie welcome screen (TriMedManagement, branch
- * codex/visit-smoothie-onboarding), rebuilt here with the same look. Shown only when nobody is
- * logged in: register (开始我的健康旅程) or log in (登录).
+ * codex/visit-smoothie-onboarding), set like a keynote title: the wordmark huge in the middle of a
+ * lit stage, one button under it, the hand-written note beside the button. Shown only when nobody
+ * is logged in: register (开始我的健康旅程) or log in (登录).
  */
 
 export default function WelcomePage() {
@@ -35,7 +36,8 @@ export default function WelcomePage() {
         }
       />
       <main className="onboarding-main is-welcome">
-        <section className="welcome-panel">
+        <section className="welcome-stage">
+          <div className="welcome-light" aria-hidden="true" />
           <div className="welcome-intro">
             <p className="welcome-eyebrow">
               <span />
@@ -52,7 +54,7 @@ export default function WelcomePage() {
               <br />
               为下一次就诊，少一点重复，多一点从容。
             </p>
-            <Link href="/onboarding" className="smoothie-button">
+            <Link href="/onboarding" className="smoothie-button smoothie-button-hero">
               开始我的健康旅程
               <span aria-hidden="true">↗</span>
             </Link>
@@ -64,7 +66,7 @@ export default function WelcomePage() {
             </p>
             <div className="welcome-handnote">
               <svg className="journey-arrow" viewBox="0 0 170 92" fill="none" aria-hidden="true">
-                <path d="M15 6C-3 70 70 87 144 45M126 44l24-4-6 23" />
+                <path d="M15 6C-3 70 70 87 144 45M126 44l24-4-6 23" pathLength={1} />
               </svg>
               <span>
                 让健康旅程，
@@ -78,7 +80,9 @@ export default function WelcomePage() {
             <span>☺</span>
           </div>
           <div className="welcome-footnote">
-            <UserRound />
+            <span aria-hidden="true">
+              <UserRound />
+            </span>
             <span>首次使用，先建立一份属于你的个人档案。</span>
           </div>
         </section>
