@@ -19,6 +19,11 @@ check("male; education is the stored option value", p.gender === "男" && p.educ
 const cond = p.conditions.join(" ");
 check("high blood pressure since 2022, medicine to be checked against the box", /high blood pressure/i.test(cond) && cond.includes("2022") && /medicine box/.test(cond), cond);
 check("no medicine name or dose invented", p.medications.length === 0 && !/\d+\s?mg/i.test(all));
+const dated = p.conditions.filter((c) => /^\d{4}-\d\d-\d\d /.test(c));
+check("past history: ten dated lines, 2022-08-16 to 2026-10-03", dated.length === 10 && dated[0].startsWith("2022-08-16") && dated[9].startsWith("2026-10-03") && /early left knee osteoarthritis/.test(dated[9]), dated);
+check("past history: same dates as the Chinese lines", dated.map((c) => c.slice(0, 10)).join() === zh.profile!.conditions.filter((c) => /^\d{4}-\d\d-\d\d /.test(c)).map((c) => c.slice(0, 10)).join());
+check("past history: smoking about 20 years, about 10 a day", p.conditions.some((c) => /Smoker for about 20 years/.test(c) && /about 10 cigarettes a day/.test(c)));
+check("surgery: 2008-06 appendectomy", p.surgeries.length === 1 && /^2008-06 Appendectomy/.test(p.surgeries[0]));
 const fam = p.familyHistory.join(" | ");
 check("family: father high blood pressure, mother type 2 diabetes, no inherited disease", /Father: high blood pressure/.test(fam) && /Mother: type 2 diabetes/.test(fam) && /No confirmed inherited/.test(fam), fam);
 const alg = p.allergies.join(" ");
@@ -53,7 +58,7 @@ const ids = (x: unknown) => (JSON.stringify(x).match(/"(id|todoId|episodeId)":"[
 check("ids identical between zh and en", ids(s) === ids(zh) && ids(s).length > 0 && s.episodes.map((e) => e.relatedEpisodeIds.join()).join() === zh.episodes.map((e) => e.relatedEpisodeIds.join()).join(), ids(s));
 check("ids fixed across builds", ids(buildLinState(new Date(2026, 0, 1), "zh")) === ids(zh));
 const shape = (x: typeof s) =>
-  JSON.stringify(x, (k, v) => (typeof v === "string" && !/^\d{4}-\d\d-\d\d/.test(v) && !/^lin-/.test(v) && !["role", "kind", "status", "source", "mode", "frequency", "demo"].includes(k) ? "" : v));
+  JSON.stringify(x, (k, v) => (typeof v === "string" && !/^\d{4}-\d\d-\d\d(T|$)/.test(v) && !/^lin-/.test(v) && !["role", "kind", "status", "source", "mode", "frequency", "demo"].includes(k) ? "" : v));
 check("same structure, dates and times in both languages", shape(s) === shape(zh));
 check("default language is Chinese", buildLinState(now).profile!.name === "林叔");
 

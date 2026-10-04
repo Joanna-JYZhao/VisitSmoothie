@@ -20,6 +20,12 @@ check("基础病：高血压，药名剂量待核对", /高血压/.test(p.condit
 check("家族史：父亲高血压、母亲 2 型糖尿病", /父亲 高血压/.test(p.familyHistory.join()) && /母亲 2 型糖尿病/.test(p.familyHistory.join()));
 check("过敏：虾，风团", /虾/.test(p.allergies.join()) && /风团/.test(p.allergies.join()));
 check("长期药没核对，不替他写", p.medications.length === 0);
+// 队友更新版的「既往病史」十条和他自己补的两条，一行一条，日期照原文
+const dated = p.conditions.filter((c) => /^\d{4}-\d\d-\d\d /.test(c));
+check("以往病史：十条带日期，从 2022-08-16 到 2026-10-03", dated.length === 10 && dated[0].startsWith("2022-08-16") && dated[9].startsWith("2026-10-03") && /骨关节炎（早期）/.test(dated[9]), dated);
+check("以往病史：9 月 22 日写明缬沙坦、新增氨氯地平", p.conditions.some((c) => c.startsWith("2026-09-22") && /缬沙坦/.test(c) && /氨氯地平/.test(c)));
+check("以往病史：吸烟约 20 年，每天约 10 支（自己添加）", p.conditions.some((c) => /吸烟约 20 年/.test(c) && /每天约 10 支/.test(c) && /2026-09-15/.test(c)));
+check("手术：2008-06 阑尾切除术（自己添加）", p.surgeries.length === 1 && /^2008-06 阑尾切除术/.test(p.surgeries[0]) && /2026-09-15/.test(p.surgeries[0]));
 
 const [knee, may] = s.episodes;
 check("旧记录：5 月 12 日左膝不适，已缓解", may.title === "左膝不适" && may.startedAt.startsWith("2026-05-1") && may.status === "resolved");
@@ -51,7 +57,8 @@ check("第一屏：他自己说的 4 分照写，不改成「比较难受」", s
 check("第一屏：看过医生后仍写着 5 月那次", sum.glance.some((g) => g.includes("以前有过类似情况：2026-05-12「左膝不适」")), sum.glance);
 check("第一屏：不把「没有明确诊断」当成上次的诊断", !sum.glance.some((g) => g.includes("当时是没有")), sum.glance);
 check("问医生：这次和上次是不是同一个问题", sum.questionsForDoctor.some((q) => q.includes("是不是同一个问题")), sum.questionsForDoctor);
-check("全文不出现「绞痛」", !JSON.stringify(sum).includes("绞痛"));
+// 以往病史里有 9 月 26 日那次「上腹阵发性绞痛」（照原文，会进相关病史和自述里的「我有…」）；这次左膝本身的内容不能出现「绞痛」
+check("这次左膝的描述不出现「绞痛」", !JSON.stringify({ ...sum, relevantHistory: [], narrative: "" }).includes("绞痛"));
 
 // 问诊引用旧记录：问哪里一样、哪里不一样，不把「没有明确诊断」当诊断
 const links = linksFor({

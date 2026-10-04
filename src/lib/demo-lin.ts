@@ -34,6 +34,41 @@ const ID = {
   dayTodo: "lin-todo-day",
 } as const;
 
+/**
+ * 既往病史（资料里的「既往病史 Medical history」十条，加上他自己补的吸烟史），一行一条，
+ * 放在「补充以往病史」写进去的同一个地方：手术进 surgeries，其余进 conditions（见 addPastHistory）。
+ * 日期照资料原文写（队友更新版「林叔_患者测试数据_更新版」），不随演示日期移动。
+ */
+const HISTORY_ZH = [
+  "2022-08-16 患者自述在门诊确诊高血压，后续按原处方服药",
+  "2025-12-08 右侧颈肩酸胀，低头工作后明显，使用就医前整理",
+  "2026-05-12 左膝内侧活动后酸痛，使用就医前整理",
+  "2026-05-19 患者补记：左膝不适比上周减轻，未保存当次医嘱",
+  "2026-06-18 食虾后出现皮肤发痒和风团，皮肤科记录为皮疹、原因待查",
+  "2026-08-03 咽部不适就诊，保存就医后医嘱与解释对话",
+  "2026-09-22 头昏，全科记录为高血压控制欠佳；病历写明现用药缬沙坦，新增氨氯地平",
+  "2026-09-26 上腹阵发性绞痛（中秋晚餐后），使用就医前整理，已去消化内科，单据未上传",
+  "2026-09-29 患者记录双侧脚踝傍晚轻度水肿，已加入复诊问题",
+  "2026-10-03 左膝内侧疼痛复发，骨科诊断左膝骨关节炎（早期）",
+  "吸烟约 20 年，每天约 10 支；2026-08 咽部不适后自述在减量（2026-09-15 自己添加）",
+];
+const HISTORY_EN = [
+  "2022-08-16 Says a clinic diagnosed high blood pressure; has taken the original prescription since",
+  "2025-12-08 Aching and stiffness on the right side of the neck and shoulder, worse after working with the head down; pre-visit notes prepared",
+  "2026-05-12 Aching on the inner side of the left knee after activity; pre-visit notes prepared",
+  "2026-05-19 Added by himself: left knee discomfort less than the week before; that visit's orders were not saved",
+  "2026-06-18 Itching and hives after eating shrimp; dermatology recorded a rash, cause to be determined",
+  "2026-08-03 Saw a doctor for throat discomfort; doctor's orders and the explanation chat saved",
+  "2026-09-22 Light-headedness; general practice recorded poorly controlled high blood pressure; the record names the current medicine valsartan and adds amlodipine",
+  "2026-09-26 Cramping upper-abdominal pain that came and went (after the Mid-Autumn dinner); pre-visit notes prepared; went to gastroenterology, papers not uploaded",
+  "2026-09-29 Noticed mild swelling of both ankles in the evenings; added to the questions for the next visit",
+  "2026-10-03 Pain on the inner side of the left knee came back; orthopaedics diagnosed early left knee osteoarthritis",
+  "Smoker for about 20 years, about 10 cigarettes a day; says he has been cutting down since the throat trouble in 2026-08 (added by himself on 2026-09-15)",
+];
+
+const SURGERY_ZH = "2008-06 阑尾切除术，术后恢复良好，无后续问题（2026-09-15 自己添加）";
+const SURGERY_EN = "2008-06 Appendectomy; recovered well, no later problems (added by himself on 2026-09-15)";
+
 export function buildLinState(now = new Date(), lang: Lang = "zh"): AppState {
   const t = (zh: string, en: string) => (lang === "en" ? en : zh);
   const at = (days: number, hour: number, minute = 0) => day(days, hour, minute, now);
@@ -54,6 +89,8 @@ export function buildLinState(now = new Date(), lang: Lang = "zh"): AppState {
         "高血压（2022 年门诊医生告知；平时按原处方吃药，药名和剂量记不清，看病时带药盒核对）",
         "High blood pressure (a clinic doctor told him in 2022; takes his medicine as first prescribed, can't remember the name or dose, will bring the medicine box to check)",
       ),
+      // 以往病史，一行一条
+      ...(lang === "en" ? HISTORY_EN : HISTORY_ZH),
     ],
     familyHistory:
       lang === "en"
@@ -67,7 +104,7 @@ export function buildLinState(now = new Date(), lang: Lang = "zh"): AppState {
     ],
     // 长期吃的降压药还没核对，不替他写
     medications: [],
-    surgeries: [],
+    surgeries: [t(SURGERY_ZH, SURGERY_EN)],
     notes: "",
     emergencyContact: null,
     createdAt: at(-30, 9),
