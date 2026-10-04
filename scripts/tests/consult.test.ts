@@ -205,4 +205,11 @@ const spokenEp: Episode = { ...ep, entries: [...ep.entries, { id: "w", at: at(2)
 const spokenDesc = fallbackSummary({ profile: profile(), episode: spokenEp, related: [] }).summary.narrative ?? "";
 check("the description says it the patient's way, the doctor's word after it", spokenDesc.includes("酸酸的（酸痛）") && spokenDesc.includes("心里发慌（心悸）") && spokenDesc.includes("休息一下会减轻"), spokenDesc);
 
+/* 病史：和这次有关的写进正文，无关的、长期用药和过敏放在最后的括号里 */
+const kneeEp: Episode = { ...ep, title: "左膝内侧酸痛", entries: [{ id: "k0", at: at(5), severity: null, note: "左膝内侧酸痛", source: "user" }] };
+const kneeProfile = { ...profile(["高血压", "左膝走路后不适（2026年5月）"]), allergies: ["虾"], medications: ["氨氯地平"] };
+const kneeStory = fallbackSummary({ profile: kneeProfile, episode: kneeEp, related: [] }).summary.narrative ?? "";
+check("related history is in the text", kneeStory.includes("我以前有左膝走路后不适（2026年5月）。"), kneeStory);
+check("unrelated history, medicines and allergies are one bracket at the end", kneeStory.includes("（补充：高血压；长期在用氨氯地平；对虾过敏）") && !kneeStory.includes("我有高血压"), kneeStory);
+
 finish("consult");

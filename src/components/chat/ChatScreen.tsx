@@ -159,14 +159,18 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   return (
     <div className="-mb-9 flex min-w-0 flex-1 flex-col">
       {/* while the page is an invitation the name of the page steps back and the question is the headline */}
-      {/* the page name and 开新的 share one row, so they can never overlap on a narrow phone */}
-      <div className={cn("flex items-center justify-between gap-3", !opening && "mb-4")}>
-        <h1 className={cn("min-w-0 animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-ink-2" : "t-title text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
-        {/* 开新的: only while a round is under way; dropping it is asked once more, below */}
-        {going && !confirmNew && <StartOver compact confirming={false} onAsk={() => setConfirmNew(true)} onCancel={() => setConfirmNew(false)} onConfirm={() => undefined} what="" />}
+      <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-ink-2" : "t-title mb-4 text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
+      <div className={cn("flex flex-1 flex-col pt-2 pb-5", opening ? "justify-center" : "justify-end")}>
+        <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
+        {/* scrolled to with room for the dock and the tab bar below it (the page simply stops at its end) */}
+        <div ref={end} aria-hidden="true" className="h-px" style={{ scrollMarginBottom: "calc(var(--tab-bar) + 12rem)" }} />
       </div>
-      {going && confirmNew && (
-        <div className="mb-4">
+      {/* the dock: frosted, edge to edge across the column, sitting on the tab bar; the deeper bottom
+          padding keeps the tab bar's raised round mark clear of the input row */}
+      <div className="glass sticky z-20 -mx-4 space-y-2.5 px-4 pt-2.5 pb-8 shadow-[0_-1px_0_var(--color-line)]" style={{ bottom: "var(--tab-bar)" }}>
+        {/* 开新的 sits in the dock, so it is always in reach however far the conversation has scrolled;
+            dropping a round is asked once more, right here */}
+        {going && confirmNew ? (
           <StartOver
             confirming
             onAsk={() => undefined}
@@ -181,28 +185,29 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
                 : L("清空这段对话，从「今天哪里不舒服」重新开始。已经保存的记录不受影响。", "Clear this chat and start again from the first question. Records you already saved stay.")
             }
           />
-        </div>
-      )}
-      <div className={cn("flex flex-1 flex-col pt-2 pb-5", opening ? "justify-center" : "justify-end")}>
-        <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
-        {/* scrolled to with room for the dock and the tab bar below it (the page simply stops at its end) */}
-        <div ref={end} aria-hidden="true" className="h-px" style={{ scrollMarginBottom: "calc(var(--tab-bar) + 12rem)" }} />
-      </div>
-      {/* the dock: frosted, edge to edge across the column, sitting on the tab bar; the deeper bottom
-          padding keeps the tab bar's raised round mark clear of the input row */}
-      <div className="glass sticky z-20 -mx-4 space-y-2.5 px-4 pt-2.5 pb-8 shadow-[0_-1px_0_var(--color-line)]" style={{ bottom: "var(--tab-bar)" }}>
-        {report && (
-          <button
-            type="button"
-            onClick={() => router.push(report)}
-            className="press flex min-h-12 w-full items-center gap-3 rounded-xl bg-brand-50 py-1 pr-3 pl-1.5 text-left text-base font-medium text-brand-800 transition duration-200 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
-          >
-            <IconTile size="sm" tone="solid">
-              <FileText />
-            </IconTile>
-            <span className="min-w-0 flex-1 truncate">{L(`给医生看的报告（${reportTitle}）`, `Report for the doctor (${reportTitle})`)}</span>
-            <ChevronRight className="h-5 w-5 shrink-0 text-brand-700" />
-          </button>
+        ) : (
+          (report || going) && (
+            <div className="flex items-center gap-2">
+              {report && (
+                <button
+                  type="button"
+                  onClick={() => router.push(report)}
+                  className="press flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-xl bg-brand-50 py-1 pr-3 pl-1.5 text-left text-base font-medium text-brand-800 transition duration-200 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                >
+                  <IconTile size="sm" tone="solid">
+                    <FileText />
+                  </IconTile>
+                  <span className="min-w-0 flex-1 truncate">{L(`给医生看的报告（${reportTitle}）`, `Report for the doctor (${reportTitle})`)}</span>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-brand-700" />
+                </button>
+              )}
+              {going && (
+                <div className={cn("shrink-0", !report && "ml-auto")}>
+                  <StartOver compact confirming={false} onAsk={() => setConfirmNew(true)} onCancel={() => setConfirmNew(false)} onConfirm={() => undefined} what="" />
+                </div>
+              )}
+            </div>
+          )
         )}
         <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
       </div>

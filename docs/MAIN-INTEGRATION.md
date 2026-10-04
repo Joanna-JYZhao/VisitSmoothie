@@ -121,3 +121,12 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 - 新测试 `scripts/tests/post-link.test.ts`：关联时不多出记录、医嘱进 pre 记录、了解到的内容在同一条记录里、不关联时单独一条。
 
 验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1550 项全部通过；`npm run build` 通过。
+
+## 2026-10-04 改动：Clinical Plan 按意思分条、「开新的」常驻底栏、病史有关的写正文无关的放括号（Yueran，推 main）
+
+- 医嘱分条（`src/lib/reminders.ts`、`src/lib/ai/prompts.ts`、`normalizeAfter`）：整理医嘱时模型直接给 `adviceItems`（按意思分好的叮嘱，一个意思一条）；没有时规则也按意思分：顿号不拆，逗号后面是新的一件事（少吃…、按时…、冰敷…）才拆，「嗯」「那个」这类停顿去掉。
+- pre（`src/components/chat/ChatScreen.tsx`）：「开新的」放进底部常驻的输入栏，和「给医生看的报告」同一行，滚动时也一直在；确认也在底栏里。
+- 病情描述：和这次同一部位的旧病写进正文，无关的病史、长期用药和过敏放在必要信息最后的「（补充：…）」括号里（提示词、规则版 `splitHistory`、英文版）。修了三处：模型照抄示例的「没有明确外伤」「没有为膝痛用药」等会被去掉；括号被过滤截断时补回；患者自己的「想请医生…要不要做检查」不会被当成建议检查删掉（`repairNarrative`）。
+- 测试：`reminders.test.ts` 加按意思分条的检查，`consult.test.ts` 加病史放正文还是括号的检查。
+
+验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1557 项全部通过；`npm run build` 通过；用智谱实测医生说话卡壳时的分条和膝痛描述的病史放法。

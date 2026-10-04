@@ -207,6 +207,9 @@ export function summaryByRuleEn(req: SummaryRequest): DoctorSummaryBody {
 
 /* ---------- the description, without a model ---------- */
 
+/** Parts of the body, to tell history about the same place (written in) from the rest (in brackets). */
+const BODY_EN = [/knee|膝/, /shoulder|肩/, /back|lumbar|spine|腰|背/, /neck|颈|脖子/, /head|migraine|头(?!晕)/, /chest|heart|胸|心/, /stomach|belly|abdom|gastr|胃|肚|腹/, /eye|眼/, /ear\b|耳/, /throat|喉|嗓/, /tooth|teeth|牙/, /foot|feet|脚|足/, /ankle|踝/, /leg|thigh|calf|腿/, /hand|wrist|手(?!术)/, /hip|髋/];
+
 /** The patient's description in English, by rule: "I'm 46. Since 27 Sep, left knee, inner side aching. Worse when: going upstairs. …" */
 export function narrativeEn(episode: Pick<Episode, "title" | "startedAt" | "createdAt" | "entries">, profile: Pick<Profile, "birthYear" | "conditions" | "medications" | "allergies">): string {
   const age = profile.birthYear ? Math.max(0, new Date().getFullYear() - profile.birthYear) : null;
@@ -215,8 +218,17 @@ export function narrativeEn(episode: Pick<Episode, "title" | "startedAt" | "crea
   const lines = [`${age != null ? `I'm ${age}. ` : ""}${since}${episode.title.charAt(0).toLowerCase()}${episode.title.slice(1)}.`];
   const notes = [...episode.entries].sort((a, b) => a.at.localeCompare(b.at)).map((e) => e.note.trim()).filter((n, i) => n && i > 0);
   for (const n of notes) lines.push(/[.!?]$/.test(n) ? n : `${n}.`);
-  if (profile.conditions.length) lines.push(`I have ${profile.conditions.join(", ")}.`);
-  if (profile.medications.length) lines.push(`I take ${profile.medications.join(", ")} long term.`);
-  if (profile.allergies.length) lines.push(`I'm allergic to ${profile.allergies.join(", ")}.`);
+  // history about the same part of the body goes into the text; the rest, regular medicines and
+  // allergies are one bracket at the end: "(Also: high blood pressure; allergic to shrimp.)"
+  const about = [episode.title, ...episode.entries.map((e) => e.location ?? "")].join(" ").toLowerCase();
+  const parts = BODY_EN.filter((re) => re.test(about));
+  const related = profile.conditions.filter((c) => parts.some((re) => re.test(c.toLowerCase())));
+  if (related.length) lines.push(`Before this I had ${related.join(", ")}.`);
+  const extra = [
+    ...profile.conditions.filter((c) => !related.includes(c)),
+    ...(profile.medications.length ? [`I take ${profile.medications.join(", ")} long term`] : []),
+    ...(profile.allergies.length ? [`allergic to ${profile.allergies.join(", ")}`] : []),
+  ];
+  if (extra.length) lines.push(`(Also: ${extra.join("; ")}.)`);
   return lines.join(" ");
 }

@@ -52,24 +52,41 @@ const CAUTION = /避免|不要|不宜|不能|不可|别|忌|禁|勿|少吃|少�
 const CARE = /锻炼|练习|功能训练|运动|冰敷|热敷|敷|护膝|护腰|护具|支具|夹板|石膏|制动|抬高|休息|理疗|康复|拉伸|按摩|泡脚|坐浴|换药|佩戴|戴|散步|走路|多喝水|饮水|漱口|雾化|清洗|消毒|拄拐|\b(exercise|exercises|stretch|walk|rest|ice|heat|warm compress|elevate|physio|physiotherapy|brace|bandage|dressing|drink (more )?water|gargle|wear|raise|massage)\b/i;
 const STARTS_CONDITION = /^(如果|如有|如|若|一旦|假如|万一)|^(if|in case|should)\b/i;
 
-/** The doctor's advice, one instruction per piece: "如出现…，及时就医" stays together. */
+/**
+ * A clause that starts a new instruction of its own: what comes after a comma is only cut off when
+ * it starts like this. Everything else belongs to the instruction before it: "避免跑跳、爬山等剧烈运动"
+ * and "每天热敷，每次 15 分钟" are one instruction each; a list joined by 、 is never cut.
+ */
+const NEW_INSTRUCTION =
+  /^(每天|每日|每周|每晚|每早|多|少|不要|别|避免|禁止|忌|戒|注意|按时|定期|保持|坚持|继续|适当|尽量|减少|增加|控制|监测|复查|复诊|回院|如果|如有|如出现|若|一旦|假如|万一|冰敷|热敷|吃|服|口服|喝|戴|佩戴|抬高|休息|卧床|换药|散步|拉伸|按摩|泡脚|练)|^(do not|don't|avoid|keep|take|drink|eat|rest|exercise|come back|return|watch|monitor|check|if|in case|should)\b/i;
+
+/** The doctor's advice, one instruction per piece, by meaning: "如出现…，及时就医" and "避免跑跳、爬山等剧烈运动" stay together. */
 export function adviceItems(advice: string | null): string[] {
   if (!advice) return [];
   const out: string[] = [];
   const english = !/[一-鿿]/.test(advice);
   for (const sentence of advice.split(/[。；;\n！!]|\.(?:\s|$)/)) {
-    const clauses = sentence.split(english ? /[,，]/ : /[，,、]/).map((c) => c.trim()).filter(Boolean);
-    let carry = "";
+    // a pause in what the doctor said ("嗯，那个，") is not an instruction: dropped before the clauses are joined
+    const clauses = sentence
+      .split(/[，,]/)
+      .map((c) => c.trim())
+      .filter((c) => c && !/^(嗯+|啊+|呃+|额+|那个|这个|就是|然后|um+|uh+|so)$/i.test(c));
+    let cur = "";
     for (const c of clauses) {
-      if (carry) {
-        out.push(english ? `${carry}, ${c}` : `${carry}，${c}`);
-        carry = "";
-      } else if (STARTS_CONDITION.test(c)) carry = c;
-      else out.push(c);
+      // a condition ("如出现发烧") always takes the clause after it; otherwise a new instruction starts a new item
+      if (cur && NEW_INSTRUCTION.test(c) && !STARTS_CONDITION.test(cur)) {
+        out.push(cur);
+        cur = c;
+      } else cur = cur ? `${cur}${english ? ", " : "，"}${c}` : c;
     }
-    if (carry) out.push(carry);
+    if (cur) out.push(cur);
   }
-  return out.filter((x) => x.length >= 2);
+  return out.map((x) => x.replace(/^(嗯+|那个|就是|然后)[，,]?/, "").trim()).filter((x) => x.length >= 2);
+}
+
+/** The advice as instructions: the model's own cut when there is one, by rule otherwise. */
+export function adviceOf(result: Pick<AfterResult, "advice" | "adviceItems">): string[] {
+  return result.adviceItems?.length ? result.adviceItems : adviceItems(result.advice);
 }
 
 /** Whether a piece of advice is something to do (care) or something to watch out for (caution). */
@@ -94,7 +111,7 @@ export function buildTodos(result: AfterResult): Todo[] {
   for (const p of result.procedures) {
     if (ONGOING.test(p)) todos.push({ id: uid(), kind: "care", text: p, remind: false, frequency: "daily", times: ["09:00"] });
   }
-  for (const a of adviceItems(result.advice)) {
+  for (const a of adviceOf(result)) {
     const kind = adviceKind(a);
     todos.push(
       kind === "care"
@@ -135,7 +152,7 @@ export function explainParts(result: AfterResult): string[] {
   if (result.findings.length) parts.push(L("检查结果是什么意思", "What the test results mean"));
   for (const m of result.medications) parts.push(L(`${m.name}是干什么的`, `What ${m.name} is for`));
   if (result.medications.length) parts.push(L("这些药常见的副作用", "Common side effects of these medicines"));
-  const advice = adviceItems(result.advice);
+  const advice = adviceOf(result);
   if (advice.some((a) => adviceKind(a) === "caution")) parts.push(L("注意事项为什么要注意", "Why these cautions matter"));
   if (advice.some((a) => adviceKind(a) === "care") || result.procedures.some((p) => ONGOING.test(p))) parts.push(L("其他治疗怎么做", "How to do the other treatment"));
   if (result.followUpDays || result.followUpNote) parts.push(L("复诊要准备什么", "What to prepare for the follow-up"));

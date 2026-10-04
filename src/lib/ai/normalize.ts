@@ -440,6 +440,24 @@ export function onlyStatedEn(text: string, said: string): string {
     .trim();
 }
 
+/**
+ * The Chinese description after the filters: a bracket a filter cut short is closed again, and what the
+ * patient wants from the doctor (recorded as "想请医生：…") is put back at the end when a filter took it
+ * out (a request to check whether tests are needed reads like a suggestion of tests).
+ */
+export function repairNarrative(text: string, req: SummaryRequest): string {
+  if (!text) return text;
+  let out = text.replace(/[，,；;]\s*$/, "。");
+  const open = (out.match(/（/g) ?? []).length - (out.match(/）/g) ?? []).length;
+  if (open > 0) {
+    // close it where the supplement ends: before what follows it, or at the end
+    out = out.replace(/。?$/, "") + "）".repeat(open);
+  }
+  const wish = req.episode.entries.map((e) => e.note).find((n) => /^想请医生[：:]/.test(n))?.replace(/^想请医生[：:]\s*/, "").trim();
+  if (wish && !/没有特别/.test(wish) && !/想请医生|想问医生|请医生/.test(out)) out = `${out.replace(/[。]?$/, "。").replace(/）。$/, "）")}想请医生帮我看看${wish.replace(/^(帮我)?看看/, "")}。`;
+  return out.replace(/。。+/g, "。");
+}
+
 /** In English the doctor's word is given in quotes: Doctors call this "throbbing pain". */
 export function termAskedEn(text: string): string | null {
   return termAsked(text) ?? text.match(/call(?:s|ed)? (?:this|it|that) ["“]([^"”]+)["”]/i)?.[1] ?? null;
@@ -496,7 +514,11 @@ export function normalizeMeasurements(v: unknown): ChatMeasurement[] {
  * "无手术史"). Each is dropped unless the patient's own words back it up.
  */
 const UNSTATED: { claim: RegExp; said: RegExp | null }[] = [
-  { claim: /(尚|暂|均)?未(服|用|予)(任何)?药(物)?|没有?(服|用)药|未(自行)?(用药|服药)|未予(任何)?(药物)?(治疗|处理)|未(经|做|作)?(任何|特殊)?(治疗|处理|处置|诊治|干预)/, said: /没(有)?(吃|用|服)(过)?(任何|什么)?药|未用药|不吃药|没管它|没处理/ },
+  { claim: /(尚|暂|均)?未(服|用|予)(任何)?药(物)?|没有?(服|用)药|没有?为.{0,8}(用|吃|服)(过)?药|未(自行)?(用药|服药)|未予(任何)?(药物)?(治疗|处理)|未(经|做|作)?(任何|特殊)?(治疗|处理|处置|诊治|干预)/, said: /没(有)?(吃|用|服)(过)?(任何|什么)?药|未用药|不吃药|没管它|没处理|用药[：:]\s*(没|无)/ },
+  // the example in the prompt says these; only the patient may
+  { claim: /没有?明确(的)?外伤|无(明确)?外伤(史)?|没有?(受过|摔过)伤/, said: /没(有)?(受伤|摔|撞|扭)|没有外伤/ },
+  { claim: /未注意到.{0,12}(发热|红肿|麻木)|没有?注意到.{0,12}(发热|红肿|麻木)/, said: /没(有)?(发烧|发热|红|肿|麻)/ },
+  { claim: /没有?明确(的)?诊断(记录)?|无明确诊断/, said: /没(有)?(诊断|看过医生|去看)/ },
   { claim: /无(明显)?发热|无发烧|未发热|未发烧|体温正常|不伴发热/, said: /没(有)?发烧|不发烧|没烧|不烧|没有发热|体温正常/ },
   { claim: /无(其他|其它)(明显)?(不适|伴随症状|症状)|不伴(其他|其它)/, said: /没有?(别的|其他|其它)|没别的/ },
   { claim: /(尚|暂)?未就(医|诊)|未(去)?看医生/, said: /没(去)?看(过)?医生|没去(过)?医院|还没看/ },
@@ -644,7 +666,21 @@ export function normalizeSummary(raw: unknown, req: SummaryRequest): DoctorSumma
     // The first screen is built from the records by rule. It is on screen at once, every line can be
     // traced to something recorded, and it does not change when the model's version arrives.
     glance: base.glance,
-    narrative: (getLang() === "en" ? onlyStatedEn(str(o.narrative), said) : clean(o.narrative)) || base.narrative,
+    narrative:
+      (getLang() === "en"
+        ? onlyStatedEn(str(o.narrative), said)
+        : (() => {
+            // the bracket of supplements is set aside while the rest goes through the filters, and put back where it was
+            const raw = str(o.narrative);
+            const m = raw.match(/（补充[:：][^）]*）?/);
+            if (!m) return repairNarrative(clean(raw), req);
+            const before = clean(raw.slice(0, m.index));
+            // what the patient wants from the doctor ("想请医生评估是否需要检查") is their own request, not a suggestion: kept as written
+            const rest = raw.slice((m.index ?? 0) + m[0].length).trim();
+            const after = /^(想请医生|想问医生|希望医生|想让医生)/.test(rest) && !/可能是|考虑为|诊断为/.test(rest) ? rest : clean(rest);
+            const bracket = `${m[0].replace(/[。；;\s]*）?$/, "")}）`;
+            return repairNarrative(`${before.replace(/[，,；;]$/, "。")}${bracket}${after}`, req);
+          })()) || base.narrative,
     chiefComplaint: clean(o.chiefComplaint) || base.chiefComplaint,
     presentIllness: clean(o.presentIllness) || base.presentIllness,
     // The timeline is never the model's: it is the recorded entries themselves, so nothing in it can be made up.
@@ -764,6 +800,8 @@ export function normalizeAfter(raw: unknown, req: AfterRequest, fromPhoto = fals
     procedures: strList(o.procedures, 6),
     medications: meds,
     advice,
+    // the advice by meaning, as the model cut it; only kept when it is the model's own advice
+    ...(nullable(o.advice) && strList(o.adviceItems, 12).length ? { adviceItems: strList(o.adviceItems, 12).map((x) => x.replace(/[。.；;]+$/, "")).filter((x) => x.length >= 2) } : {}),
     followUpDays: o.followUpDays != null && Number.isFinite(days) && days >= 1 && days <= 730 ? Math.round(days) : (base?.followUpDays ?? null),
     followUpNote: (nullable(o.followUpNote) ?? base?.followUpNote ?? null)?.replace(/[。.；;，,\s]+$/, "") ?? null,
     readings: normalizeMeasurements(o.readings),

@@ -1241,6 +1241,17 @@ function knownDiagnosis(d: string | null | undefined): boolean {
 }
 
 /**
+ * The past history split into what is about the same part of the body as this complaint (written into
+ * the description) and the rest (put in brackets at the end). By rule only the body part can tell:
+ * 「左膝走路后不适」 goes with knee pain, 「高血压」 does not.
+ */
+export function splitHistory(conditions: string[], about: string): { related: string[]; other: string[] } {
+  const parts = BODY_PARTS.filter((re) => re.test(about));
+  const related = conditions.filter((c) => parts.some((re) => re.test(c)));
+  return { related, other: conditions.filter((c) => !related.includes(c)) };
+}
+
+/**
  * The description in the patient's own voice, put together by rule: 我46岁，从9月27日起左膝内侧酸痛。…
  * Only what is on record: the answers to the questions, the history on file, what they want to ask.
  */
@@ -1275,9 +1286,16 @@ function narrativeByRule(req: SummaryRequest, points: string[], onsetKnown: bool
   const impact = answer("对生活工作的影响");
   if (impact) lines.push(/没什么|没有|不影响/.test(impact) ? "对生活工作没什么影响。" : `已经${impact.replace(/^已经/, "")}。`);
   for (const label of ["最近血压", "最近血糖"]) if (answer(label)) lines.push(`${label}${answer(label)}。`);
-  if (profile.conditions.length) lines.push(`我有${profile.conditions.join("、")}。`);
-  if (profile.medications.length) lines.push(`长期在用${profile.medications.join("、")}。`);
-  if (profile.allergies.length) lines.push(`对${profile.allergies.join("、")}过敏。`);
+  // history about the same part of the body goes into the text; the rest, the regular medicines and
+  // the allergies are a bracket at the end of what the doctor needs: （补充：高血压；对虾过敏）
+  const history = splitHistory(profile.conditions, `${episode.title} ${where}`);
+  if (history.related.length) lines.push(`我以前有${history.related.join("、")}。`);
+  const extra = [
+    ...history.other,
+    ...(profile.medications.length ? [`长期在用${profile.medications.join("、")}`] : []),
+    ...(profile.allergies.length ? [`对${profile.allergies.join("、")}过敏`] : []),
+  ];
+  if (extra.length) lines.push(`（补充：${extra.join("；")}）`);
   const wish = answer("想请医生");
   const own = ownQuestions(episode.entries.filter((e) => e.source === "user").map((e) => e.note).join("\n"));
   if (wish && !/没有特别/.test(wish)) lines.push(`想请医生帮我看看${wish.replace(/^(帮我)?看看/, "")}。`);

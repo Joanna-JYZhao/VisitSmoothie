@@ -427,6 +427,11 @@ export interface AfterResult {
   procedures: string[];
   medications: AfterMedication[];
   advice: string | null;
+  /**
+   * the advice cut into its instructions by meaning, one complete instruction each ("避免跑跳、爬山等剧烈运动"
+   * is one): written by the model; without it the advice is cut by rule
+   */
+  adviceItems?: string[];
   followUpDays: number | null;
   followUpNote: string | null;
   readings: ChatMeasurement[];

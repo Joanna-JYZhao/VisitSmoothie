@@ -1,5 +1,5 @@
 import type { AfterResult, Reminder } from "../../src/lib/types";
-import { adviceItems, buildTodos, dueReminders, dueSlot, explainLine, explainParts, explainQuestion, fireDue, homeTodos, medicineTimes, reminderMessage, suggestedTodoQuestions } from "../../src/lib/reminders";
+import { adviceItems, adviceOf, buildTodos, dueReminders, dueSlot, explainLine, explainParts, explainQuestion, fireDue, homeTodos, medicineTimes, reminderMessage, suggestedTodoQuestions } from "../../src/lib/reminders";
 import { check, finish } from "./_check";
 
 const base: AfterResult = {
@@ -55,7 +55,13 @@ check("没有复诊就没有复诊待办", !r2.some((t) => t.kind === "followup"
 check("饭前往前推半小时", r2[0].times?.join() === "07:30,19:30", r2[0].times);
 const r3 = buildTodos({ ...base, followUpNote: "不适随诊" });
 check("复诊没定日子：列出但不提醒", r3.length === 1 && r3[0].kind === "followup" && !r3[0].remind, r3);
-check("建议拆分保留条件句", adviceItems("如出现发热，立即就诊。多休息").join("|") === "如出现发热，立即就诊|多休息", adviceItems("如出现发热，立即就诊。多休息"));
+// 按意思分条，不按标点分
+check("一个意思是一条：顿号连起来的不拆", adviceItems("避免跑跳、爬山等剧烈运动").join("|") === "避免跑跳、爬山等剧烈运动", adviceItems("避免跑跳、爬山等剧烈运动"));
+check("一个意思是一条：补充说明跟着前一条", adviceItems("每天热敷，每次 15 分钟").join("|") === "每天热敷，每次 15 分钟", adviceItems("每天热敷，每次 15 分钟"));
+check("不同的事分开", adviceItems("少吃辛辣，按时复查").join("|") === "少吃辛辣|按时复查", adviceItems("少吃辛辣，按时复查"));
+check("医生说话卡壳不算分条", adviceItems("嗯，那个，避免跑跳，嗯，爬山这些剧烈运动").join("|") === "避免跑跳，爬山这些剧烈运动", adviceItems("嗯，那个，避免跑跳，嗯，爬山这些剧烈运动"));
+check("模型按意思分好的条目优先", adviceOf({ advice: "避免跑跳、爬山。多休息", adviceItems: ["避免跑跳、爬山等剧烈运动", "多休息"] }).join("|") === "避免跑跳、爬山等剧烈运动|多休息");
+check("建议拆分保留条件句",adviceItems("如出现发热，立即就诊。多休息").join("|") === "如出现发热，立即就诊|多休息", adviceItems("如出现发热，立即就诊。多休息"));
 
 // the parts that can be explained
 const parts = explainParts({
