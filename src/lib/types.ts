@@ -84,6 +84,8 @@ export interface DoctorSummaryBody {
 export interface DoctorSummary extends DoctorSummaryBody {
   generatedAt: string;
   mode: AiMode;
+  /** the language it was written in: written again when the app is in the other one */
+  lang?: Lang;
 }
 
 export interface VisitRecord {

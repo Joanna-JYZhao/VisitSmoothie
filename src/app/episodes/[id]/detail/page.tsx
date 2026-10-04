@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronDown, ChevronRight, FileSearch, FileText, MessageCircle, Stethoscope } from "lucide-react";
+import { ChevronDown, FileSearch, FileText, MessageCircle, Stethoscope } from "lucide-react";
 import type { Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn, fmtDate, roughDuration } from "@/lib/utils";
 import { L } from "@/lib/lang";
 import { recordById, recordNarrative } from "@/lib/records";
+import { EpisodeSheet } from "@/components/EpisodeSheet";
 import { instantSummary, refreshSummary, summaryBusy, summaryIsStale } from "@/lib/summaries";
 import { useReplyPending } from "@/lib/episodeAI";
 import { RecordLinks, VisitPlanView } from "@/components/VisitPlanView";
@@ -160,65 +161,66 @@ function Detail({ episode: e }: { episode: Episode }) {
   );
 }
 
+/** A row that opens what is folded under it, like the conversation: the words, and a chevron that turns. */
+function Fold({ icon, title, open, onToggle, children }: { icon: React.ReactNode; title: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={onToggle}
+        className={cn("press flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2/70", focusRing, "focus-visible:ring-inset")}
+      >
+        <span aria-hidden="true" className="flex h-5 w-5 shrink-0 items-center justify-center text-brand-700 [&>svg]:h-5 [&>svg]:w-5">
+          {icon}
+        </span>
+        <span className="min-w-0 flex-1 text-lg font-medium text-ink">{title}</span>
+        <ChevronDown aria-hidden="true" className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform duration-200", open && "rotate-180")} />
+      </button>
+      {open && <div className="animate-fade-up px-3 pb-3">{children}</div>}
+    </div>
+  );
+}
+
 /**
- * What pre kept, in short: the description in the patient's words (without what the profile already
- * says), the history that may matter for this complaint (not all of it), a way to the full page for the
- * doctor and its PDF, and the conversation folded away.
+ * What pre kept: the page for the doctor as it was handed over (the PDF), never what post filed in
+ * afterwards. Shown short — the description of the complaint at the time — with the whole page (and its
+ * PDF) and the conversation each folded away until opened.
  */
 function PreSaved({ episode: e }: { episode: Episode }) {
   const { state } = useStore();
   const busy = summaryBusy.use(e.id);
   const stale = summaryIsStale(e);
   const reading = useReplyPending(e.id);
+  const [full, setFull] = useState(false);
+  const [chat, setChat] = useState(false);
   useEffect(() => {
     if (stale && !busy && !reading) void refreshSummary(e.id);
   }, [e.id, stale, busy, reading]);
   const view = !stale && e.summary ? e.summary : instantSummary(e, state);
   const narrative = view?.narrative ? recordNarrative(view.narrative) : "";
-  const history = [...(view?.relevantHistory ?? []), ...(view?.priorSimilar ?? [])].filter((x, i, a) => x.trim() && a.indexOf(x) === i);
 
   return (
     <Card className="divide-y divide-line overflow-hidden">
       <div className="px-4 py-4">
-        <p className="text-base font-semibold text-brand-700">{L("我的描述", "In my words")}</p>
+        <p className="text-base font-semibold text-brand-700">{L("给医生看 · 当时的病情描述", "For the doctor · how it was described")}</p>
         {narrative ? (
           <p className="t-body mt-1.5 text-ink">{narrative}</p>
         ) : (
           <p className="t-body mt-1.5 text-ink-2">{busy || reading ? L("正在整理…", "Organising…") : L("这次没有描述。", "No description this time.")}</p>
         )}
       </div>
-      {history.length > 0 && (
-        <div className="px-4 py-4">
-          <p className="text-base font-semibold text-brand-700">{L("可能有关的病史", "History that may matter")}</p>
-          <ul className="mt-1.5 space-y-1.5">
-            {history.map((h, i) => (
-              <li key={i} className="flex gap-3 text-lg leading-snug text-ink">
-                <span aria-hidden="true" className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600" />
-                <span className="min-w-0">{h}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <Link href={`/doctor/${e.id}`} className={cn("press flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2/70", focusRing, "focus-visible:ring-inset")}>
-        <FileText aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
-        <span className="min-w-0 flex-1 text-lg font-medium text-brand-800">{L("给医生看的完整页 · 导出 PDF", "Full page for the doctor · PDF")}</span>
-        <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-3" />
-      </Link>
-      <details className="group no-print">
-        <summary className={cn("press flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden", focusRing, "focus-visible:ring-inset")}>
-          <MessageCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
-          <span className="min-w-0 flex-1 text-lg font-medium text-ink">{L("对话过程", "The conversation")}</span>
-          <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-200 group-open:rotate-180" />
-        </summary>
-        <div className="px-4 pb-2">
+      <Fold icon={<FileText />} title={L("更详细（给医生看的完整页 · PDF）", "More detail (the full page for the doctor · PDF)")} open={full} onToggle={() => setFull((o) => !o)}>
+        <EpisodeSheet episode={e} embedded />
+      </Fold>
+      <div className="no-print">
+        <Fold icon={<MessageCircle />} title={L("对话过程", "The conversation")} open={chat} onToggle={() => setChat((o) => !o)}>
           <Transcript episode={e} />
-        </div>
-      </details>
+        </Fold>
+      </div>
     </Card>
   );
 }
-
 /** The conversation in pre, as it went: the patient on the right, the assistant on the left. */
 function Transcript({ episode: e }: { episode: Episode }) {
   if (!e.messages.length) return <p className="t-body py-3 text-ink-2">{L("没有对话。", "No conversation.")}</p>;

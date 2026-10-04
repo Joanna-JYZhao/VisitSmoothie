@@ -17,15 +17,15 @@ check("born 1980-03-18, 46 on 2026-10-04", p.birthDate === "1980-03-18" && p.bir
 check("male; education is the stored option value", p.gender === "男" && p.education === "高中/中专" && (EDUCATION_OPTIONS as readonly string[]).includes(p.education!));
 const cond = p.conditions.join(" ");
 check("high blood pressure since 2022, medicine to be checked against the box", /high blood pressure/i.test(cond) && cond.includes("2022") && /medicine box/.test(cond), cond);
-// doses appear only where a doctor wrote them: the treatment lines of R008 and R010
-const withoutOrders = JSON.stringify({ ...s, episodes: s.episodes.map((e) => ({ ...e, visit: e.visit ? { ...e.visit, treatment: "" } : null })) });
+// doses appear only where a doctor wrote them: the treatment lines of R008 and R010, and the plan saved from them
+const withoutOrders = JSON.stringify({ ...s, episodes: s.episodes.map((e) => ({ ...e, visit: e.visit ? { ...e.visit, treatment: "", planItems: [] } : null })) });
 check("no medicine name or dose invented", p.medications.length === 0 && !/\d+\s?mg/i.test(withoutOrders));
 check("doses copied from the doctor's record (R008, R010)", /valsartan capsules 80 mg/.test(s.episodes.find((e) => e.id === "lin-r008")!.visit!.treatment) && /amlodipine besylate tablets 5 mg/.test(s.episodes.find((e) => e.id === "lin-r008")!.visit!.treatment));
 {
   const r = s.episodes.filter((e) => e.id.startsWith("lin-r"));
   const z = zh.episodes.filter((e) => e.id.startsWith("lin-r"));
   check("ten reports in English, same ids and dates as Chinese", r.length === 10 && r.map((e) => e.id + e.startedAt).join() === z.map((e) => e.id + e.startedAt).join());
-  check("R010 title and diagnosis in English", /^Pain on the inner left knee came back · Orthopaedics$/.test(r.find((e) => e.id === "lin-r010")!.title) && /Early left knee osteoarthritis/.test(r.find((e) => e.id === "lin-r010")!.visit!.diagnosis));
+  check("R010 title and diagnosis in English", /^Pain on the inner left knee$/.test(r.find((e) => e.id === "lin-r010")!.title) && /Early left knee osteoarthritis/.test(r.find((e) => e.id === "lin-r010")!.visit!.diagnosis));
 }
 const dated = p.conditions.filter((c) => /^\d{4}-\d\d-\d\d /.test(c));
 check("past history: ten dated lines, 2022-08-16 to 2026-10-03", dated.length === 10 && dated[0].startsWith("2022-08-16") && dated[9].startsWith("2026-10-03") && /early left knee osteoarthritis/.test(dated[9]), dated);

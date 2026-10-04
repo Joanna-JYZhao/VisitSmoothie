@@ -172,3 +172,13 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 - `src/app/post/page.tsx`：整理出 Clinical Plan 之后不再显示关联选项，直接是 Clinical Plan 和解释；存储照旧按选的关联保存。
 
 验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1573 项全部通过；`npm run build` 通过。
+
+## 2026-10-04 改动：给医生看只一种语言、是 pre 的存档并收进详情；身体图每个部位都能细选；一直追问到具体；林叔数据改成现在的格式（Yueran，推 main）
+
+- `src/lib/summaries.ts`、`src/lib/types.ts`：给医生看记下生成时的语言（`DoctorSummary.lang`，旧的按内容判断），界面换语言就按新语言重写，英文里不留中文、中文里不留英文；写的时候不带 post 存进来的就诊内容，记录里有了 post 之后这份就是当时的存档、不再改（只有换语言会重写）。顺手修了「最近血压 / 血糖」那一行把中英文名拼在一起的问题。
+- `src/app/episodes/[id]/detail/page.tsx`、`src/app/report/page.tsx`：健康报告列表去掉「给医生看」入口；详情里只显示当时的病情描述，「更详细（给医生看的完整页 · PDF）」和「对话过程」都要点开。post 的存储不变。
+- `src/components/chat/BodyMap.tsx`：每个部位点进去都有细分（头：前额、太阳穴、头顶、眼眶周围；四肢：前/后面、外侧、内侧；手、脚、脖子、胸、后脑、后颈、臀部、小腿肚、脚跟等），按点的那一面排。
+- `src/lib/ai/prompts.ts`：一项没说具体就接着追问这一项，每次更具体一层、选项也更具体；身体图点过的位置不再问。
+- `src/lib/demo-lin.ts`：十条记录按现在的格式：标题是主要症状短语（去掉「· 科室」）；复诊关联 R001 → R006 → R004（高血压随访）、R002 → R010（左膝）；看过医生的存下治疗计划（疗程、到哪天，药名剂量只照病历）和下次复诊、要带的东西。测试 `demo-lin-en.test.ts` 跟着改标题，药名剂量检查把照病历存下的计划也算作病历。
+
+验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1573 项全部通过；`npm run build` 通过；中英两套林叔数据逐条核对标题、复诊链和计划状态。

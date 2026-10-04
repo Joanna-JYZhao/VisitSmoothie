@@ -1,12 +1,12 @@
 "use client";
 
-import type { AnnualSummaryBody, AppState, DoctorSummaryBody, Episode } from "./types";
+import type { AnnualSummaryBody, AppState, DoctorSummary, DoctorSummaryBody, Episode, Lang } from "./types";
 import { getState, storeActions } from "./store";
 import { createBusy } from "./busy";
 import { generateAnnual, generateSummary } from "./ai/client";
 import { fallbackAnnual, fallbackSummary } from "./ai/fallback";
 import { relatedEpisodesOf } from "./episodeAI";
-import { getLang, inChinese } from "./lang";
+import { L, getLang, inChinese } from "./lang";
 import { checkupBackground } from "./checkup";
 import { previousContext } from "./records";
 import { METRICS, buildAnnualFacts, formatValue, latestOf } from "./metrics";
@@ -22,12 +22,27 @@ const YEAR = "year";
 
 const time = (iso: string | undefined | null) => (iso ? new Date(iso).getTime() : 0);
 
-/** The stored summary no longer matches the record (new entries since), or there is none. */
+/** The language a stored page is in: as stamped, or (for one stored before it was stamped) as written. */
+function summaryLang(s: DoctorSummary): Lang {
+  if (s.lang) return s.lang;
+  return /[一-鿿]/.test([s.narrative ?? "", s.chiefComplaint, ...s.glance].join("")) ? "zh" : "en";
+}
+
+/**
+ * The stored summary no longer matches the record (new entries since), is in the other language, or
+ * there is none. Once a visit is filed into the record the page is the archive of what was handed over
+ * before it, kept as it was: only the language makes it be written again.
+ */
 export function summaryIsStale(e: Episode): boolean {
   const s = e.summary;
   if (!s || !Array.isArray(s.glance)) return true;
+  if (summaryLang(s) !== getLang()) return true;
+  if (e.visit) return false;
   return time(e.updatedAt) > time(s.generatedAt);
 }
+
+/** The record as it stood before the doctor: the page for the doctor never carries what post filed into it. */
+const beforeVisit = (e: Episode): Episode => (e.visit ? { ...e, visit: undefined } : e);
 
 /**
  * Recent readings of someone who tracks them: a doctor seeing a dizzy patient with high blood
@@ -39,7 +54,7 @@ export function vitalsLines(state: AppState, now: number = Date.now()): string[]
   for (const type of ["bp", "fbg"] as const) {
     const last = latestOf(state.measurements, type);
     if (last && now - time(last.at) <= 14 * 86_400_000) {
-      lines.push(`最近${METRICS[type].label} ${formatValue(last)}（${fmtDate(last.at)}）`);
+      lines.push(L(`最近${METRICS[type].label[0]} ${formatValue(last)}（${fmtDate(last.at)}）`, `Latest ${METRICS[type].label[1].toLowerCase()} ${formatValue(last)} (${fmtDate(last.at)})`));
     }
   }
   return lines.slice(0, 2);
@@ -62,7 +77,7 @@ export function instantSummary(e: Episode, state: AppState): DoctorSummaryBody |
     vitals: vitalsLines(state),
     background: checkupBackground(state),
   }));
-  return fallbackSummary({ profile, episode: e, ...material }).summary;
+  return fallbackSummary({ profile, episode: beforeVisit(e), ...material }).summary;
 }
 
 export async function refreshSummary(episodeId: string): Promise<void> {
@@ -74,7 +89,7 @@ export async function refreshSummary(episodeId: string): Promise<void> {
     const startedFrom = episode.updatedAt;
     const res = await generateSummary({
       profile: state.profile,
-      episode,
+      episode: beforeVisit(episode),
       ...inMaterialLang(() => ({
         related: relatedEpisodesOf(episode, state.episodes).map(toRelatedContext),
         vitals: vitalsLines(state),
@@ -89,6 +104,7 @@ export async function refreshSummary(episodeId: string): Promise<void> {
       ...res.summary,
       generatedAt: current && time(current.updatedAt) > time(startedFrom) ? startedFrom : generatedAt,
       mode: res.mode,
+      lang: getLang(),
     });
   } finally {
     summaryBusy.stop(episodeId);

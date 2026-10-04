@@ -14,7 +14,7 @@ import { IconTile } from "@/components/ui";
 type Side = "右" | "左";
 /** The close-up a block opens: a knee or a shoulder as seen from the side of the body that was tapped (正面 / 背面). */
 type View = "front" | "back";
-type Detail = { kind: "knee" | "shoulder"; side: Side; view: View } | { kind: "belly" } | { kind: "back" };
+type Detail = { kind: "knee" | "shoulder"; side: Side; view: View } | { kind: "belly" } | { kind: "back" } | { kind: "part"; name: string };
 
 interface Zone {
   /** 规范名称，点了就是它（有细分图的点了先放大） */
@@ -82,7 +82,7 @@ const BACK: Zone[] = [
  * English names. In English what is picked is sent on in English too ("Left knee, inner side"), so
  * nothing Chinese shows up in an English conversation; in Chinese the Chinese name above is sent.
  */
-const NAME_EN: Record<string, string> = {
+const NAME_EN: Record<string, string | undefined> = {
   头: "Head", 颈部: "Neck", 右肩: "Right shoulder", 左肩: "Left shoulder", 胸部: "Chest", 上腹: "Upper belly", 下腹: "Lower belly",
   右上臂: "Right upper arm", 左上臂: "Left upper arm", 右肘: "Right elbow", 左肘: "Left elbow",
   右前臂和手: "Right forearm and hand", 左前臂和手: "Left forearm and hand", 右大腿: "Right thigh", 左大腿: "Left thigh",
@@ -116,8 +116,104 @@ const TILE_EN: Record<string, string> = {
   左上背: "Upper left", 上背正中: "Upper middle", 右上背: "Upper right", 左腰: "Left waist", 腰正中: "Middle waist", 右腰: "Right waist",
   左侧臀部: "Left buttock", 尾骨附近: "Tailbone", 右侧臀部: "Right buttock",
 };
+/*
+ * Every other block opens a close-up too: 头 → 前额 / 太阳穴 / 头顶…, 大腿 → 前面 / 外侧 / 内侧…, so a
+ * place is always picked as exactly as the patient can say it. Limbs are laid out as the side tapped
+ * shows them: the outer side is the one away from the middle of the body.
+ */
+interface PartDef {
+  title: [string, string];
+  cols: number;
+  zones: (string | null)[];
+  whole: string;
+}
+/** [中文名, English name, 格子上的中文, 格子上的 English] */
+type Item = [string, string, string, string] | null;
+const PARTS: Record<string, PartDef> = {};
+const TILE: Record<string, [string, string]> = {};
+function def(whole: string, wholeEn: string, title: [string, string], cols: number, items: Item[]) {
+  NAME_EN[whole] ??= wholeEn;
+  for (const it of items) {
+    if (!it) continue;
+    NAME_EN[it[0]] ??= it[1];
+    TILE[it[0]] = [it[2], it[3]];
+  }
+  PARTS[whole] = { title, cols, zones: items.map((it) => (it ? it[0] : null)), whole };
+}
+const SIDE_EN = { 右: "Right", 左: "Left" } as const;
+/** a part of a limb: [中文, the English after "Right " / "Left ", the short English on the block] */
+type Part = [string, string, string];
+function limb(side: Side, view: View, whole: string, title: [string, string], face: Part, outer: Part, inner: Part, more: Part[] = []) {
+  const se = SIDE_EN[side];
+  const mk = (x: Part): Item => [`${side}${x[0]}`, `${se} ${x[1]}`, x[0], x[2]];
+  const outerLeft = (side === "右") === (view === "front");
+  const row = outerLeft ? [mk(outer), mk(face), mk(inner)] : [mk(inner), mk(face), mk(outer)];
+  def(whole, `${se} ${whole}`, title, 3, [...row, ...more.map(mk)]);
+}
+function list(side: Side, whole: string, title: [string, string], cols: number, parts: Part[]) {
+  const se = SIDE_EN[side];
+  def(whole, `${se} ${whole}`, title, cols, parts.map((x) => [`${side}${x[0]}`, `${se} ${x[1]}`, x[0], x[2]]));
+}
+const OUT_ARM: Part = ["上臂外侧", "upper arm, outer side", "Outer side"];
+const IN_ARM: Part = ["上臂内侧", "upper arm, inner side", "Inner side"];
+const OUT_ELBOW: Part = ["肘外侧", "elbow, outer side", "Outer side"];
+const IN_ELBOW: Part = ["肘内侧", "elbow, inner side", "Inner side"];
+const OUT_THIGH: Part = ["大腿外侧", "thigh, outer side", "Outer side"];
+const IN_THIGH: Part = ["大腿内侧", "thigh, inner side", "Inner side"];
+for (const s of ["右", "左"] as const) {
+  const se = SIDE_EN[s];
+  // 正面
+  limb(s, "front", `${s}上臂`, [`${s}上臂，从正面看`, `${se} upper arm, from the front`], ["上臂前面", "upper arm, front", "Front"], OUT_ARM, IN_ARM);
+  limb(s, "front", `${s}肘`, [`${s}肘，从正面看`, `${se} elbow, from the front`], ["肘窝", "elbow crease", "Crease"], OUT_ELBOW, IN_ELBOW);
+  list(s, `${s}前臂和手`, [`${s}前臂和手`, `${se} forearm and hand`], 2, [["前臂", "forearm", "Forearm"], ["手腕", "wrist", "Wrist"], ["手掌", "palm", "Palm"], ["手指", "fingers", "Fingers"]]);
+  limb(s, "front", `${s}大腿`, [`${s}大腿，从正面看`, `${se} thigh, from the front`], ["大腿前面", "thigh, front", "Front"], OUT_THIGH, IN_THIGH, [["腹股沟", "groin", "Groin"]]);
+  limb(s, "front", `${s}小腿`, [`${s}小腿，从正面看`, `${se} lower leg, from the front`], ["小腿前面（胫骨）", "lower leg, front (shin)", "Shin"], ["小腿外侧", "lower leg, outer side", "Outer side"], ["小腿内侧", "lower leg, inner side", "Inner side"]);
+  limb(s, "front", `${s}脚踝和脚`, [`${s}脚踝和脚`, `${se} ankle and foot`], ["脚背", "top of the foot", "Top of foot"], ["脚踝外侧", "ankle, outer side", "Outer ankle"], ["脚踝内侧", "ankle, inner side", "Inner ankle"], [["脚趾", "toes", "Toes"]]);
+  // 背面
+  limb(s, "back", `${s}上臂后侧`, [`${s}上臂，从背后看`, `${se} upper arm, from behind`], ["上臂后面", "upper arm, back", "Back"], OUT_ARM, IN_ARM);
+  limb(s, "back", `${s}肘后面`, [`${s}肘，从背后看`, `${se} elbow, from behind`], ["肘尖", "point of the elbow", "Point"], OUT_ELBOW, IN_ELBOW);
+  list(s, `${s}手背和前臂`, [`${s}手背和前臂`, `${se} back of hand and forearm`], 2, [["前臂后面", "forearm, back", "Forearm"], ["手腕", "wrist", "Wrist"], ["手背", "back of the hand", "Back of hand"], ["手指", "fingers", "Fingers"]]);
+  limb(s, "back", `${s}大腿后侧`, [`${s}大腿，从背后看`, `${se} thigh, from behind`], ["大腿后面", "thigh, back", "Back"], OUT_THIGH, IN_THIGH);
+  list(s, `${s}小腿肚`, [`${s}小腿肚`, `${se} calf`], 1, [["小腿肚上部", "calf, upper part", "Upper calf"], ["小腿肚下部", "calf, lower part", "Lower calf"], ["跟腱", "Achilles tendon", "Achilles tendon"]]);
+  list(s, `${s}脚跟`, [`${s}脚跟`, `${se} heel`], 1, [["脚跟后面", "heel, back", "Back of heel"], ["脚底", "sole of the foot", "Sole"], ["脚跟两侧", "heel, sides", "Sides of heel"]]);
+}
+// 正面：患者的右边在画面左边
+def("头", "Head", ["头，从正面看", "Head, from the front"], 3, [
+  null, ["头顶", "Top of the head", "头顶", "Top"], null,
+  ["右太阳穴", "Right temple", "右太阳穴", "Right temple"], ["前额", "Forehead", "前额", "Forehead"], ["左太阳穴", "Left temple", "左太阳穴", "Left temple"],
+  null, ["眼眶周围", "Around the eyes", "眼眶周围", "Around eyes"], null,
+]);
+PARTS["头"].whole = "整个头";
+NAME_EN["整个头"] = "The whole head";
+def("颈部", "Neck", ["脖子，从正面看", "Neck, from the front"], 3, [
+  ["颈部右侧", "Right side of the neck", "右侧", "Right side"], ["喉咙（颈前）", "Throat (front of the neck)", "喉咙（颈前）", "Throat"], ["颈部左侧", "Left side of the neck", "左侧", "Left side"],
+]);
+def("胸部", "Chest", ["胸部，从正面看", "Chest, from the front"], 3, [
+  ["右胸", "Right chest", "右胸", "Right chest"], ["胸口正中", "Middle of the chest", "胸口正中", "Middle"], ["左胸", "Left chest", "左胸", "Left chest"],
+  ["右侧肋骨", "Right ribs", "右侧肋骨", "Right ribs"], null, ["左侧肋骨", "Left ribs", "左侧肋骨", "Left ribs"],
+]);
+PARTS["胸部"].whole = "整个胸部";
+NAME_EN["整个胸部"] = "The whole chest";
+// 背面：患者的左边在画面左边
+def("后脑", "Back of head", ["后脑，从背后看", "Back of the head, from behind"], 3, [
+  ["后脑左侧", "Back of the head, left side", "左侧", "Left side"], ["后脑勺", "Back of the head, middle", "后脑勺", "Middle"], ["后脑右侧", "Back of the head, right side", "右侧", "Right side"],
+  null, ["后脑下方（靠近脖子）", "Base of the skull (near the neck)", "下方（靠近脖子）", "Base of skull"], null,
+]);
+PARTS["后脑"].whole = "整个后脑";
+NAME_EN["整个后脑"] = "The whole back of the head";
+def("后颈", "Back of neck", ["后颈，从背后看", "Back of the neck, from behind"], 3, [
+  ["后颈左侧", "Back of the neck, left side", "左侧", "Left side"], ["后颈正中", "Back of the neck, middle", "正中", "Middle"], ["后颈右侧", "Back of the neck, right side", "右侧", "Right side"],
+]);
+def("臀部", "Buttocks", ["臀部，从背后看", "Buttocks, from behind"], 3, [
+  ["左侧臀部", "Left buttock", "左侧臀部", "Left buttock"], ["尾骨附近", "Near the tailbone", "尾骨附近", "Tailbone"], ["右侧臀部", "Right buttock", "右侧臀部", "Right buttock"],
+]);
+
+/** The close-up a block opens: its own, or the one every other block has. */
+const detailFor = (z: Zone): Detail | null => z.detail ?? (PARTS[z.name] ? { kind: "part", name: z.name } : null);
+
 /** A block of the close-up grid: the part without the joint in front of it. */
 function tileName(name: string): string {
+  if (TILE[name]) return L(TILE[name][0], TILE[name][1]);
   const part = name.replace(/^(右膝|左膝|右肩|左肩)/, "");
   return L(part, TILE_EN[part.replace(/^[膝肩]/, "")] ?? TILE_EN[part] ?? shownName(name));
 }
@@ -135,6 +231,8 @@ function detailTitle(d: Detail): string {
       return L("肚子，从正面看", "Belly, seen from the front");
     case "back":
       return L("后背和腰，从背后看", "Back, seen from behind");
+    case "part":
+      return L(...PARTS[d.name].title);
   }
 }
 
@@ -179,14 +277,19 @@ function detailOf(d: Detail): { title: string; cols: number; zones: (string | nu
         zones: ["左上背", "上背正中", "右上背", "左腰", "腰正中", "右腰", "左侧臀部", "尾骨附近", "右侧臀部"],
         whole: "整个后背",
       };
+    case "part": {
+      const p = PARTS[d.name];
+      return { title: p.title[0], cols: p.cols, zones: p.zones, whole: p.whole };
+    }
   }
 }
 
 /** Is anything picked inside this block: the block itself, or a part of its close-up? */
 function zoneHas(z: Zone, picked: string[]): boolean {
   if (picked.includes(z.name)) return true;
-  if (!z.detail) return false;
-  const d = detailOf(z.detail);
+  const detail = detailFor(z);
+  if (!detail) return false;
+  const d = detailOf(detail);
   return picked.some((p) => p === d.whole || d.zones.includes(p));
 }
 
@@ -219,7 +322,7 @@ function Figure({ zones, onZone, picked }: { zones: Zone[]; onZone: (z: Zone) =>
           role="button"
           tabIndex={0}
           aria-label={shownName(z.name)}
-          aria-pressed={z.detail ? undefined : on}
+          aria-pressed={detailFor(z) ? undefined : on}
           className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-brand-600 [&:focus-visible>rect]:stroke-[2.5] [&:hover>rect]:fill-brand-200 [&:hover>rect]:stroke-brand-500 [&:active>rect]:fill-brand-300"
           onClick={() => onZone(z)}
           onKeyDown={(e) => {
@@ -296,7 +399,12 @@ export function BodyMap({ onPick, prompt = L("点一下不舒服的地方", "Tap
   const [sent, setSent] = useState(false);
 
   const toggle = (name: string) => setPicked((p) => (p.includes(name) ? p.filter((x) => x !== name) : [...p, name]));
-  const zone = (z: Zone) => (z.detail ? setDetail(z.detail) : toggle(z.name));
+  // every block opens its close-up, where the exact place is picked
+  const zone = (z: Zone) => {
+    const d = detailFor(z);
+    if (d) setDetail(d);
+    else toggle(z.name);
+  };
   const done = () => {
     if (sent || !picked.length) return;
     setSent(true);

@@ -8,7 +8,7 @@ import { allRecords } from "@/lib/records";
 import { L } from "@/lib/lang";
 import { Badge, Card, IconTile, Notice, focusRing } from "@/components/ui";
 
-/** report: every visit record, whole (问诊 + 医嘱) or in part, each with the page for the doctor. */
+/** report: every visit record, whole (问诊 + 医嘱) or in part; the page for the doctor is kept inside each, under 详情. */
 export default function ReportPage() {
   const { state } = useStore();
   // the main complaint in a phrase, with 复诊 · in front for a follow-up
@@ -21,7 +21,6 @@ export default function ReportPage() {
       kind: e.visit ? L("问诊 + 医嘱", "Visit + orders") : L("问诊", "Visit"),
       icon: e.visit ? Stethoscope : MessageCircle,
       line: `${fmtDate(e.startedAt, { year: true })} · ${episodeLine(e)}`,
-      doctor: `/doctor/${e.id}`,
       detail: `/episodes/${e.id}/detail`,
     })),
     ...state.followUps.map((f) => ({
@@ -31,7 +30,6 @@ export default function ReportPage() {
       kind: L("医嘱", "Doctor's orders"),
       icon: ClipboardList,
       line: L(`${f.date} · ${f.findings}；${f.plan}`, `${f.date} · ${f.findings}; ${f.plan}`),
-      doctor: null as string | null,
       detail: `/report/visit/${f.id}`,
     })),
   ].sort((a, b) => b.at - a.at);
@@ -69,7 +67,7 @@ function RecordCard({
   row: r,
   first,
 }: {
-  row: { title: string; kind: string; icon: LucideIcon; line: string; doctor: string | null; detail: string };
+  row: { title: string; kind: string; icon: LucideIcon; line: string; detail: string };
   first: boolean;
 }) {
   const Icon = r.icon;
@@ -89,12 +87,7 @@ function RecordCard({
         </div>
       </div>
       <div className="flex divide-x divide-line border-t border-line">
-        {r.doctor && (
-          <Link href={r.doctor} className={actionCls}>
-            {L("给医生看", "Show the doctor")}
-            <ChevronRight className="h-5 w-5" />
-          </Link>
-        )}
+
         <Link href={r.detail} className={actionCls}>
           {L("详情", "Details")}
           <ChevronRight className="h-5 w-5" />
