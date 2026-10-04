@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Check, CircleAlert, ClipboardList, HelpCircle, Lightbulb, Stethoscope } from "lucide-react";
+import { CalendarDays, Check, CircleAlert, ClipboardList, HelpCircle, Lightbulb, MessageCircleQuestion, Stethoscope } from "lucide-react";
 import type { AfterResult, Todo } from "@/lib/types";
 import { getState } from "@/lib/store";
 import { buildTodos, explainQuestion, scheduleText } from "@/lib/reminders";
 import { cn, fmtDate } from "@/lib/utils";
-import { Button, Card, IconTile, Spinner } from "@/components/ui";
+import { Button, Card, IconTile, Input, Spinner } from "@/components/ui";
 
 /*
  * Clinical Plan: what was read from the photos and the recording, one line per thing to do. Each
@@ -17,17 +17,23 @@ import { Button, Card, IconTile, Spinner } from "@/components/ui";
 const KIND_LABEL: Record<Todo["kind"], string> = { medicine: "用药", care: "要做的", caution: "要注意的", followup: "复诊" };
 const ORDER: Todo["kind"][] = ["medicine", "care", "caution", "followup"];
 
-/** What the visit says beyond the to-dos, which can be explained too but goes on no list. */
-type InfoKey = "diagnosis" | "findings";
+/** One question about a line and its answer. The first is the explanation itself; the rest are follow-ups asked under it. */
+interface Turn {
+  q: string;
+  a: string;
+}
 
-async function explain(result: AfterResult, part: string): Promise<string> {
+const NOT_EXPLAINED = "这一条这次没解释成，可以再问一次，或者问医生、药师。";
+
+/** `history`: what was already asked about the same line, so a follow-up is answered about it. */
+async function explain(result: AfterResult, part: string, history: Turn[] = []): Promise<string> {
   const profile = getState().profile;
   if (!profile) return "";
   try {
     const res = await fetch("/api/explain", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile, result, part }),
+      body: JSON.stringify({ profile, result, part, history }),
     });
     if (!res.ok) return "";
     return ((await res.json()) as { answer?: string }).answer ?? "";
@@ -50,23 +56,95 @@ function Tick({ on }: { on: boolean }) {
   );
 }
 
-/** An explanation under the line it is about. */
-function Why({ text }: { text: string }) {
+/** What goes onto the to-do: the explanation, then each follow-up as 问 / 答. */
+export function turnsText(turns: Turn[] | undefined): string | undefined {
+  if (!turns?.length) return undefined;
+  const [first, ...more] = turns;
+  return [first.a, ...more.map((t) => `问：${t.q}\n答：${t.a}`)].join("\n\n");
+}
+
+/**
+ * The explanation under the line it is about, the follow-ups asked under it, and a box to ask one
+ * more about this same line: 漏吃了一次怎么办, 能和降压药一起吃吗.
+ */
+function Why({ turns, onAsk, busy, disabled }: { turns: Turn[]; onAsk: (q: string) => void; busy: boolean; disabled?: boolean }) {
+  const [text, setText] = useState("");
+  const [first, ...more] = turns;
+  const send = () => {
+    const q = text.trim();
+    if (!q || busy) return;
+    onAsk(q);
+    setText("");
+  };
   return (
-    <div className="mt-3 flex animate-fade-up gap-3 rounded-2xl bg-brand-50/70 px-4 py-3">
-      <Lightbulb aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-brand-700" />
-      <p className="t-body min-w-0 flex-1 whitespace-pre-line text-ink">{text}</p>
+    <div className="mt-3 animate-fade-up rounded-2xl bg-brand-50/70 px-4 py-3">
+      <div className="flex gap-3">
+        <Lightbulb aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-brand-700" />
+        <p className="t-body min-w-0 flex-1 whitespace-pre-line text-ink">{first.a}</p>
+      </div>
+      {more.map((t, i) => (
+        <div key={i} className="mt-3 animate-fade-up border-t border-brand-100 pt-3">
+          <p className="flex gap-2 text-lg leading-snug font-semibold text-brand-800">
+            <MessageCircleQuestion aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
+            {t.q}
+          </p>
+          <p className="t-body mt-1.5 whitespace-pre-line text-ink">{t.a}</p>
+        </div>
+      ))}
+      {busy && (
+        <p role="status" className="mt-3 flex items-center gap-2.5 border-t border-brand-100 pt-3 text-base text-ink-2">
+          <Spinner className="h-5 w-5" />
+          正在回答…
+        </p>
+      )}
+      {!disabled && (
+        <form
+          className="mt-3 flex gap-2 border-t border-brand-100 pt-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            send();
+          }}
+        >
+          <Input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="还有不明白的？接着问这一条"
+            aria-label="接着问这一条"
+            className="min-w-0 flex-1 bg-surface"
+            disabled={busy}
+          />
+          <Button type="submit" className="press shrink-0 px-5" disabled={!text.trim() || busy}>
+            问
+          </Button>
+        </form>
+      )}
     </div>
   );
 }
 
 export function ClinicalPlan({ result, onSave, saving }: { result: AfterResult; onSave: (todos: Todo[]) => void; saving?: boolean }) {
-  const [todos, setTodos] = useState<Todo[]>(() => buildTodos(result));
+  const [todos] = useState<Todo[]>(() => buildTodos(result));
   const [picked, setPicked] = useState<string[]>(() => todos.map((t) => t.id));
   const [phase, setPhase] = useState<"choose" | "unclear" | "explaining">("choose");
   const [unclear, setUnclear] = useState<string[]>([]);
-  const [info, setInfo] = useState<Partial<Record<InfoKey, string>>>({});
+  // what was explained, per line (a to-do's id, or "diagnosis" / "findings"), with the follow-ups asked under it
+  const [turns, setTurns] = useState<Record<string, Turn[]>>({});
+  const [asking, setAsking] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+
+  /** A follow-up about one line, asked right under its explanation. */
+  const askMore = async (id: string, q: string) => {
+    const history = turns[id] ?? [];
+    setAsking(id);
+    try {
+      const a = (await explain(result, q, history)) || NOT_EXPLAINED;
+      setTurns((all) => ({ ...all, [id]: [...(all[id] ?? []), { q, a }] }));
+    } finally {
+      setAsking(null);
+    }
+  };
+  const why = (id: string) =>
+    turns[id]?.length ? <Why turns={turns[id]} busy={asking === id} disabled={phase !== "choose" || (asking != null && asking !== id)} onAsk={(q) => void askMore(id, q)} /> : null;
 
   const marking = phase === "unclear";
   const toggle = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
@@ -82,9 +160,9 @@ export function ClinicalPlan({ result, onSave, saving }: { result: AfterResult; 
           return t ? explainQuestion(t, result) : "";
         })();
       if (!part) continue;
-      const answer = (await explain(result, part)) || "这一条这次没解释成，可以再点一次，或者问医生、药师。";
-      if (id === "diagnosis" || id === "findings") setInfo((i) => ({ ...i, [id]: answer }));
-      else setTodos((list) => list.map((t) => (t.id === id ? { ...t, explain: answer } : t)));
+      const answer = (await explain(result, part)) || NOT_EXPLAINED;
+      // explained again from the start: what was asked under it before is replaced
+      setTurns((all) => ({ ...all, [id]: [{ q: part, a: answer }] }));
       setProgress((n) => n + 1);
     }
     setUnclear([]);
@@ -122,8 +200,8 @@ export function ClinicalPlan({ result, onSave, saving }: { result: AfterResult; 
           </p>
           <p className="t-title mt-1 text-balance text-ink">{result.diagnosis || "没有写诊断"}</p>
           {result.findings.length > 0 && <p className="t-body mt-3 text-ink">检查结果：{result.findings.join("；")}</p>}
-          {info.diagnosis && <Why text={info.diagnosis} />}
-          {info.findings && <Why text={info.findings} />}
+          {why("diagnosis")}
+          {why("findings")}
           {marking && (result.diagnosis || result.findings.length > 0) && (
             <div className="mt-4 flex flex-wrap gap-2">
               {(["diagnosis", "findings"] as const)
@@ -175,11 +253,7 @@ export function ClinicalPlan({ result, onSave, saving }: { result: AfterResult; 
                               </span>
                             </span>
                           </button>
-                          {t.explain && (
-                            <div className="px-5 pb-4 sm:px-8">
-                              <Why text={t.explain} />
-                            </div>
-                          )}
+                          {turns[t.id]?.length ? <div className="px-5 pb-4 sm:px-8">{why(t.id)}</div> : null}
                         </li>
                       );
                     })}
@@ -200,7 +274,13 @@ export function ClinicalPlan({ result, onSave, saving }: { result: AfterResult; 
       {/* the two ways on: save to the to-do list, or have the unclear lines explained first */}
       {phase === "choose" && (
         <div className="grid gap-3">
-          <Button size="lg" className="press w-full" disabled={saving} onClick={() => onSave(todos.filter((t) => picked.includes(t.id)))}>
+          <Button
+            size="lg"
+            className="press w-full"
+            disabled={saving || asking != null}
+            // what was explained, follow-ups included, goes with each line onto the to-do list
+            onClick={() => onSave(todos.filter((t) => picked.includes(t.id)).map((t) => ({ ...t, explain: turnsText(turns[t.id]) })))}
+          >
             {saving ? "正在保存…" : picked.length ? `加入待办并保存（${picked.length} 条）` : "只保存，不加待办"}
           </Button>
           <Button size="lg" variant="secondary" className="press w-full" disabled={saving} onClick={() => setPhase("unclear")}>

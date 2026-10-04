@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { AfterResult, Profile } from "@/lib/types";
 import { GlmFormatError, glmConfigured, glmJSON } from "@/lib/ai/glm";
-import { buildExplainMessages, fallbackExplain, guardExplain } from "@/lib/ai/ordersAI";
+import { buildExplainMessages, fallbackExplain, guardExplain, type ExplainTurn } from "@/lib/ai/ordersAI";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ const list = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => ty
 
 /** 医嘱 b: explains one part of the doctor's orders in plain words. */
 export async function POST(req: Request) {
-  let body: { profile?: Profile; result?: AfterResult; part?: string };
+  let body: { profile?: Profile; result?: AfterResult; part?: string; history?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -30,9 +30,17 @@ export async function POST(req: Request) {
     readings: [],
   };
 
+  // earlier questions and answers about the same line, for a follow-up asked in the same place
+  const history: ExplainTurn[] = Array.isArray(body.history)
+    ? body.history
+        .filter((t): t is ExplainTurn => Boolean(t) && typeof (t as ExplainTurn).q === "string" && typeof (t as ExplainTurn).a === "string")
+        .slice(-6)
+        .map((t) => ({ q: t.q.slice(0, 200), a: t.a.slice(0, 1200) }))
+    : [];
+
   if (!glmConfigured()) return NextResponse.json({ mode: "fallback", answer: fallbackExplain(result, part) });
   try {
-    const raw = await glmJSON<{ answer?: unknown }>(buildExplainMessages(profile, result, part), { maxTokens: 700, temperature: 0.3, timeoutMs: 45_000 });
+    const raw = await glmJSON<{ answer?: unknown }>(buildExplainMessages(profile, result, part, history), { maxTokens: 700, temperature: 0.3, timeoutMs: 45_000 });
     const answer = guardExplain(typeof raw?.answer === "string" ? raw.answer : "", profile, result, part);
     return NextResponse.json({ mode: "glm", answer: answer || fallbackExplain(result, part) });
   } catch (err) {

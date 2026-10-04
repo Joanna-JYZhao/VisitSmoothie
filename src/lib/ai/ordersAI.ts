@@ -61,10 +61,28 @@ export function ordersRecord(r: AfterResult): AskRecord {
   };
 }
 
-export function buildExplainMessages(profile: Profile, r: AfterResult, part: string): GlmMessage[] {
+/** A question asked about one line, and what was answered: earlier turns about the same line. */
+export interface ExplainTurn {
+  q: string;
+  a: string;
+}
+
+/**
+ * `history`: what was already asked and answered about this same line. The new `part` is then a
+ * follow-up ("漏吃了一次怎么办"), answered about that line and without repeating what was said.
+ */
+export function buildExplainMessages(profile: Profile, r: AfterResult, part: string, history: ExplainTurn[] = []): GlmMessage[] {
+  const earlier = history.flatMap((t, i) => [
+    { role: "user" as const, content: i === 0 ? `请解释：${t.q}` : t.q },
+    { role: "assistant" as const, content: JSON.stringify({ answer: t.a }) },
+  ]);
+  const ask = history.length
+    ? `接着问上面这一条：${part}\n（只回答这个问题，前面讲过的不要重复；还是只讲这一条。）`
+    : `请解释：${part}`;
   return [
     { role: "system", content: `${EXPLAIN_SYSTEM}\n\n---\n\n${profileContext(profile)}\n\n【这次的医嘱】\n${ordersText(r)}` },
-    { role: "user", content: `请解释：${part}\n\n（请只输出一个 JSON 对象，包含 answer 字段）` },
+    ...earlier,
+    { role: "user", content: `${ask}\n\n（请只输出一个 JSON 对象，包含 answer 字段）` },
   ];
 }
 
