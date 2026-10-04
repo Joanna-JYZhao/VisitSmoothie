@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 患者数据（SQLite，加密落盘，永不提交）
+.data/

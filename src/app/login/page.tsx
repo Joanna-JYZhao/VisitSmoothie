@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ChevronLeft } from "lucide-react";
 import { reloadAccount, useStore } from "@/lib/store";
-import { loginHere } from "@/lib/accounts";
+import { lastAuthError, loginHere } from "@/lib/accounts";
 import { isDev } from "@/lib/dev";
 import { SmoothieAppMark, SmoothieFooter, SmoothieHeader } from "@/components/Smoothie";
 import "../welcome/smoothie.css";
@@ -32,7 +32,7 @@ export default function LoginPage() {
     const ok = await loginHere(name, password);
     if (!ok) {
       setBusy(false);
-      return setError("姓名或密码不对，请再试一次。");
+      return setError(lastAuthError() ?? "姓名或密码不对，请再试一次。");
     }
     reloadAccount();
     router.replace("/");
