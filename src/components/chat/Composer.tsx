@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { ArrowUp, Camera, Keyboard, Mic } from "lucide-react";
 import { MicButton } from "@/components/MicButton";
 import { useAiAvailable } from "@/components/AiStatus";
+import { L } from "@/lib/lang";
 
 /** Typing instead of speaking: one box that grows with the text, and a button to send it. */
 function TypeBox({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
@@ -35,15 +36,15 @@ function TypeBox({ onSend, disabled }: { onSend: (text: string) => void; disable
             send();
           }
         }}
-        placeholder="在这里打字"
-        aria-label="对医伴说"
+        placeholder={L("在这里打字", "Type here")}
+        aria-label={L("对医伴说", "Say it to VisitSmoothie")}
         className="min-h-11 min-w-0 flex-1 resize-none bg-transparent py-2 pr-1 pl-3.5 text-base leading-relaxed text-ink outline-none placeholder:text-ink-3"
       />
       <button
         type="button"
         onClick={send}
         disabled={disabled || !text.trim()}
-        aria-label="发送"
+        aria-label={L("发送", "Send")}
         className="press relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white transition duration-200 after:absolute after:-inset-1 hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:bg-line-strong disabled:bg-none disabled:shadow-none"
       >
         <ArrowUp className="h-6 w-6" strokeWidth={2.4} />
@@ -59,12 +60,12 @@ const side =
 /** The three things a patient asks for most, said for them with one tap. */
 export function QuickOptions({ onPick, disabled }: { onPick: (which: "visit" | "history" | "export") => void; disabled?: boolean }) {
   const options = [
-    { key: "visit", label: "去看医生" },
-    { key: "history", label: "讲解病史" },
-    { key: "export", label: "导出" },
+    { key: "visit", label: L("去看医生", "See a doctor") },
+    { key: "history", label: L("讲解病史", "My history") },
+    { key: "export", label: L("导出", "Export") },
   ] as const;
   return (
-    <div className="grid grid-cols-3 gap-2" aria-label="快捷选项">
+    <div className="grid grid-cols-3 gap-2" aria-label={L("快捷选项", "Quick options")}>
       {options.map((o) => (
         <button
           key={o.key}
@@ -102,7 +103,7 @@ export function Composer({
   return (
     <div className="flex items-end gap-2">
       {canSpeak && (
-        <button type="button" className={side} onClick={() => setTyping((t) => !t)} aria-label={keyboard ? "改用说的" : "改用打字"}>
+        <button type="button" className={side} onClick={() => setTyping((t) => !t)} aria-label={keyboard ? L("改用说的", "Speak instead") : L("改用打字", "Type instead")}>
           {keyboard ? <Mic className="h-6 w-6" /> : <Keyboard className="h-6 w-6" />}
         </button>
       )}
@@ -110,10 +111,10 @@ export function Composer({
         {keyboard ? (
           <TypeBox onSend={onSend} disabled={disabled} />
         ) : (
-          <MicButton big pill label="按一下，开始说" maxSeconds={180} onText={onSend} disabled={disabled} />
+          <MicButton big pill label={L("按一下，开始说", "Tap to speak")} maxSeconds={180} onText={onSend} disabled={disabled} />
         )}
       </div>
-      <button type="button" className={side} onClick={() => file.current?.click()} disabled={disabled} aria-label="拍照或从相册选">
+      <button type="button" className={side} onClick={() => file.current?.click()} disabled={disabled} aria-label={L("拍照或从相册选", "Take or choose a photo")}>
         <Camera className="h-6 w-6" />
       </button>
       <input

@@ -647,7 +647,7 @@ export function SectionTitle({ children, action }: { children: React.ReactNode; 
   );
 }
 
-export function TypingDots({ label = L("医伴正在想", "Yiban is thinking") }: { label?: string }) {
+export function TypingDots({ label = L("医伴正在想", "VisitSmoothie is thinking") }: { label?: string }) {
   return (
     <span className="inline-flex items-center gap-1.5" role="status" aria-label={label}>
       {[0, 1, 2].map((i) => (

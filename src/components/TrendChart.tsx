@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { fmtDate } from "@/lib/utils";
+import { L } from "@/lib/lang";
 
 export interface TrendPoint {
   id: string;
@@ -53,6 +54,8 @@ function niceTicks(min: number, max: number, count = 4): number[] {
   return out;
 }
 
+const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 function timeTicks(start: number, end: number): { t: number; label: string }[] {
   const span = end - start;
   const out: { t: number; label: string }[] = [];
@@ -64,7 +67,10 @@ function timeTicks(start: number, end: number): { t: number; label: string }[] {
       const m = cur.getMonth() + 1;
       out.push({
         t: cur.getTime(),
-        label: first || m === 1 ? `${String(cur.getFullYear()).slice(2)}年${m}月` : `${m}月`,
+        label:
+          first || m === 1
+            ? L(`${String(cur.getFullYear()).slice(2)}年${m}月`, `${MONTHS_EN[m - 1]} '${String(cur.getFullYear()).slice(2)}`)
+            : L(`${m}月`, MONTHS_EN[m - 1]),
       });
       first = false;
       cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
@@ -76,7 +82,7 @@ function timeTicks(start: number, end: number): { t: number; label: string }[] {
   let cur = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 1).getTime();
   for (; cur <= end; cur += stepDays * DAY) {
     const d = new Date(cur);
-    out.push({ t: cur, label: `${d.getMonth() + 1}月${d.getDate()}日` });
+    out.push({ t: cur, label: L(`${d.getMonth() + 1}月${d.getDate()}日`, `${MONTHS_EN[d.getMonth()]} ${d.getDate()}`) });
   }
   return out;
 }
@@ -196,7 +202,7 @@ export function TrendChart({
         tabIndex={0}
         onKeyDown={onKey}
         onBlur={() => setActive(null)}
-        aria-label={`${ariaLabel}，使用左右方向键逐条查看`}
+        aria-label={L(`${ariaLabel}，使用左右方向键逐条查看`, `${ariaLabel}. Use the left and right arrow keys to go through it.`)}
       >
         {width > 0 && points.length > 0 && (
           <svg
@@ -213,7 +219,7 @@ export function TrendChart({
                 {/* the band's name sits at its foot, where readings seldom are, out of the line's way */}
                 {bandBottom - bandTop >= 24 && (
                   <text x={PAD.l + 8} y={bandBottom - 8} fontSize={17} fill="var(--color-ink-2)">
-                    一般范围
+                    {L("一般范围", "Usual range")}
                   </text>
                 )}
               </>
@@ -257,7 +263,7 @@ export function TrendChart({
                   strokeDasharray="6 4"
                 />
                 <text x={PAD.l + 8} y={y(band.high) - 7} fontSize={17} fill="var(--color-ink-2)">
-                  一般低于 {band.high}
+                  {L(`一般低于 ${band.high}`, `Usually below ${band.high}`)}
                 </text>
               </>
             )}
@@ -316,7 +322,7 @@ export function TrendChart({
                   )}
                   {p.flag === "low" && (
                     <text x={x(p.t)} y={y(p.v) + 22} textAnchor="middle" fontSize={17} fontWeight={600} fill="var(--color-ink)">
-                      {fmt(p.v)} 低
+                      {L(`${fmt(p.v)} 低`, `${fmt(p.v)} low`)}
                     </text>
                   )}
                 </g>
@@ -384,7 +390,7 @@ export function TrendChart({
               <div className="flex items-baseline gap-1">
                 <span className="text-lg font-semibold text-ink tabular">{fmt(act.v)}</span>
                 <span className="text-base text-ink-2">{unit}</span>
-                {act.flag === "low" && <span className="ml-1 text-base font-medium text-danger">低血糖</span>}
+                {act.flag === "low" && <span className="ml-1 text-base font-medium text-danger">{L("低血糖", "Low sugar")}</span>}
               </div>
             )}
             <div className="mt-0.5 text-base text-ink-2">

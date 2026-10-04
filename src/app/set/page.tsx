@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Settings } from "lucide-react";
+import { ChevronRight, Languages, Settings } from "lucide-react";
 import { reloadAccount, useStore } from "@/lib/store";
 import { logoutHere } from "@/lib/accounts";
 import { ageOf, cn } from "@/lib/utils";
-import { ageFromBirthDate } from "@/app/me/profile-data";
+import { ageFromBirthDate, ageLabel, genderLabel } from "@/app/me/profile-data";
 import { DevSwitch } from "@/components/DevSwitch";
-import { Card, PageHeader, RowLink, focusRing } from "@/components/ui";
+import { LangToggle } from "@/components/LangToggle";
+import { Card, IconTile, PageHeader, RowLink, focusRing } from "@/components/ui";
+import { L } from "@/lib/lang";
 
 /**
  * set, laid out like iOS Settings: who I am (the way into 我的档案) on top, then the settings,
@@ -37,9 +39,18 @@ export default function SetPage() {
           <span className="min-w-0 flex-1">
             <span className="name-title block text-ink">{profile.name}</span>
             <span className="t-body mt-0.5 block text-ink-2">
-              {[profile.gender, `${age} 岁`].filter(Boolean).join(" · ")}
-              <span className="mx-1.5 text-ink-3">·</span>
-              我的档案
+              {/* each part stays whole; a zero-width space before each lets the line break between them */}
+              {[genderLabel(profile.gender), ageLabel(age)].filter(Boolean).map((part, i) => (
+                <span key={i}>
+                  {i > 0 && "\u200b"}
+                  <span className="whitespace-nowrap">{i > 0 ? ` · ${part}` : part}</span>
+                </span>
+              ))}
+              {"\u200b"}
+              <span className="whitespace-nowrap">
+                <span className="mx-1.5 text-ink-3">·</span>
+                {L("我的档案", "My profile")}
+              </span>
             </span>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" aria-hidden="true" />
@@ -47,7 +58,15 @@ export default function SetPage() {
       </Card>
 
       <Card tone="raised" className="rise-1 overflow-hidden">
-        <RowLink href="/me/settings" title="设置" icon={<Settings />} iconTone="neutral" className="press" />
+        <RowLink href="/me/settings" title={L("设置", "Settings")} icon={<Settings />} iconTone="neutral" className="press" />
+        {/* the language: a settings row of its own, the two choices side by side at the end of it */}
+        <div className="flex min-h-14 items-center gap-3 border-t border-line px-4 py-2">
+          <IconTile tone="neutral">
+            <Languages />
+          </IconTile>
+          <span className="min-w-0 flex-1 text-lg font-medium text-ink">{L("语言", "Language")}</span>
+          <LangToggle segmented />
+        </div>
       </Card>
 
       {/* 开发者开关: the same switch as before, now a settings row of its own */}
@@ -68,7 +87,7 @@ export default function SetPage() {
             focusRing,
           )}
         >
-          退出登录
+          {L("退出登录", "Sign out")}
         </button>
       </Card>
     </div>

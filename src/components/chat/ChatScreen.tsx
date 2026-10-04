@@ -22,6 +22,7 @@ import { useToast } from "@/components/Toast";
 import { IconTile } from "@/components/ui";
 import { ChevronRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { L, getLang } from "@/lib/lang";
 
 const MAX_PHOTOS = 4;
 
@@ -120,10 +121,10 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   const photos = async (files: File[]) => {
     try {
       const images = await Promise.all(files.slice(0, MAX_PHOTOS).map((f) => compressImage(f)));
-      if (files.length > MAX_PHOTOS) toast.show(`一次最多 ${MAX_PHOTOS} 张，先看前 ${MAX_PHOTOS} 张`);
+      if (files.length > MAX_PHOTOS) toast.show(L(`一次最多 ${MAX_PHOTOS} 张，先看前 ${MAX_PHOTOS} 张`, `Up to ${MAX_PHOTOS} photos at a time. Looking at the first ${MAX_PHOTOS}.`));
       void sendTurn("", images);
     } catch {
-      toast.show("这张照片打不开，换一张试试", "danger");
+      toast.show(L("这张照片打不开，换一张试试", "This photo won't open. Try another one."), "danger");
     }
   };
 
@@ -141,7 +142,7 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   return (
     <div className="-mb-9 flex min-w-0 flex-1 flex-col">
       {/* while the page is an invitation the name of the page steps back and the question is the headline */}
-      <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-center text-ink-2" : "t-title mb-4 text-ink")}>看医生之前</h1>
+      <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-center text-ink-2" : "t-title mb-4 text-ink")}>{L("看医生之前", "Before the doctor")}</h1>
       <div className={cn("flex flex-1 flex-col pt-2 pb-5", opening ? "justify-center" : "justify-end")}>
         <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
         {/* scrolled to with room for the dock and the tab bar below it (the page simply stops at its end) */}
@@ -159,10 +160,12 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
             <IconTile size="sm" tone="solid">
               <FileText />
             </IconTile>
-            <span className="min-w-0 flex-1 truncate">给医生看的报告（{reportTitle}）</span>
+            <span className="min-w-0 flex-1 truncate">{L(`给医生看的报告（${reportTitle}）`, `Report for the doctor (${reportTitle})`)}</span>
             <ChevronRight className="h-5 w-5 shrink-0 text-brand-700" />
           </button>
         )}
+        {/* the assistant still answers in Chinese: said once, quietly, where its replies arrive */}
+        {getLang() === "en" && <p className="text-center text-base leading-snug text-ink-2">AI replies are in Chinese for now.</p>}
         <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
       </div>
     </div>

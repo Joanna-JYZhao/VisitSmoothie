@@ -1,6 +1,7 @@
 import { Activity, CalendarClock, TrendingDown, TriangleAlert } from "lucide-react";
 import type { Insight } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { IconTile } from "./ui";
 
 const ICON = { low: TriangleAlert, streak: Activity, recent: Activity, trend: TrendingDown, overdue: CalendarClock } as const;
@@ -21,7 +22,7 @@ export function InsightList({ insights, className }: { insights: Insight[]; clas
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="text-lg leading-snug font-semibold tracking-[-0.005em] text-ink">
                 {i.title}
-                {attention && <span className="ml-2 text-base font-medium text-warn">最近的，值得留意</span>}
+                {attention && <span className="ml-2 text-base font-medium text-warn">{L("最近的，值得留意", "Recent, worth a look")}</span>}
               </div>
               <p className="t-body mt-1 text-ink-2">{i.text}</p>
             </div>

@@ -4,6 +4,7 @@ import { CalendarClock, CalendarDays, CircleAlert, ClipboardList, MessageSquareT
 import type { AfterResult } from "@/lib/types";
 import { followUpDate } from "@/lib/after";
 import { cn, fmtDate } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { Card, IconTile, type IconTone } from "@/components/ui";
 
 /*
@@ -45,7 +46,7 @@ function Block({
 export function VisitResult({ result: r }: { result: AfterResult }) {
   const where = [r.date ? fmtDate(`${r.date}T12:00:00`, { year: true }) : "", r.hospital, r.department].filter(Boolean).join(" · ");
   const next = followUpDate(r);
-  const followUp = [r.followUpNote, next ? `（${fmtDate(next, { weekday: true })}）` : ""].filter(Boolean).join("");
+  const followUp = [r.followUpNote, next ? L(`（${fmtDate(next, { weekday: true })}）`, ` (${fmtDate(next, { weekday: true })})`) : ""].filter(Boolean).join("");
   // a short diagnosis is set like a headline; a long one steps down so it still reads as one line or two
   const short = (r.diagnosis?.length ?? 0) <= 12;
   return (
@@ -58,7 +59,7 @@ export function VisitResult({ result: r }: { result: AfterResult }) {
               <CalendarDays className={ic} />
             </IconTile>
             <span className="min-w-0">
-              时间地点
+              {L("时间地点", "When and where")}
               <span className="ml-2.5 font-normal text-ink">{where}</span>
             </span>
           </p>
@@ -67,22 +68,22 @@ export function VisitResult({ result: r }: { result: AfterResult }) {
           <IconTile tone="brand" size="sm">
             <Stethoscope className={ic} />
           </IconTile>
-          诊断
+          {L("诊断", "Diagnosis")}
         </p>
         {r.diagnosis ? (
           <h2 className={cn("mt-3 text-balance text-ink", short ? "t-display" : "t-title")}>{r.diagnosis}</h2>
         ) : (
-          <p className="t-lead mt-3 text-ink-2">没有写诊断</p>
+          <p className="t-lead mt-3 text-ink-2">{L("没有写诊断", "No diagnosis written")}</p>
         )}
       </div>
 
       {r.findings.length > 0 && (
-        <Block label="检查结果" icon={<ClipboardList className={ic} />} tone="info">
+        <Block label={L("检查结果", "Test results")} icon={<ClipboardList className={ic} />} tone="info">
           {r.findings.join("；")}
         </Block>
       )}
 
-      <Block label="药和用法" icon={<Pill className={ic} />}>
+      <Block label={L("药和用法", "Medicines and how to take them")} icon={<Pill className={ic} />}>
         {r.medications.length ? (
           <ul className="-mx-2 divide-y divide-line">
             {r.medications.map((m, i) => (
@@ -98,28 +99,28 @@ export function VisitResult({ result: r }: { result: AfterResult }) {
             ))}
           </ul>
         ) : (
-          <span className="text-ink-2">没有开药</span>
+          <span className="text-ink-2">{L("没有开药", "No medicines prescribed")}</span>
         )}
       </Block>
 
       {r.advice && (
-        <Block label="注意事项" icon={<MessageSquareText className={ic} />} tone="neutral">
+        <Block label={L("注意事项", "Things to watch")} icon={<MessageSquareText className={ic} />} tone="neutral">
           {r.advice}
         </Block>
       )}
 
       {r.procedures.length > 0 && (
-        <Block label="其他治疗" icon={<Syringe className={ic} />} tone="neutral">
+        <Block label={L("其他治疗", "Other treatment")} icon={<Syringe className={ic} />} tone="neutral">
           {r.procedures.join("；")}
         </Block>
       )}
 
-      <Block label="复诊" icon={<CalendarClock className={ic} />} className={followUp ? "bg-brand-50/50" : undefined}>
-        {followUp ? <span className="text-lg leading-relaxed font-medium text-brand-800">{followUp}</span> : <span className="text-ink-2">没有说要复诊</span>}
+      <Block label={L("复诊", "Follow-up visit")} icon={<CalendarClock className={ic} />} className={followUp ? "bg-brand-50/50" : undefined}>
+        {followUp ? <span className="text-lg leading-relaxed font-medium text-brand-800">{followUp}</span> : <span className="text-ink-2">{L("没有说要复诊", "No follow-up visit mentioned")}</span>}
       </Block>
 
       {r.unclear.length > 0 && (
-        <Block label="这几处没看清，请对一下原件" icon={<CircleAlert className={ic} />} tone="warn" className="bg-warn-bg/70">
+        <Block label={L("这几处没看清，请对一下原件", "Not clear. Please check the original")} icon={<CircleAlert className={ic} />} tone="warn" className="bg-warn-bg/70">
           <ul className="space-y-1.5">
             {r.unclear.map((u, i) => (
               <li key={i} className="flex gap-2">

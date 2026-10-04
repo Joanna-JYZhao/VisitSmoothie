@@ -11,6 +11,7 @@ import { IconTile, focusRing } from "@/components/ui";
 import { GuideTour, TOUR_FLAG } from "@/components/GuideTour";
 import { unsavedCards } from "@/lib/drafts";
 import { cn } from "@/lib/utils";
+import { L } from "@/lib/lang";
 
 const ITEM_TONE = {
   red: { row: "bg-danger-bg", tile: "solidDanger" as const, Icon: AlertTriangle },
@@ -63,7 +64,7 @@ export default function HomePage() {
   const active = state.episodes.filter((e) => e.status === "active");
   const items: { key: string; text: string; href?: string; tone?: "warn" | "red" }[] = [];
   // a description or orders left unsaved in the conversation: first in the list
-  if (unsavedCards(state.thread, state.episodes).length) items.push({ key: "unsaved", text: "有一条记录还没保存，点这里处理", href: "/pre", tone: "warn" });
+  if (unsavedCards(state.thread, state.episodes).length) items.push({ key: "unsaved", text: L("有一条记录还没保存，点这里处理", "One record isn't saved yet. Tap here."), href: "/pre", tone: "warn" });
 
   // what is due today: the daily question about each complaint
   for (const e of active) {
@@ -130,7 +131,7 @@ export default function HomePage() {
       {/* bottom half: ask anything; it grows into the whole screen once a question is being asked */}
       <section className="rise-2 flex flex-1 flex-col rounded-[1.1rem] bg-surface p-4 shadow-[0_0_0_0.5px_var(--color-line)]">
         <div className="mb-3">
-          <HalfTitle icon={<MessageCircleQuestion />}>问 AI</HalfTitle>
+          <HalfTitle icon={<MessageCircleQuestion />}>{L("问 AI", "Ask AI")}</HalfTitle>
         </div>
         <AskBox now={now} />
       </section>

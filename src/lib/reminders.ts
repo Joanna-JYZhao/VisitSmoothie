@@ -4,6 +4,7 @@ import type { AfterResult, AppState, Reminder, Todo } from "./types";
 import { getState, storeActions } from "./store";
 import { followUpDate, medicationLine } from "./after";
 import { DAY, HOUR, fmtISODate, uid } from "./utils";
+import { L, getLang } from "./lang";
 
 /*
  * 医嘱 a: what the doctor's orders ask the patient to do, as a list of to-dos with sensible
@@ -325,20 +326,26 @@ export function reminderMessage(r: Reminder, slot: Slot): string {
 const FREQ: Record<Todo["frequency"], string> = { each: "每次", daily: "每天一次", once: "只提醒一次", none: "不提醒" };
 export const frequencyLabel = (f: Todo["frequency"]) => FREQ[f];
 
-/** "10月10日 周六 上午 9:00". */
+/** "10月10日 周六 上午 9:00"; in English "Sat, Oct 10, 9:00 AM" (display only — text the rules write is built in Chinese). */
 export function whenText(iso: string): string {
   const d = new Date(iso);
-  const wd = "日一二三四五六"[d.getDay()];
   const h = d.getHours();
+  if (getLang() === "en") {
+    const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
+    const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()];
+    return `${day}, ${month} ${d.getDate()}, ${h % 12 === 0 ? 12 : h % 12}:${pad(d.getMinutes())} ${h < 12 ? "AM" : "PM"}`;
+  }
+  const wd = "日一二三四五六"[d.getDay()];
   return `${d.getMonth() + 1}月${d.getDate()}日 周${wd} ${h < 12 ? "上午" : "下午"} ${h > 12 ? h - 12 : h}:${pad(d.getMinutes())}`;
 }
 
 /** One line saying when a reminder goes off. */
 export function scheduleText(r: Pick<Reminder, "kind" | "frequency" | "times" | "at">): string {
-  if (r.frequency === "none") return "不提醒";
-  if (r.frequency === "once") return r.at ? `${whenText(r.at)}${r.kind === "followup" ? "，前一天也提醒" : ""}` : "只提醒一次";
+  if (r.frequency === "none") return L("不提醒", "No reminder");
+  if (r.frequency === "once")
+    return r.at ? `${whenText(r.at)}${r.kind === "followup" ? L("，前一天也提醒", ", and the day before") : ""}` : L("只提醒一次", "Once");
   const times = r.frequency === "daily" ? (r.times ?? []).slice(0, 1) : (r.times ?? []);
-  return `每天 ${times.join("、")}`;
+  return L(`每天 ${times.join("、")}`, `Every day ${times.join(", ")}`);
 }
 
 /* ---------- 医嘱 b: explaining one part ---------- */

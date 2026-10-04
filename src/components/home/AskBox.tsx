@@ -11,6 +11,7 @@ import { AlertCircle, ArrowUp, BookOpen, ChevronDown, ChevronRight, MessageCircl
 import { LogoMark } from "@/components/Logo";
 import { HintBanner } from "@/components/HintBanner";
 import { cn } from "@/lib/utils";
+import { L } from "@/lib/lang";
 
 /*
  * 提问框: a question about one's medicines or visit, answered from the records (问医伴).
@@ -58,7 +59,7 @@ function Answer({ turn }: { turn: AskTurn }) {
         {turn.sources.length > 0 && (
           <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-line pt-3 text-base text-ink-2">
             <BookOpen className="h-5 w-5 text-brand-600" aria-hidden="true" />
-            依据：
+            {L("依据：", "Based on:")}
             {turn.sources.map((s, i) => (
               <Link
                 key={i}
@@ -91,6 +92,7 @@ export function AskBox({ now }: { now: number }) {
   const suggestions = suggestedTodoQuestions(homeTodos(state, now)).filter((q) => !asked.has(q));
   const last = state.asks[state.asks.length - 1];
   const empty = state.asks.length === 0 && !pending && !failed;
+  const english = state.settings.lang === "en";
 
   const expand = () => {
     setClosing(false);
@@ -157,8 +159,8 @@ export function AskBox({ now }: { now: number }) {
         onChange={(e) => setText(e.target.value)}
         onFocus={full ? undefined : expand}
         autoFocus={full}
-        placeholder="对吃药或就诊有疑问？问我"
-        aria-label="对吃药或就诊有疑问？问我"
+        placeholder={L("对吃药或就诊有疑问？问我", "Ask about medicines")}
+        aria-label={L("对吃药或就诊有疑问？问我", "Ask about medicines")}
         className={inputCls}
       />
       <button
@@ -169,7 +171,7 @@ export function AskBox({ now }: { now: number }) {
           focusRing,
         )}
       >
-        问
+        {L("问", "Ask")}
         <ArrowUp className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
       </button>
     </form>
@@ -193,7 +195,7 @@ export function AskBox({ now }: { now: number }) {
     <div role="status">
       <p className="flex items-center gap-2.5 text-base leading-relaxed text-ink">
         <Spinner />
-        正在查你的记录，回答「{pending.question}」……
+        {L(`正在查你的记录，回答「${pending.question}」……`, `Checking your records to answer "${pending.question}"…`)}
       </p>
       <div className="mt-3.5 space-y-2.5" aria-hidden="true">
         <span className="skeleton block h-4 w-11/12" />
@@ -208,7 +210,7 @@ export function AskBox({ now }: { now: number }) {
       <IconTile tone="warn" size="sm">
         <AlertCircle />
       </IconTile>
-      这次没问成，再问一遍试试。
+      {L("这次没问成，再问一遍试试。", "That didn't go through. Please ask again.")}
     </p>
   );
 
@@ -237,7 +239,7 @@ export function AskBox({ now }: { now: number }) {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="问 AI"
+            aria-label={L("问 AI", "Ask AI")}
             className={cn("ask-sheet phone-fixed", closing && "is-closing")}
             onAnimationEnd={(e) => e.target === e.currentTarget && onSlidDown()}
           >
@@ -256,12 +258,12 @@ export function AskBox({ now }: { now: number }) {
                   )}
                 >
                   <ChevronDown className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
-                  收起
+                  {L("收起", "Close")}
                 </button>
                 <span className="flex items-center gap-2 text-ink">
                   <LogoMark className="h-8 w-8" />
                   <span className="flex flex-col leading-tight">
-                    <span className="t-heading leading-tight">问 AI</span>
+                    <span className="t-heading leading-tight">{L("问 AI", "Ask AI")}</span>
                     <span className="text-base font-medium text-ink-2">VisitSmoothie</span>
                   </span>
                 </span>
@@ -276,7 +278,7 @@ export function AskBox({ now }: { now: number }) {
                     <LogoMark className="h-20 w-20" />
                     <span className="text-xl font-semibold tracking-tight text-brand-ink">VisitSmoothie</span>
                   </span>
-                  <p className="t-title max-w-[16em] text-balance text-ink">对吃药或就诊有疑问？问我</p>
+                  <p className="t-title max-w-[16em] text-balance text-ink">{L("对吃药或就诊有疑问？问我", "Questions about medicines or a visit? Ask me")}</p>
                   {suggestions.length > 0 && (
                     <ul className="mt-1 w-full space-y-2.5 text-left">
                       {suggestions.map((q) => (
@@ -325,6 +327,8 @@ export function AskBox({ now }: { now: number }) {
               style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
             >
               {!empty && chips}
+              {/* the answers come from the assistant, which speaks Chinese only for now: said once, quietly, in English only */}
+              {english && <p className="t-body text-center text-ink-2">AI replies are in Chinese for now.</p>}
               {form(true)}
             </div>
           </div>

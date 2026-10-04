@@ -6,10 +6,14 @@ import { useRouter } from "next/navigation";
 import { UserRound } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { SmoothieFooter, SmoothieHeader } from "@/components/Smoothie";
-import { SmoothieMark } from "@/components/Logo";
 import "./smoothie.css";
+import { L } from "@/lib/lang";
 
-/* A calm welcome sheet for the phone column: the app icon, the name, one big way in, and the login. */
+/*
+ * The welcome screen, in the round-2 redesign look for the phone column: the name set like a
+ * keynote title on a softly lit stage, one big pill button, the hand-written note under it with
+ * its drawn arrow, and the first-time hint at the foot. The logo with its name is in the header.
+ */
 
 export default function WelcomePage() {
   const { state, ready } = useStore();
@@ -27,43 +31,56 @@ export default function WelcomePage() {
       <SmoothieHeader
         right={
           <Link href="/login" className="onboarding-language">
-            登录
+            {L("登录", "Sign in")}
           </Link>
         }
       />
       <main className="onboarding-main is-welcome">
         <section className="welcome-stage">
+          <div className="welcome-light" aria-hidden="true" />
           <div className="welcome-intro">
-            <SmoothieMark className="welcome-icon" />
             <p className="welcome-eyebrow">
               <span />
-              你的健康故事，从这里开始
+              {L("你的健康故事，从这里开始", "Your health story starts here")}
             </p>
+            {/* reads as one word, VisitSmoothie; set on two lines like the keynote title it was drawn as */}
             <h1>
-              Visit<em>Smoothie</em>
+              Visit
+              <br />
+              <em>Smoothie</em>
               <span className="welcome-period">.</span>
             </h1>
             <p className="welcome-description">
-              从认识你开始，
+              {L("从认识你开始，", "It starts with getting to know you, ")}
               <br />
-              为下一次就诊，少一点重复，多一点从容。
+              {L("为下一次就诊，少一点重复，多一点从容。", "so your next visit has less repeating and more calm.")}
             </p>
             <Link href="/onboarding" className="smoothie-button smoothie-button-hero">
-              开始我的健康旅程
+              {L("开始我的健康旅程", "Start my health journey")}
               <span aria-hidden="true">↗</span>
             </Link>
             <p className="welcome-login">
-              已有账号？
+              {L("已有账号？", "Have an account?")}
               <Link href="/login" className="text-button">
-                登录
+                {L("登录", "Sign in")}
               </Link>
             </p>
+            <div className="welcome-handnote">
+              <svg className="journey-arrow" viewBox="0 0 170 92" fill="none" aria-hidden="true">
+                <path d="M15 6C-3 70 70 87 144 45M126 44l24-4-6 23" pathLength={1} />
+              </svg>
+              <span>
+                {L("让健康旅程，", "A smoother")}
+                <br />
+                {L("顺畅一点。", "health journey.")}
+              </span>
+            </div>
           </div>
           <div className="welcome-footnote">
             <span aria-hidden="true">
               <UserRound />
             </span>
-            <span>首次使用，先建立一份属于你的个人档案。</span>
+            <span>{L("首次使用，先建立一份属于你的个人档案。", "First time here? Start by making your own profile.")}</span>
           </div>
         </section>
       </main>

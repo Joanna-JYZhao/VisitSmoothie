@@ -18,7 +18,7 @@ import {
 import { useStore } from "@/lib/store";
 import { hasYearOfData } from "@/lib/metrics";
 import { ageOf, cn, fmtDate } from "@/lib/utils";
-import { addPastHistory, ageFromBirthDate } from "@/app/me/profile-data";
+import { addPastHistory, ageFromBirthDate, ageLabel, educationLabel, genderLabel } from "@/app/me/profile-data";
 import { useToast } from "@/components/Toast";
 import {
   Button,
@@ -35,6 +35,7 @@ import {
   Toggle,
   focusRing,
 } from "@/components/ui";
+import { L } from "@/lib/lang";
 
 /** 我的档案: who I am, everything recorded so far, and the few settings there are. */
 export default function MePage() {
@@ -45,22 +46,22 @@ export default function MePage() {
   const contact = profile.emergencyContact;
 
   const facts: [string, string[]][] = [
-    ["基础病和以往病史", profile.conditions],
-    ["过敏史", profile.allergies],
-    ["长期吃的药", profile.medications],
-    ["做过的手术", profile.surgeries],
-    ["家族遗传病", profile.familyHistory],
+    [L("基础病和以往病史", "Health conditions and past illnesses"), profile.conditions],
+    [L("过敏史", "Allergies"), profile.allergies],
+    [L("长期吃的药", "Regular medicines"), profile.medications],
+    [L("做过的手术", "Past operations"), profile.surgeries],
+    [L("家族遗传病", "Family history"), profile.familyHistory],
   ];
   const age = (profile.birthDate ? ageFromBirthDate(profile.birthDate) : null) ?? ageOf(profile.birthYear);
 
   return (
     <div className="space-y-6 pb-2">
       <PageHeader
-        title="我的档案"
+        title={L("我的档案", "My profile")}
         aside={
           <Link
             href="/me/settings"
-            aria-label="设置"
+            aria-label={L("设置", "Settings")}
             className={cn(
               "press -mr-2 flex h-12 w-12 items-center justify-center rounded-xl text-ink-2 transition hover:bg-surface-2 hover:text-ink",
               focusRing,
@@ -84,7 +85,7 @@ export default function MePage() {
             <h2 className="name-title text-ink">{profile.name}</h2>
             <p className="t-body mt-0.5 text-ink-2">
               {/* each part stays whole when the line wraps on a narrow phone */}
-              {[profile.gender, `${age} 岁`, profile.education].filter(Boolean).map((part, i) => (
+              {[genderLabel(profile.gender), ageLabel(age), profile.education ? educationLabel(profile.education) : null].filter(Boolean).map((part, i) => (
                 <Fragment key={i}>
                   {i > 0 && <span className="mx-1.5 text-ink-3">·</span>}
                   <span className="whitespace-nowrap">{part}</span>
@@ -93,12 +94,12 @@ export default function MePage() {
             </p>
           </div>
           <LinkButton href="/me/edit" variant="secondary" size="sm" className="press shrink-0 self-center">
-            修改
+            {L("修改", "Edit")}
           </LinkButton>
         </div>
         <dl className="divide-y divide-line border-t border-line">
           {facts
-            .filter(([label, list]) => list.length || label === "基础病和以往病史" || label === "过敏史")
+            .filter(([, list]) => list.length || list === profile.conditions || list === profile.allergies)
             .map(([label, list]) => {
               // allergies must not be missed by anyone reading the card
               const allergy = list === profile.allergies;
@@ -113,7 +114,7 @@ export default function MePage() {
                   <div className="min-w-0 flex-1">
                     <dt className={cn("text-base font-medium", warn ? "text-danger" : "text-ink-2")}>{label}</dt>
                     <dd className={cn("t-body mt-0.5", list.length ? "text-ink" : "text-ink-3", warn && "text-lg font-medium")}>
-                      {list.length ? list.join("、") : "还没填"}
+                      {list.length ? list.join(L("、", ", ")) : L("还没填", "Not filled in yet")}
                     </dd>
                   </div>
                 </div>
@@ -121,7 +122,7 @@ export default function MePage() {
             })}
           {profile.notes && (
             <div className="px-4 py-3">
-              <dt className="text-base font-medium text-ink-2">还想让医生知道的</dt>
+              <dt className="text-base font-medium text-ink-2">{L("还想让医生知道的", "Anything else for the doctor")}</dt>
               <dd className="t-body mt-0.5 text-ink">{profile.notes}</dd>
             </div>
           )}
@@ -132,7 +133,7 @@ export default function MePage() {
             <Phone />
           </IconTile>
           <dl className="min-w-0 flex-1">
-            <dt className="text-base font-medium text-ink-2">紧急联系人</dt>
+            <dt className="text-base font-medium text-ink-2">{L("紧急联系人", "Emergency contact")}</dt>
             {contact ? (
               <dd className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                 <span className="text-lg font-medium text-ink">{[contact.relation, contact.name].filter(Boolean).join(" ")}</span>
@@ -140,9 +141,9 @@ export default function MePage() {
               </dd>
             ) : (
               <dd className="flex flex-wrap items-center justify-between gap-x-3 text-lg text-ink-2">
-                还没有紧急联系人
+                {L("还没有紧急联系人", "No emergency contact yet")}
                 <TextLink href="/me/edit#contact" className="-my-2 -mr-2">
-                  去填
+                  {L("去填", "Add one")}
                 </TextLink>
               </dd>
             )}
@@ -161,32 +162,36 @@ export default function MePage() {
           </IconTile>
           <div className="min-w-0 flex-1 pt-1">
             <p className="t-lead font-medium text-ink">
-              {fmtDate(state.nextVisit.at, { weekday: true })}要去看医生：{state.nextVisit.note}
+              {L(`${fmtDate(state.nextVisit.at, { weekday: true })}要去看医生：`, `Doctor's visit on ${fmtDate(state.nextVisit.at, { weekday: true })}: `)}
+              {state.nextVisit.note}
             </p>
             <TextButton className="mt-1 -ml-2" onClick={() => setNextVisit(null)}>
-              不用提醒了
+              {L("不用提醒了", "No more reminders")}
             </TextButton>
           </div>
         </Card>
       )}
 
       <section className="rise-3">
-        <SectionTitle>更多</SectionTitle>
+        <SectionTitle>{L("更多", "More")}</SectionTitle>
         <Card className="divide-y divide-line overflow-hidden">
           <Toggle
             checked={longTerm}
             onChange={(v) => updateSettings({ longTerm: v })}
             icon={<HeartPulse />}
-            label="长期管理"
-            detail="有糖尿病、高血压这类要长期记录的情况时打开。打开后，首页会按时问你一个数，比如今天的血糖。关掉后首页不再问，下面的「健康指标」和「这一年」也收起来，记录都还在。"
+            label={L("长期管理", "Long-term care")}
+            detail={L(
+              "有糖尿病、高血压这类要长期记录的情况时打开。打开后，首页会按时问你一个数，比如今天的血糖。关掉后首页不再问，下面的「健康指标」和「这一年」也收起来，记录都还在。",
+              "For diabetes, high blood pressure or anything tracked over time. The home page asks for one number on schedule, like today's blood sugar. Turned off, it stops asking and hides \"Health numbers\" and \"This year\". Your records stay.",
+            )}
           />
-          {longTerm && <RowLink href="/me/metrics" icon={<Activity />} title="健康指标" detail="血糖、血压、体重的记录和变化" className="press" />}
+          {longTerm && <RowLink href="/me/metrics" icon={<Activity />} title={L("健康指标", "Health numbers")} detail={L("血糖、血压、体重的记录和变化", "Blood sugar, blood pressure and weight over time")} className="press" />}
           {longTerm && hasYearOfData(state) && (
-            <RowLink href="/doctor/year" icon={<FileText />} title="给医生看：这一年" detail="复诊时把一年的变化交给医生" className="press" />
+            <RowLink href="/doctor/year" icon={<FileText />} title={L("给医生看：这一年", "For the doctor: this year")} detail={L("复诊时把一年的变化交给医生", "Show the doctor a year of changes at a follow-up visit")} className="press" />
           )}
-          <RowLink href="/ask" icon={<MessageCircleQuestion />} iconTone="info" title="问医伴" detail="记不清的，问我" className="press" />
-          <RowLink href="/sos" icon={<Siren />} iconTone="solidDanger" title="应急手册" detail="突发状况时，打开给身边的人看" className="press" />
-          <RowLink href="/me/settings" icon={<Settings />} iconTone="neutral" title="设置" detail="提醒、备份、演示数据" className="press" />
+          <RowLink href="/ask" icon={<MessageCircleQuestion />} iconTone="info" title={L("问医伴", "Ask VisitSmoothie")} detail={L("记不清的，问我", "Can't remember something? Ask me")} className="press" />
+          <RowLink href="/sos" icon={<Siren />} iconTone="solidDanger" title={L("应急手册", "Emergency guide")} detail={L("突发状况时，打开给身边的人看", "In an emergency, open this and show the people around you")} className="press" />
+          <RowLink href="/me/settings" icon={<Settings />} iconTone="neutral" title={L("设置", "Settings")} detail={L("提醒、备份、演示数据", "Reminders, backup, demo")} className="press" />
         </Card>
       </section>
     </div>
@@ -211,12 +216,12 @@ function PastHistory() {
   const save = () => {
     const { profile: next, surgeries, conditions } = addPastHistory(profile, text);
     if (!surgeries.length && !conditions.length) {
-      toast.show(text.trim() ? "这些档案里已经有了" : "还没写内容", "neutral");
+      toast.show(text.trim() ? L("这些档案里已经有了", "These are already in your profile") : L("还没写内容", "Nothing written yet"), "neutral");
       return;
     }
     setProfile(next);
     close();
-    toast.show(`已记进档案：${[...conditions, ...surgeries].join("、")}`, "good");
+    toast.show(L(`已记进档案：${[...conditions, ...surgeries].join("、")}`, `Added to your profile: ${[...conditions, ...surgeries].join(", ")}`), "good");
   };
   return (
     <Card className="p-4">
@@ -225,34 +230,39 @@ function PastHistory() {
           <History />
         </IconTile>
         <div className="min-w-0 flex-1 pt-0.5">
-          <p className="t-heading text-ink">以往病史</p>
-          <p className="t-body mt-1 text-ink-2">以前得过的病、受过的伤、做过的手术，补上以后，问诊时我会一起考虑。</p>
+          <p className="t-heading text-ink">{L("以往病史", "Past illnesses")}</p>
+          <p className="t-body mt-1 text-ink-2">
+            {L(
+              "以前得过的病、受过的伤、做过的手术，补上以后，问诊时我会一起考虑。",
+              "Illnesses, injuries and operations you had before. Once added, I keep them in mind when we talk about how you feel.",
+            )}
+          </p>
         </div>
       </div>
       <Button size="lg" variant="secondary" className="press mt-4 w-full" onClick={() => setOpen(true)}>
         <NotebookPen className="h-6 w-6" />
-        补充以往病史
+        {L("补充以往病史", "Add past illnesses")}
       </Button>
       <Modal
         open={open}
-        title="补充以往病史"
+        title={L("补充以往病史", "Add past illnesses")}
         onClose={close}
         footer={
           <>
             <Button variant="ghost" onClick={close}>
-              先不写
+              {L("先不写", "Not now")}
             </Button>
-            <Button onClick={save}>记进档案</Button>
+            <Button onClick={save}>{L("记进档案", "Add to profile")}</Button>
           </>
         }
       >
-        <p className="t-body mb-3 text-ink-2">一行写一条，写上大概哪年。</p>
+        <p className="t-body mb-3 text-ink-2">{L("一行写一条，写上大概哪年。", "One per line, with roughly which year.")}</p>
         <Textarea
           autoFocus
           value={text}
           onChange={(e) => setText(e.target.value)}
-          aria-label="以往病史"
-          placeholder={"比如：\n2015 年阑尾切除\n2024 年右膝扭伤"}
+          aria-label={L("以往病史", "Past illnesses")}
+          placeholder={L("比如：\n2015 年阑尾切除\n2024 年右膝扭伤", "For example:\n2015 appendix removed\n2024 sprained right knee")}
           className="min-h-36"
         />
       </Modal>

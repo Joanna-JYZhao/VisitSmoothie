@@ -4,8 +4,39 @@
  */
 import type { Gender, Profile } from "../../lib/types";
 import { isDev } from "@/lib/dev";
+import { L } from "@/lib/lang";
 
 export const EDUCATION_OPTIONS = ["小学", "初中", "高中/中专", "大专", "本科及以上"] as const;
+
+/** How a saved education value reads on screen. The saved value itself stays as it is (Chinese). */
+export function educationLabel(e: string): string {
+  switch (e) {
+    case "小学":
+    case "小学及以下":
+      return L(e, "Primary school");
+    case "初中":
+      return L(e, "Middle school");
+    case "高中/中专":
+    case "高中或中专":
+      return L(e, "High school");
+    case "大专":
+      return L(e, "College");
+    case "本科及以上":
+      return L(e, "University");
+    default:
+      return e;
+  }
+}
+
+/** How a saved gender reads on screen; the saved value stays 男 / 女. */
+export function genderLabel(g: string): string {
+  if (g === "男") return L(g, "Male");
+  if (g === "女") return L(g, "Female");
+  return g;
+}
+
+/** "62 岁" / "62 years old". */
+export const ageLabel = (age: number | string) => L(`${age} 岁`, `${age}\u00a0years\u00a0old`); // kept on one line when it wraps
 
 /** Values saved by the earlier form, mapped onto today's options. */
 const LEGACY_EDUCATION: Record<string, string> = { 小学及以下: "小学", 高中或中专: "高中/中专" };
@@ -102,7 +133,20 @@ export function registerFromProfile(p: Profile): RegisterDraft {
 }
 
 export type RequiredField = "name" | "birthDate" | "gender" | "education";
-export const FIELD_NAME: Record<RequiredField, string> = { name: "姓名", birthDate: "出生日期", gender: "性别", education: "学历" };
+export const FIELD_NAME: Record<RequiredField, string> = {
+  get name() {
+    return L("姓名", "name");
+  },
+  get birthDate() {
+    return L("出生日期", "date of birth");
+  },
+  get gender() {
+    return L("性别", "gender");
+  },
+  get education() {
+    return L("学历", "education");
+  },
+};
 
 /** Which required items are still empty, in the order they appear on the form. */
 export function missingFields(d: RegisterDraft): RequiredField[] {
@@ -119,9 +163,10 @@ export function validateRegister(d: RegisterDraft, today: Date = new Date()): st
   // 开发者开关开着：必填都不必填
   if (isDev()) return null;
   const missing = missingFields(d);
-  if (missing.length) return `还差：${missing.map((f) => FIELD_NAME[f]).join("、")}。填上就能保存。`;
+  if (missing.length)
+    return L(`还差：${missing.map((f) => FIELD_NAME[f]).join("、")}。填上就能保存。`, `Still missing: ${missing.map((f) => FIELD_NAME[f]).join(", ")}. Fill these in to save.`);
   const age = ageFromBirthDate(d.birthDate, today);
-  if (age == null || age > 120) return "出生日期好像不对，请再选一下。";
+  if (age == null || age > 120) return L("出生日期好像不对，请再选一下。", "The date of birth doesn't look right. Please pick it again.");
   return null;
 }
 

@@ -420,7 +420,7 @@ export default function OnboardingPage() {
       <main className="onboarding-main is-register">
         <Link href="/welcome" className="onboarding-back">
           <ChevronLeft className="h-5 w-5" />
-          返回
+          {L("返回", "Back")}
         </Link>
         <div className="registration-layout">
           {/*
@@ -428,14 +428,14 @@ export default function OnboardingPage() {
             原来的大标题、步骤清单和重复的解释文字都去掉了，表单因此成为这一页的主角。
           */}
           <aside className="registration-guide">
-            <p className="registration-eyebrow">个人档案</p>
-            <p className="guide-hint">健康信息可跳过，之后可以补充。</p>
+            <p className="registration-eyebrow">{L("个人档案", "Your profile")}</p>
+            <p className="guide-hint">{L("健康信息可跳过，之后可以补充。", "You can skip the health questions and add them later.")}</p>
             <div className="guide-links">
               <Link href="/login" className="guide-link">
-                直接登录
+                {L("直接登录", "Sign in")}
               </Link>
               <Link href="/demo/lin" className="guide-link">
-                林叔：一次左膝痛（虚构）
+                {L("林叔：一次左膝痛（虚构）", "Uncle Lin: left knee pain (made up)")}
               </Link>
             </div>
           </aside>
@@ -444,7 +444,7 @@ export default function OnboardingPage() {
             <header className="registration-card-header">
               <div>
                 <p className="registration-eyebrow">LET’S GET TO KNOW YOU</p>
-                <h2 id="profile-title">建立个人档案</h2>
+                <h2 id="profile-title">{L("建立个人档案", "Make your profile")}</h2>
               </div>
               <button
                 type="button"
@@ -457,7 +457,7 @@ export default function OnboardingPage() {
                 <span className="guide-tile" aria-hidden="true">
                   <Camera />
                 </span>
-                <span>有体检报告？拍一下，我帮你填</span>
+                <span>{L("有体检报告？拍一下，我帮你填", "Have a check-up report? Take a photo and I'll fill this in")}</span>
                 <ChevronRight aria-hidden="true" />
               </button>
             </header>
@@ -473,8 +473,11 @@ export default function OnboardingPage() {
                   <Info aria-hidden="true" />
                   <span>
                     {takeLegacy
-                      ? `这台电脑上原来有「${legacy.name}」的档案和记录，已经帮你填好。注册后，它们会接到这个新账号里。`
-                      : `「${legacy.name}」原来的档案留在这台电脑上，不接到新账号。`}{" "}
+                      ? L(
+                          `这台电脑上原来有「${legacy.name}」的档案和记录，已经帮你填好。注册后，它们会接到这个新账号里。`,
+                          `This computer already has a profile and records for "${legacy.name}". They are filled in for you and will move to this new account when you sign up.`,
+                        )
+                      : L(`「${legacy.name}」原来的档案留在这台电脑上，不接到新账号。`, `The earlier profile for "${legacy.name}" stays on this computer and won't move to the new account.`)}{" "}
                     <button
                       type="button"
                       className="text-button"
@@ -484,7 +487,7 @@ export default function OnboardingPage() {
                         setForm(next ? registerFromProfile(legacy) : emptyRegister());
                       }}
                     >
-                      {takeLegacy ? "不要接，从空白开始" : "还是接过来"}
+                      {takeLegacy ? L("不要接，从空白开始", "Don't move it, start blank") : L("还是接过来", "Move it after all")}
                     </button>
                   </span>
                 </p>
@@ -498,9 +501,9 @@ export default function OnboardingPage() {
                 </p>
               )}
               <div className="registration-submit">
-                <p>留空的内容将标记为「未记录」，之后随时可以补充。</p>
+                <p>{L("留空的内容将标记为「未记录」，之后随时可以补充。", "Anything left empty is marked \"not recorded\". You can add it any time.")}</p>
                 <button type="submit" className="smoothie-button" disabled={saving}>
-                  {saving ? "正在保存…" : hasAccount ? "保存并开始" : "注册并保存"}
+                  {saving ? L("正在保存…", "Saving…") : hasAccount ? L("保存并开始", "Save and start") : L("注册并保存", "Sign up and save")}
                   <span aria-hidden="true">→</span>
                 </button>
               </div>
@@ -543,12 +546,12 @@ function Confirm({
   }));
   const [missing, setMissing] = useState<RequiredField[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const list = (items: string[]) => items.join("、");
-  const who = [r.name, r.gender ? genderLabel(r.gender) : "", r.birthYear != null ? `${r.birthYear} 年生（约 ${ageOf(r.birthYear)} 岁）` : ""].filter(Boolean);
+  const list = (items: string[]) => items.join(L("、", ", "));
+  const who = [r.name, r.gender ? genderLabel(r.gender) : "", r.birthYear != null ? L(`${r.birthYear} 年生（约 ${ageOf(r.birthYear)} 岁）`, `born ${r.birthYear} (about ${ageOf(r.birthYear)})`) : ""].filter(Boolean);
   const body = [
-    r.heightCm != null ? `身高 ${r.heightCm} cm` : "",
-    r.weightKg != null ? `体重 ${r.weightKg} kg` : "",
-    r.bloodType ? `${r.bloodType} 型血` : "",
+    r.heightCm != null ? L(`身高 ${r.heightCm} cm`, `height ${r.heightCm} cm`) : "",
+    r.weightKg != null ? L(`体重 ${r.weightKg} kg`, `weight ${r.weightKg} kg`) : "",
+    r.bloodType ? L(`${r.bloodType} 型血`, `blood type ${r.bloodType}`) : "",
   ].filter(Boolean);
   const when = r.date ? fmtDate(`${r.date}T12:00:00`, { year: true }) : "";
 
@@ -583,8 +586,8 @@ function Confirm({
           <IconTile tone="solid" size="lg" className="mb-4">
             <ScanText />
           </IconTile>
-          <h1 className="t-display text-ink">我从体检报告里认出了这些</h1>
-          <p className="t-lead mt-3 text-ink-2">看一眼对不对，再把下面带 * 的补上就能建档。</p>
+          <h1 className="t-display text-ink">{L("我从体检报告里认出了这些", "Here is what I read from your report")}</h1>
+          <p className="t-lead mt-3 text-ink-2">{L("看一眼对不对，再把下面带 * 的补上就能建档。", "Check that it's right, then fill in the items marked * below to make your profile.")}</p>
         </header>
 
         {sample && (
@@ -592,7 +595,7 @@ function Confirm({
             <IconTile tone="info" size="sm">
               <Info />
             </IconTile>
-            <p className="t-body min-w-0 flex-1 pt-1 text-ink">这是示例体检报告，人物是虚构的。</p>
+            <p className="t-body min-w-0 flex-1 pt-1 text-ink">{L("这是示例体检报告，人物是虚构的。", "This is a sample report. The person is made up.")}</p>
           </div>
         )}
 
@@ -602,7 +605,7 @@ function Confirm({
               <AlertCircle />
             </IconTile>
             <div className="min-w-0 flex-1 pt-1">
-              <p className="text-lg font-semibold text-ink">这几处我拿不准，请看一眼</p>
+              <p className="text-lg font-semibold text-ink">{L("这几处我拿不准，请看一眼", "I'm not sure about these. Please check")}</p>
               <ul className="t-body mt-1 space-y-1 text-ink">
                 {r.unclear.map((u, i) => (
                   <li key={i}>· {u}</li>
@@ -615,12 +618,12 @@ function Confirm({
         {/* the report as it was read: a typeset sheet, one labelled row per thing found */}
         <Card tone="raised" className="divide-y divide-line overflow-hidden rounded-[20px]">
           {who.length > 0 && (
-            <Row label="报告上的你">
-              <span className="t-heading block text-ink">{who.join("，")}</span>
-              {body.length > 0 && <span className="mt-1 block">{body.join("，")}</span>}
+            <Row label={L("报告上的你", "You, on the report")}>
+              <span className="t-heading block text-ink">{who.join(L("，", ", "))}</span>
+              {body.length > 0 && <span className="mt-1 block">{body.join(L("，", ", "))}</span>}
             </Row>
           )}
-          <Row label="长期吃的药">
+          <Row label={L("长期吃的药", "Regular medicines")}>
             {r.medications.length ? (
               <ul className="space-y-0.5">
                 {r.medications.map((m, i) => (
@@ -628,18 +631,20 @@ function Confirm({
                 ))}
               </ul>
             ) : (
-              "报告上没有写"
+              L("报告上没有写", "Not on the report")
             )}
           </Row>
-          {r.surgeries.length > 0 && <Row label="做过的手术">{list(r.surgeries)}</Row>}
+          {r.surgeries.length > 0 && <Row label={L("做过的手术", "Past operations")}>{list(r.surgeries)}</Row>}
           {r.readings.length > 0 && (
-            <Row label={`这次体检的数${when ? `（${when}）` : ""}`}>
+            <Row label={L(`这次体检的数${when ? `（${when}）` : ""}`, `Numbers from this check-up${when ? ` (${when})` : ""}`)}>
               {list(r.readings.map(readingText))}
-              {!r.date && <span className="mt-1 block text-base text-ink-2">报告上没认出体检日期，这几个数只在这里给你看，不会记进档案。</span>}
+              {!r.date && <span className="mt-1 block text-base text-ink-2">
+                  {L("报告上没认出体检日期，这几个数只在这里给你看，不会记进档案。", "I couldn't find the check-up date, so these numbers are only shown here and not saved to your profile.")}
+                </span>}
             </Row>
           )}
           {r.abnormal.length > 0 && (
-            <Row label="报告上要留意的">
+            <Row label={L("报告上要留意的", "Worth noting on the report")}>
               <ul className="space-y-0.5">
                 {r.abnormal.map((a, i) => (
                   <li key={i}>{a}</li>
@@ -648,14 +653,14 @@ function Confirm({
             </Row>
           )}
           {r.advice && (
-            <Row label="体检建议">
+            <Row label={L("体检建议", "Check-up advice")}>
               <span className="whitespace-pre-line">{r.advice}</span>
             </Row>
           )}
         </Card>
 
         <Card className="smoothie-scope rounded-[20px] p-5">
-          <p className="t-heading mb-5 text-ink">你的资料（报告上有的已经填好，可以改）</p>
+          <p className="t-heading mb-5 text-ink">{L("你的资料（报告上有的已经填好，可以改）", "Your details (what was on the report is filled in; you can change it)")}</p>
           <RegisterFields draft={draft} onChange={change} missing={missing} birthYearHint={r.birthYear} />
         </Card>
         {extra && <Card className="smoothie-scope rounded-[20px] p-5">{extra}</Card>}
@@ -671,14 +676,19 @@ function Confirm({
 
         <div className="space-y-3">
           <Button size="lg" className="w-full" onClick={confirm}>
-            对，建档
+            {L("对，建档", "Yes, make my profile")}
           </Button>
           <Button variant="secondary" size="lg" className="w-full" onClick={onRetake}>
             <Camera className="h-5 w-5" aria-hidden="true" />
-            重新拍
+            {L("重新拍", "Take again")}
           </Button>
         </div>
-        <p className="t-body text-center text-balance text-ink-2">基础病只照抄报告上「既往史」里写的，不会因为某个数偏高就替你写上一种病。</p>
+        <p className="t-body text-center text-balance text-ink-2">
+          {L(
+            "基础病只照抄报告上「既往史」里写的，不会因为某个数偏高就替你写上一种病。",
+            "Health conditions are copied only from the report's past-history section. I never add an illness just because a number is high.",
+          )}
+        </p>
       </div>
     </StepFrame>
   );
@@ -699,12 +709,12 @@ function PasswordFields({ value, onChange }: { value: { password: string; confir
   return (
     <section className="registration-section history-section" aria-labelledby="password-heading">
       <div className="form-section-title">
-        <h3 id="password-heading">设置登录密码</h3>
-        <span>必填</span>
+        <h3 id="password-heading">{L("设置登录密码", "Set a password")}</h3>
+        <span>{L("必填", "Required")}</span>
       </div>
       <div className="field-grid">
         <div className="field">
-          <label htmlFor="password">密码</label>
+          <label htmlFor="password">{L("密码", "Password")}</label>
           <input
             type="password"
             id="password"
@@ -714,10 +724,10 @@ function PasswordFields({ value, onChange }: { value: { password: string; confir
             onChange={(e) => onChange({ ...value, password: e.target.value })}
             aria-describedby="password-hint"
           />
-          <small id="password-hint">{`${PASSWORD_MIN}–${PASSWORD_MAX} 个字，可以用一句好记的话。`}</small>
+          <small id="password-hint">{L(`${PASSWORD_MIN}–${PASSWORD_MAX} 个字，可以用一句好记的话。`, `${PASSWORD_MIN}–${PASSWORD_MAX} characters. A sentence you can remember works well.`)}</small>
         </div>
         <div className="field">
-          <label htmlFor="confirm-password">确认密码</label>
+          <label htmlFor="confirm-password">{L("确认密码", "Confirm password")}</label>
           <input
             type="password"
             id="confirm-password"

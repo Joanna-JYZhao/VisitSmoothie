@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { BrandLogo, LogoMark } from "./Logo";
+import { LangToggle } from "./LangToggle";
+import { L } from "@/lib/lang";
 
 /* The Visit Smoothie header and footer, shared by the welcome screen and the registration screen. */
 
@@ -14,8 +16,12 @@ export function SmoothieHeader({ right }: { right?: React.ReactNode }) {
   return (
     <header className="onboarding-header">
       {brand}
-      <span className="onboarding-header-note">让每一次就诊，更从容一点。</span>
-      {right}
+      <span className="onboarding-header-note">{L("让每一次就诊，更从容一点。", "Making every doctor's visit a little calmer.")}</span>
+      {/* 中 / EN before signing in too, so the whole way in can be read in either language */}
+      <span className="onboarding-header-right">
+        <LangToggle segmented />
+        {right}
+      </span>
     </header>
   );
 }
@@ -24,7 +30,7 @@ export function SmoothieFooter() {
   return (
     <footer className="onboarding-footer">
       <span>VisitSmoothie</span>
-      <span>档案保存在这台电脑上。</span>
+      <span>{L("档案保存在这台电脑上。", "Your profile is kept on this computer.")}</span>
     </footer>
   );
 }

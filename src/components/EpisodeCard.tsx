@@ -167,7 +167,7 @@ export function EpisodeCard({ episode: e, now, quiet = false }: { episode: Episo
       <div className="mt-6 border-t border-line pt-6">
         {pending ? (
           <p className="flex min-h-12 items-center gap-3 text-lg text-ink-2">
-            <TypingDots /> {L("医伴正在想", "Yiban is thinking")}
+            <TypingDots /> {L("医伴正在想", "VisitSmoothie is thinking")}
           </p>
         ) : unfinished ? (
           <>

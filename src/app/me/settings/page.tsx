@@ -8,19 +8,20 @@ import { aiHealth, type AiHealth } from "@/lib/ai/client";
 import { cn, fmtISODate } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 import { Button, Card, IconTile, LinkButton, Modal, PageHeader, SectionTitle, Select, Spinner, Toggle, type IconTone } from "@/components/ui";
+import { L } from "@/lib/lang";
 
 type Perm = NotificationPermission | "unsupported";
-const INTERVALS = [
-  { hours: 12, label: "一天两次" },
-  { hours: 24, label: "每天一次" },
-  { hours: 48, label: "两天一次" },
+const intervals = () => [
+  { hours: 12, label: L("一天两次", "Twice a day") },
+  { hours: 24, label: L("每天一次", "Once a day") },
+  { hours: 48, label: L("两天一次", "Every two days") },
 ];
-const METRIC_CADENCE = [
-  { hours: 24, label: "每天" },
-  { hours: 48, label: "两天一次" },
-  { hours: 72, label: "三天一次" },
-  { hours: 168, label: "每周" },
-  { hours: 0, label: "不提醒" },
+const metricCadence = () => [
+  { hours: 24, label: L("每天", "Every day") },
+  { hours: 48, label: L("两天一次", "Every two days") },
+  { hours: 72, label: L("三天一次", "Every three days") },
+  { hours: 168, label: L("每周", "Every week") },
+  { hours: 0, label: L("不提醒", "Never") },
 ];
 
 /** One row of a settings group, the way iOS Settings lays one out: tile, title, detail, then the control under it. */
@@ -81,7 +82,7 @@ export default function SettingsPage() {
     if (perm === "unsupported") return;
     if (!on) {
       updateSettings({ notificationsEnabled: false });
-      toast.show("已关掉提醒");
+      toast.show(L("已关掉提醒", "Reminders turned off"));
       return;
     }
     const p = perm === "granted" ? "granted" : await Notification.requestPermission();
@@ -89,13 +90,13 @@ export default function SettingsPage() {
     if (p === "granted") {
       updateSettings({ notificationsEnabled: true });
       try {
-        new Notification("医伴", { body: "提醒已经打开。到了该问你的时候，我会来提醒。" });
+        new Notification(L("医伴", "VisitSmoothie"), { body: L("提醒已经打开。到了该问你的时候，我会来提醒。", "Reminders are on. I'll remind you when it's time to check in.") });
       } catch {
         /* ignore */
       }
-      toast.show("已打开提醒", "good");
+      toast.show(L("已打开提醒", "Reminders turned on"), "good");
     } else {
-      toast.show("浏览器没有允许通知。请在地址栏左边的网站设置里允许", "danger");
+      toast.show(L("浏览器没有允许通知。请在地址栏左边的网站设置里允许", "The browser blocked notifications. Allow them in the site settings left of the address bar"), "danger");
     }
   };
 
@@ -104,8 +105,8 @@ export default function SettingsPage() {
     const h = await aiHealth(true);
     setHealth(h);
     setPinging(false);
-    if (h.ok) toast.show(`连接正常，用了 ${((h.latencyMs ?? 0) / 1000).toFixed(1)} 秒`, "good");
-    else toast.show(h.configured ? "没连上，请检查 Key 和网络" : "还没有配置 API Key", "danger");
+    if (h.ok) toast.show(L(`连接正常，用了 ${((h.latencyMs ?? 0) / 1000).toFixed(1)} 秒`, `Connected in ${((h.latencyMs ?? 0) / 1000).toFixed(1)} s`), "good");
+    else toast.show(h.configured ? L("没连上，请检查 Key 和网络", "Not connected. Check the Key and the network") : L("还没有配置 API Key", "No API Key set up yet"), "danger");
   };
 
   const download = () => {
@@ -116,7 +117,7 @@ export default function SettingsPage() {
     a.download = `yiban-backup-${fmtISODate(new Date())}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.show("备份文件已经下载", "good");
+    toast.show(L("备份文件已经下载", "Backup file downloaded"), "good");
   };
 
   // the AI row glows by its state: checking, connected, not reachable, not set up
@@ -131,21 +132,28 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 pb-2">
-      <PageHeader back={{ href: "/me", label: "我的档案" }} title="设置" />
+      <PageHeader back={{ href: "/me", label: L("我的档案", "My profile") }} title={L("设置", "Settings")} />
 
       <section className="rise-1">
-        <SectionTitle>提醒</SectionTitle>
+        <SectionTitle>{L("提醒", "Reminders")}</SectionTitle>
         <Card className="divide-y divide-line overflow-hidden">
-          <Block icon={<Timer />} title="多久问我一次" detail="有不舒服在跟踪时，我按这个节奏在首页问你怎么样了。拖了两周以上的，改成每周问一次。">
+          <Block
+            icon={<Timer />}
+            title={L("多久问我一次", "How often to ask me")}
+            detail={L(
+              "有不舒服在跟踪时，我按这个节奏在首页问你怎么样了。拖了两周以上的，改成每周问一次。",
+              "While I'm following something that bothers you, I ask how you are on the home page this often. After two weeks, I ask once a week.",
+            )}
+          >
             <Select
               value={String(interval)}
-              aria-label="多久问我一次"
+              aria-label={L("多久问我一次", "How often to ask me")}
               onChange={(e) => {
                 updateSettings({ checkInIntervalHours: Number(e.target.value) });
-                toast.show("已改好", "good");
+                toast.show(L("已改好", "Changed"), "good");
               }}
             >
-              {INTERVALS.map((i) => (
+              {intervals().map((i) => (
                 <option key={i.hours} value={i.hours}>
                   {i.label}
                 </option>
@@ -153,16 +161,21 @@ export default function SettingsPage() {
             </Select>
           </Block>
           {state.settings.longTerm && (
-            <Block icon={<Droplets />} iconTone="info" title="多久提醒我记血糖" detail="血压和体重最多每周提醒一次。">
+            <Block
+              icon={<Droplets />}
+              iconTone="info"
+              title={L("多久提醒我记血糖", "How often to remind me about blood sugar")}
+              detail={L("血压和体重最多每周提醒一次。", "Blood pressure and weight: at most once a week.")}
+            >
               <Select
                 value={String(state.settings.metricReminderHours)}
-                aria-label="多久提醒我记血糖"
+                aria-label={L("多久提醒我记血糖", "How often to remind me about blood sugar")}
                 onChange={(e) => {
                   updateSettings({ metricReminderHours: Number(e.target.value) });
-                  toast.show("已改好", "good");
+                  toast.show(L("已改好", "Changed"), "good");
                 }}
               >
-                {METRIC_CADENCE.map((c) => (
+                {metricCadence().map((c) => (
                   <option key={c.hours} value={c.hours}>
                     {c.label}
                   </option>
@@ -174,11 +187,14 @@ export default function SettingsPage() {
             <Block
               icon={<BellOff />}
               iconTone="neutral"
-              title="弹出提醒"
+              title={L("弹出提醒", "Pop-up reminders")}
               detail={
                 perm === "unsupported"
-                  ? "这个浏览器不能弹出提醒。打开医伴时，首页照样会问你。"
-                  : "浏览器不允许这个网站发通知。请在地址栏左边的网站设置里允许，再回来打开。"
+                  ? L("这个浏览器不能弹出提醒。打开医伴时，首页照样会问你。", "This browser can't show pop-up reminders. The home page still asks you when you open VisitSmoothie.")
+                  : L(
+                      "浏览器不允许这个网站发通知。请在地址栏左边的网站设置里允许，再回来打开。",
+                      "The browser doesn't allow this site to send notifications. Allow them in the site settings left of the address bar, then come back and turn this on.",
+                    )
               }
             />
           ) : (
@@ -187,75 +203,102 @@ export default function SettingsPage() {
               onChange={(v) => void toggleNotify(v)}
               icon={<Bell />}
               iconTone={notifyOn ? "solid" : "brand"}
-              label="弹出提醒"
-              detail="网页开着的时候，到时间会弹出一条通知。关掉网页就不会提醒了。"
+              label={L("弹出提醒", "Pop-up reminders")}
+              detail={L("网页开着的时候，到时间会弹出一条通知。关掉网页就不会提醒了。", "While this page is open, a notification pops up when it's time. Close the page and the reminders stop.")}
             />
           )}
         </Card>
       </section>
 
       <section className="rise-2">
-        <SectionTitle>我的数据</SectionTitle>
+        <SectionTitle>{L("我的数据", "My data")}</SectionTitle>
         <Card className="divide-y divide-line overflow-hidden">
           <Block
             icon={<HardDrive />}
             iconTone="neutral"
-            title="数据存在哪里"
-            detail="档案和记录只存在这台设备的浏览器里，每个账号分开存。只有在你和医伴说话、整理给医生看的内容、认照片和语音的时候，相关内容才会发给 AI 模型。"
+            title={L("数据存在哪里", "Where your data is kept")}
+            detail={L(
+              "档案和记录只存在这台设备的浏览器里，每个账号分开存。只有在你和医伴说话、整理给医生看的内容、认照片和语音的时候，相关内容才会发给 AI 模型。",
+              "Your profile and records are kept only in this device's browser, separately for each account. Only when you talk with VisitSmoothie, prepare a page for the doctor, or read a photo or voice note is the related content sent to the AI model.",
+            )}
           />
-          <Block icon={<Download />} title="备份" detail="把档案和全部记录存成一个文件。">
+          <Block icon={<Download />} title={L("备份", "Backup")} detail={L("把档案和全部记录存成一个文件。", "Save your profile and all records as one file.")}>
             <Button variant="secondary" className="press" onClick={download}>
               <Download className="h-5 w-5" />
-              下载备份
+              {L("下载备份", "Download backup")}
             </Button>
           </Block>
-          <Block icon={<Play />} iconTone="info" title="看看演示" detail="林叔是虚构的病人，有一次左膝痛的记录。打开演示会先退出你的账号，你的档案和记录不受影响。">
+          <Block
+            icon={<Play />}
+            iconTone="info"
+            title={L("看看演示", "See a demo")}
+            detail={L(
+              "林叔是虚构的病人，有一次左膝痛的记录。打开演示会先退出你的账号，你的档案和记录不受影响。",
+              "Uncle Lin is a made-up patient with a record of left knee pain. Opening the demo signs you out first; your profile and records are not changed.",
+            )}
+          >
             <LinkButton href="/demo/lin" variant="secondary" className="press">
-              林叔的演示
+              {L("林叔的演示", "Uncle Lin's demo")}
             </LinkButton>
           </Block>
-          <Block icon={<Trash2 />} iconTone="danger" title="全部清空" detail="删掉这个账号的档案和所有记录，从头开始。账号本身还在。">
+          <Block
+            icon={<Trash2 />}
+            iconTone="danger"
+            title={L("全部清空", "Erase everything")}
+            detail={L("删掉这个账号的档案和所有记录，从头开始。账号本身还在。", "Delete this account's profile and all records and start over. The account itself stays.")}
+          >
             <Button variant="dangerSoft" className="press" onClick={() => setConfirm("reset")}>
-              全部清空
+              {L("全部清空", "Erase everything")}
             </Button>
           </Block>
         </Card>
       </section>
 
       <section className="rise-3">
-        <SectionTitle>关于</SectionTitle>
+        <SectionTitle>{L("关于", "About")}</SectionTitle>
         <Card className="divide-y divide-line overflow-hidden">
           <Block
             icon={<Info />}
             iconTone="neutral"
-            title="使用须知"
-            detail="医伴只帮你记录、整理和提醒，不做诊断，不建议用药。指标的范围是一般的标准，你自己的目标听医生的。胸痛、喘不上气、神志不清、大出血这类急事，请立即拨打 120。"
+            title={L("使用须知", "Please note")}
+            detail={L(
+              "医伴只帮你记录、整理和提醒，不做诊断，不建议用药。指标的范围是一般的标准，你自己的目标听医生的。胸痛、喘不上气、神志不清、大出血这类急事，请立即拨打 120。",
+              "VisitSmoothie only helps you record, organize and remember. It does not diagnose or suggest medicines. Ranges for health numbers are general; your own targets come from your doctor. For emergencies like chest pain, trouble breathing, confusion or heavy bleeding, call 120 right away.",
+            )}
           />
           <Block
             icon={<Sparkles />}
             iconTone={aiTone}
-            title="AI 连接"
+            title={L("AI 连接", "AI connection")}
             mark={<span aria-hidden="true" className={cn("inline-block h-2.5 w-2.5 rounded-full transition-all duration-300", aiLight, !health && "animate-breathe")} />}
             detail={
               !health ? (
                 <span className="inline-flex items-center gap-2.5">
                   <Spinner className="h-5 w-5" />
-                  正在检查…
+                  {L("正在检查…", "Checking…")}
                 </span>
               ) : health.configured ? (
                 <>
-                  已连接智谱 GLM。对话 {health.model}，认照片 {health.visionModel}，听语音 {health.speechModel}
-                  {health.ok === true && health.latencyMs != null && `。刚才测试用了 ${(health.latencyMs / 1000).toFixed(1)} 秒`}
-                  {health.ok === false && "。刚才测试没连上，对话会先用内置规则顶上"}
-                  。Key 和模型名在项目根目录的 .env.local 里改。
+                  {L("已连接智谱 GLM。对话 ", "Connected to Zhipu GLM. Chat ")}
+                  {health.model}
+                  {L("，认照片 ", ", photos ")}
+                  {health.visionModel}
+                  {L("，听语音 ", ", voice ")}
+                  {health.speechModel}
+                  {health.ok === true && health.latencyMs != null && L(`。刚才测试用了 ${(health.latencyMs / 1000).toFixed(1)} 秒`, `. The last test took ${(health.latencyMs / 1000).toFixed(1)} s`)}
+                  {health.ok === false && L("。刚才测试没连上，对话会先用内置规则顶上", ". The last test failed; built-in rules answer for now")}
+                  {L("。Key 和模型名在项目根目录的 .env.local 里改。", ". Change the Key and model names in .env.local at the project root.")}
                 </>
               ) : (
-                "还没有配置 GLM API Key。现在用内置规则回答，不能听语音、认照片。把 Key 填进 .env.local 再重启就可以了。"
+                L(
+                  "还没有配置 GLM API Key。现在用内置规则回答，不能听语音、认照片。把 Key 填进 .env.local 再重启就可以了。",
+                  "No GLM API Key set up yet. Built-in rules answer for now; voice and photos don't work. Put the Key in .env.local and restart.",
+                )
               )
             }
           >
             <Button variant="secondary" className="press" onClick={ping} loading={pinging}>
-              测试连接
+              {L("测试连接", "Test connection")}
             </Button>
           </Block>
         </Card>
@@ -263,12 +306,12 @@ export default function SettingsPage() {
 
       <Modal
         open={confirm === "reset"}
-        title="全部清空？"
+        title={L("全部清空？", "Erase everything?")}
         onClose={() => setConfirm(null)}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirm(null)}>
-              不清了
+              {L("不清了", "Keep it")}
             </Button>
             <Button
               variant="danger"
@@ -278,7 +321,7 @@ export default function SettingsPage() {
                 router.replace("/onboarding");
               }}
             >
-              全部清空
+              {L("全部清空", "Erase everything")}
             </Button>
           </>
         }
@@ -287,7 +330,7 @@ export default function SettingsPage() {
           <IconTile tone="solidDanger" size="lg">
             <Trash2 />
           </IconTile>
-          <p className="t-lead pt-1.5 text-ink">档案、全部记录和对话都会删掉，找不回来。</p>
+          <p className="t-lead pt-1.5 text-ink">{L("档案、全部记录和对话都会删掉，找不回来。", "Your profile, all records and conversations will be deleted for good.")}</p>
         </div>
       </Modal>
     </div>

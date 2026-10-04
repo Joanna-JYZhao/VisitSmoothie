@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { L } from "@/lib/lang";
 
 export function ChipsInput({
   value,
@@ -42,7 +43,7 @@ export function ChipsInput({
               type="button"
               onClick={() => onChange(value.filter((x) => x !== v))}
               className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-brand-700 transition hover:bg-brand-100 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
-              aria-label={`移除 ${v}`}
+              aria-label={L(`移除 ${v}`, `Remove ${v}`)}
             >
               <X className="h-5 w-5" />
             </button>
@@ -62,7 +63,7 @@ export function ChipsInput({
             }
           }}
           onBlur={() => text && add(text)}
-          placeholder={value.length ? "继续添加…" : placeholder}
+          placeholder={value.length ? L("继续添加…", "Add more…") : placeholder}
           className="h-12 min-w-[8rem] flex-1 bg-transparent px-2.5 text-lg text-ink outline-none placeholder:text-ink-3"
         />
       </div>

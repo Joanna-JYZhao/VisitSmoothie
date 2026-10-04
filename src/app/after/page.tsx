@@ -9,6 +9,7 @@ import { PhotoError, organizeVisit } from "@/lib/ai/client";
 import { followUpDate, medicationLine, newLongTermMedications, saveAfter } from "@/lib/after";
 import { compressImage } from "@/lib/image";
 import { cn, fmtDate, fmtISODate } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { useAiAvailable } from "@/components/AiStatus";
 import { MicButton } from "@/components/MicButton";
 import { useToast } from "@/components/Toast";
@@ -83,10 +84,10 @@ function After() {
       const reason = err instanceof PhotoError ? err.reason : "failed";
       setProblem(
         reason === "unavailable"
-          ? "现在认不了照片。可以说给我听，或者打字。"
+          ? L("现在认不了照片。可以说给我听，或者打字。", "Photos can't be read right now. Tell me instead, or type it.")
           : reason === "unreadable"
-            ? "这张照片上没认出看病的内容。换个角度、光线亮一点再拍一张，或者说给我听。"
-            : "照片没认出来。可以再拍一张，或者说给我听。",
+            ? L("这张照片上没认出看病的内容。换个角度、光线亮一点再拍一张，或者说给我听。", "Nothing about the visit was found in this photo. Try another angle in brighter light, or tell me instead.")
+            : L("照片没认出来。可以再拍一张，或者说给我听。", "The photo couldn't be read. Take another one, or tell me instead."),
       );
       setStage({ kind: "input" });
     }
@@ -100,7 +101,7 @@ function After() {
       setPhotos(all);
       void organize(text, all);
     } catch {
-      setProblem("这张照片打不开，换一张试试。");
+      setProblem(L("这张照片打不开，换一张试试。", "This photo won't open. Try another one."));
     }
   };
 
@@ -121,11 +122,11 @@ function After() {
 
   const finish = (remindAt?: string) => {
     const where = episode
-      ? `已存到「${episode.title}」的记录里`
+      ? L(`已存到「${episode.title}」的记录里`, `Saved to the records for "${episode.title}"`)
       : linked.current.length
-        ? `已存进我的档案，也记到「${linked.current.join("」「")}」下面了`
-        : "已存进我的档案";
-    toast.show(remindAt ? `${where}。${fmtDate(remindAt)}我会提醒你` : where, "good");
+        ? L(`已存进我的档案，也记到「${linked.current.join("」「")}」下面了`, `Saved to My profile, and also under "${linked.current.join('", "')}"`)
+        : L("已存进我的档案", "Saved to My profile");
+    toast.show(remindAt ? L(`${where}。${fmtDate(remindAt)}我会提醒你`, `${where}. I'll remind you on ${fmtDate(remindAt)}.`) : where, "good");
     router.replace("/");
   };
 
@@ -142,11 +143,11 @@ function After() {
     const { result, names } = stage;
     return (
       <Question
-        title="已存档。"
-        ask={`${names.map((m) => `「${m.name}」`).join("、")}是要长期吃的药吗？`}
-        note="是的话我加进你的长期用药，以后每次给医生看的内容里都会带上。"
-        yes="是，加进去"
-        no="不是"
+        title={L("已存档。", "Saved.")}
+        ask={L(`${names.map((m) => `「${m.name}」`).join("、")}是要长期吃的药吗？`, `Is ${names.map((m) => `"${m.name}"`).join(", ")} a medicine you take long term?`)}
+        note={L("是的话我加进你的长期用药，以后每次给医生看的内容里都会带上。", "If so, I'll add it to your regular medicines, and it will be on every page you show the doctor.")}
+        yes={L("是，加进去", "Yes, add it")}
+        no={L("不是", "No")}
         onYes={() => {
           addMedications(names.map(medicationLine));
           afterSave(result, { medicines: true });
@@ -160,10 +161,13 @@ function After() {
     const { result, at } = stage;
     return (
       <Question
-        title="已存档。"
-        ask={`医生让你 ${fmtDate(at, { weekday: true })} 前后再去${result.followUpNote ? `：${result.followUpNote.replace(/[。.；;，,\s]+$/, "")}` : "复查"}。到时候提醒你吗？`}
-        yes="提醒我"
-        no="不用"
+        title={L("已存档。", "Saved.")}
+        ask={L(
+          `医生让你 ${fmtDate(at, { weekday: true })} 前后再去${result.followUpNote ? `：${result.followUpNote.replace(/[。.；;，,\s]+$/, "")}` : "复查"}。到时候提醒你吗？`,
+          `The doctor wants you back around ${fmtDate(at, { weekday: true })}${result.followUpNote ? `: ${result.followUpNote.replace(/[。.；;，,\s]+$/, "")}` : ""}. Remind you then?`,
+        )}
+        yes={L("提醒我", "Remind me")}
+        no={L("不用", "No, thanks")}
         onYes={() => {
           if (episode) updateEpisode(episode.id, (e) => (e.visit ? { ...e, visit: { ...e.visit, followUpAt: at } } : e));
           else setNextVisit({ at, note: result.followUpNote ?? "复查" });
@@ -193,7 +197,7 @@ function After() {
     const short = (r.diagnosis?.length ?? 0) <= 12;
     return (
       <div className="space-y-6">
-        <PageHeader back={{ href: back }} title="我整理成这样" sub="看一眼对不对，对就存档。" />
+        <PageHeader back={{ href: back }} title={L("我整理成这样", "Here's what I got")} sub={L("看一眼对不对，对就存档。", "Check that it's right, then save it.")} />
 
         {r.unclear.length > 0 && (
           <div className="flex animate-fade-up gap-4 rounded-card border border-warn/20 bg-warn-bg px-5 py-4">
@@ -201,7 +205,7 @@ function After() {
               <CircleAlert className="h-5 w-5" />
             </IconTile>
             <div className="min-w-0 flex-1 pt-1.5">
-              <p className="text-lg leading-snug font-semibold text-ink">这几处我拿不准，请看一眼</p>
+              <p className="text-lg leading-snug font-semibold text-ink">{L("这几处我拿不准，请看一眼", "I'm not sure about these. Please check.")}</p>
               <ul className="mt-2 space-y-1.5 text-lg leading-relaxed text-ink">
                 {r.unclear.map((u, i) => (
                   <li key={i} className="flex gap-2">
@@ -223,16 +227,16 @@ function After() {
               <IconTile tone="brand" size="sm">
                 <Stethoscope className={ic} />
               </IconTile>
-              医生的诊断
+              {L("医生的诊断", "The doctor's diagnosis")}
             </p>
             {r.diagnosis ? (
               <h2 className={cn("mt-3 text-balance text-ink", short ? "t-display" : "t-title")}>{r.diagnosis}</h2>
             ) : (
-              <p className="t-lead mt-3 text-ink-2">这次没有提到新的诊断</p>
+              <p className="t-lead mt-3 text-ink-2">{L("这次没有提到新的诊断", "No new diagnosis this time")}</p>
             )}
           </div>
           {r.findings.length > 0 && (
-            <Block label="检查结果" icon={<ClipboardList className={ic} />} tone="info">
+            <Block label={L("检查结果", "Test results")} icon={<ClipboardList className={ic} />} tone="info">
               <ul className="space-y-1">
                 {r.findings.map((f, i) => (
                   <li key={i}>{f}</li>
@@ -241,11 +245,11 @@ function After() {
             </Block>
           )}
           {r.procedures.length > 0 && (
-            <Block label="当场做的处理" icon={<Syringe className={ic} />} tone="neutral">
+            <Block label={L("当场做的处理", "Treatment given there")} icon={<Syringe className={ic} />} tone="neutral">
               {r.procedures.join("；")}
             </Block>
           )}
-          <Block label="开的药" icon={<Pill className={ic} />}>
+          <Block label={L("开的药", "Medicines")} icon={<Pill className={ic} />}>
             {r.medications.length ? (
               <ul className="-mx-2 divide-y divide-line">
                 {r.medications.map((m, i) => (
@@ -261,26 +265,26 @@ function After() {
                 ))}
               </ul>
             ) : (
-              <span className="text-ink-2">没有开药</span>
+              <span className="text-ink-2">{L("没有开药", "No medicines prescribed")}</span>
             )}
           </Block>
           {r.advice && (
-            <Block label="医生的叮嘱" icon={<MessageSquareText className={ic} />} tone="neutral">
+            <Block label={L("医生的叮嘱", "The doctor's advice")} icon={<MessageSquareText className={ic} />} tone="neutral">
               {r.advice}
             </Block>
           )}
           {(r.followUpDays || r.followUpNote) && (
-            <Block label="复查" icon={<CalendarClock className={ic} />} className="bg-brand-50/50">
-              <span className="text-lg leading-relaxed font-medium text-brand-800">{r.followUpNote ?? `${r.followUpDays} 天后`}</span>
-              {at && <span className="text-ink-2">（{fmtDate(at)}前后）</span>}
+            <Block label={L("复查", "Follow-up visit")} icon={<CalendarClock className={ic} />} className="bg-brand-50/50">
+              <span className="text-lg leading-relaxed font-medium text-brand-800">{r.followUpNote ?? L(`${r.followUpDays} 天后`, `In ${r.followUpDays} days`)}</span>
+              {at && <span className="text-ink-2">{L(`（${fmtDate(at)}前后）`, ` (around ${fmtDate(at)})`)}</span>}
             </Block>
           )}
-          <Block label="哪天看的" icon={<CalendarDays className={ic} />} tone="neutral">
-            {r.date ? fmtDate(`${r.date}T12:00:00`, { year: true }) : "今天"}
-            {where && <span className="text-ink-2">　{where}</span>}
+          <Block label={L("哪天看的", "Date of visit")} icon={<CalendarDays className={ic} />} tone="neutral">
+            {r.date ? fmtDate(`${r.date}T12:00:00`, { year: true }) : L("今天", "Today")}
+            {where && <span className="text-ink-2">{L("　", " · ")}{where}</span>}
           </Block>
           {r.summary && (
-            <Block label="存档时会这样写" icon={<FileText className={ic} />} tone="neutral" className="bg-surface-2/60">
+            <Block label={L("存档时会这样写", "It will be saved as")} icon={<FileText className={ic} />} tone="neutral" className="bg-surface-2/60">
               <span className="text-ink-2">{r.summary}</span>
             </Block>
           )}
@@ -292,18 +296,21 @@ function After() {
               <Info className="h-5 w-5" />
             </IconTile>
             <p className="min-w-0 flex-1 pt-1.5 text-lg leading-relaxed text-ink">
-              你的档案里写着对{profile.allergies.join("、")}过敏。开新药的时候，记得让医生或药师知道。
+              {L(
+                `你的档案里写着对${profile.allergies.join("、")}过敏。开新药的时候，记得让医生或药师知道。`,
+                `Allergies in your records: ${profile.allergies.join("; ")}. When you get a new medicine, tell the doctor or pharmacist.`,
+              )}
             </p>
           </div>
         )}
 
         <div className="space-y-3">
           <Button size="lg" className="press w-full" onClick={() => save(r, stage.mode)}>
-            对，存档
+            {L("对，存档", "Yes, save it")}
           </Button>
           <div className="grid grid-cols-2 gap-3">
             <Button variant="secondary" className="press" onClick={() => setStage({ kind: "edit", result: r, mode: stage.mode })}>
-              改一下
+              {L("改一下", "Change")}
             </Button>
             <Button
               variant="secondary"
@@ -313,7 +320,7 @@ function After() {
                 setStage({ kind: "input" });
               }}
             >
-              重新来
+              {L("重新来", "Start over")}
             </Button>
           </div>
         </div>
@@ -329,8 +336,11 @@ function After() {
     <div className="space-y-6">
       <PageHeader
         back={{ href: back }}
-        title="看完医生了"
-        sub={`${episode ? `「${episode.title}」` : ""}医生怎么说的？${aiAvailable ? "拍下来，或者说给我听。" : "写下来就行，我来整理。"}`}
+        title={L("看完医生了", "I've seen the doctor")}
+        sub={L(
+          `${episode ? `「${episode.title}」` : ""}医生怎么说的？${aiAvailable ? "拍下来，或者说给我听。" : "写下来就行，我来整理。"}`,
+          `${episode ? `"${episode.title}": ` : ""}What did the doctor say? ${aiAvailable ? "Take a photo, or tell me." : "Just write it down and I'll sort it out."}`,
+        )}
       />
 
       {problem && (
@@ -349,8 +359,8 @@ function After() {
             <IconTile tone="brand" size="xl" className="mb-1 bg-surface shadow-glow">
               <Spinner className="h-8 w-8" />
             </IconTile>
-            <p className="t-heading text-ink">{stage.what === "photo" ? "正在认照片上的字" : "正在整理"}</p>
-            <p className="t-body text-ink-2">一般不到十秒。</p>
+            <p className="t-heading text-ink">{stage.what === "photo" ? L("正在认照片上的字", "Reading the photo") : L("正在整理", "Sorting it out")}</p>
+            <p className="t-body text-ink-2">{L("一般不到十秒。", "Usually under ten seconds.")}</p>
           </Card>
           <Card aria-hidden="true" className="divide-y divide-line overflow-hidden">
             <div className="space-y-4 px-5 pt-6 pb-5">
@@ -408,12 +418,12 @@ function After() {
                   <Camera strokeWidth={2.2} />
                 </IconTile>
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="t-title">拍照</span>
-                  <span className="text-base leading-snug text-ink-2">病历、处方、药盒、化验单都行</span>
+                  <span className="t-title">{L("拍照", "Take a photo")}</span>
+                  <span className="text-base leading-snug text-ink-2">{L("病历、处方、药盒、化验单都行", "Notes, prescriptions, medicine boxes or test results")}</span>
                 </span>
               </button>
               <div className="mt-1 flex justify-center">
-                <TextButton onClick={() => albumRef.current?.click()}>已经拍好了，从相册选</TextButton>
+                <TextButton onClick={() => albumRef.current?.click()}>{L("已经拍好了，从相册选", "Already have one? Choose from photos")}</TextButton>
               </div>
             </div>
           )}
@@ -421,7 +431,7 @@ function After() {
           <div className="rise-2">
             <MicButton
               big
-              label="说给我听"
+              label={L("说给我听", "Tell me")}
               maxSeconds={180}
               onText={(t) => {
                 const all = text ? `${text}${t}` : t;
@@ -436,10 +446,10 @@ function After() {
               {photos.map((src, i) => (
                 <li key={i} className="relative aspect-square animate-pop overflow-hidden rounded-2xl bg-surface-2 shadow-card ring-1 ring-line/80">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt={`第 ${i + 1} 张照片`} className="h-full w-full object-cover" />
+                  <img src={src} alt={L(`第 ${i + 1} 张照片`, `Photo ${i + 1}`)} className="h-full w-full object-cover" />
                   <button
                     type="button"
-                    aria-label={`去掉第 ${i + 1} 张照片`}
+                    aria-label={L(`去掉第 ${i + 1} 张照片`, `Remove photo ${i + 1}`)}
                     onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
                     className={cn(
                       // the dot is small so the photo stays visible; the area that takes the tap is 44px
@@ -459,27 +469,30 @@ function After() {
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="比如：医生说是急性咽炎，开了头孢和布洛芬，让多喝水，三天不退烧再去。"
-                aria-label="医生怎么说的"
+                placeholder={L(
+                  "比如：医生说是急性咽炎，开了头孢和布洛芬，让多喝水，三天不退烧再去。",
+                  "e.g. The doctor said it's a sore throat, gave me antibiotics and ibuprofen, said to drink lots of water and come back if the fever lasts three days.",
+                )}
+                aria-label={L("医生怎么说的", "What the doctor said")}
                 autoFocus={typing && !text}
                 className="shadow-card"
               />
               <Button size="lg" className="press mt-4 w-full" disabled={!text.trim() && !photos.length} onClick={() => void organize(text, photos)}>
-                整理
+                {L("整理", "Sort it out")}
               </Button>
             </div>
           ) : (
             <div className="rise-3">
               <Button variant="secondary" size="lg" className="press w-full" onClick={() => setTyping(true)}>
                 <Keyboard className="h-6 w-6" />
-                打字
+                {L("打字", "Type")}
               </Button>
             </div>
           )}
 
           {aiAvailable && (
             <p className="px-2 text-center text-base leading-relaxed text-ink-2">
-              照片和录音只用来认字，认完就丢，不会保存。
+              {L("照片和录音只用来认字，认完就丢，不会保存。", "Photos and recordings are only used to read the words, then deleted. They are not saved.")}
             </p>
           )}
         </>
@@ -597,25 +610,25 @@ function EditResult({ result, onCancel, onDone }: { result: AfterResult; onCance
 
   return (
     <div className="space-y-6">
-      <PageHeader title="改一下" />
+      <PageHeader title={L("改一下", "Make changes")} />
       <Card className="grid animate-fade-up gap-6 p-5">
-        <Field label="医生的诊断">
-          <Input value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} placeholder="比如：急性咽炎" />
+        <Field label={L("医生的诊断", "The doctor's diagnosis")}>
+          <Input value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} placeholder={L("比如：急性咽炎", "e.g. sore throat")} />
         </Field>
-        <Field label="检查结果" hint="一行写一项，没有就空着。">
-          <Textarea value={findings} onChange={(e) => setFindings(e.target.value)} className="min-h-20" placeholder={"血压 128/82\n糖化血红蛋白 6.7%"} />
+        <Field label={L("检查结果", "Test results")} hint={L("一行写一项，没有就空着。", "One per line. Leave empty if none.")}>
+          <Textarea value={findings} onChange={(e) => setFindings(e.target.value)} className="min-h-20" placeholder={L("血压 128/82\n糖化血红蛋白 6.7%", "Blood pressure 128/82\nHbA1c 6.7%")} />
         </Field>
-        <Field label="开的药" hint="一行写一种，药名后面空一格写怎么吃。">
-          <Textarea value={meds} onChange={(e) => setMeds(e.target.value)} placeholder={"头孢克肟 一天两次\n布洛芬 发烧时吃"} />
+        <Field label={L("开的药", "Medicines")} hint={L("一行写一种，药名后面空一格写怎么吃。", "One per line: the name, a space, then how to take it.")}>
+          <Textarea value={meds} onChange={(e) => setMeds(e.target.value)} placeholder={L("头孢克肟 一天两次\n布洛芬 发烧时吃", "Cefixime twice a day\nIbuprofen when feverish")} />
         </Field>
-        <Field label="医生的叮嘱">
+        <Field label={L("医生的叮嘱", "The doctor's advice")}>
           <Textarea value={advice} onChange={(e) => setAdvice(e.target.value)} className="min-h-24" />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="几天后复查">
-            <Input type="number" inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} placeholder="不用就空着" />
+          <Field label={L("几天后复查", "Follow-up in how many days")}>
+            <Input type="number" inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} placeholder={L("不用就空着", "Empty if none")} />
           </Field>
-          <Field label="哪天看的">
+          <Field label={L("哪天看的", "Date of visit")}>
             <Input
               type="date"
               value={date}
@@ -628,10 +641,10 @@ function EditResult({ result, onCancel, onDone }: { result: AfterResult; onCance
       </Card>
       <div className="grid grid-cols-2 gap-3">
         <Button variant="secondary" size="lg" className="press" onClick={onCancel}>
-          不改了
+          {L("不改了", "Cancel")}
         </Button>
         <Button size="lg" className="press" onClick={done}>
-          改好了
+          {L("改好了", "Done")}
         </Button>
       </div>
     </div>

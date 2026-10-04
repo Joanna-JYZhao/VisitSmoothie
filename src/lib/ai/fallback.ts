@@ -1181,7 +1181,13 @@ export function fallbackSummary(req: SummaryRequest): SummaryResponse {
 
 /** A diagnosis worth naming: not empty, and not a note that there was none. */
 function knownDiagnosis(d: string | null | undefined): boolean {
-  return Boolean(d && d !== NO_DIAGNOSIS && !/没有(明确|新的)?诊断|无明确诊断|原因待查/.test(d));
+  // English records (the English demo) say the same in English: those are not diagnoses either
+  return Boolean(
+    d &&
+      d !== NO_DIAGNOSIS &&
+      !/没有(明确|新的)?诊断|无明确诊断|原因待查/.test(d) &&
+      !/\bno (clear |new |definite )?diagnosis\b|\bcause (is )?(to be determined|unknown|unclear)\b|\bnot (yet )?diagnosed\b/i.test(d),
+  );
 }
 
 function summaryByRule(req: SummaryRequest): SummaryResponse {

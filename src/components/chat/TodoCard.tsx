@@ -5,11 +5,16 @@ import type { ThreadItem, Todo } from "@/lib/types";
 import { storeActions, useStore } from "@/lib/store";
 import { frequencyLabel, scheduleText, setReminders } from "@/lib/reminders";
 import { cn } from "@/lib/utils";
+import { L, inChinese } from "@/lib/lang";
 import { Badge, Button, Card, IconTile } from "@/components/ui";
 
 /* 医嘱 a: what to do, and which of them to be reminded about, set before anything is stored. */
 
-const KIND_LABEL: Record<Todo["kind"], string> = { medicine: "吃药", care: "要做的", caution: "要注意的", followup: "复诊" };
+const KIND_ZH: Record<Todo["kind"], string> = { medicine: "吃药", care: "要做的", caution: "要注意的", followup: "复诊" };
+const KIND_EN: Record<Todo["kind"], string> = { medicine: "Medicine", care: "To do", caution: "Watch out", followup: "Follow-up" };
+const kindLabel = (k: Todo["kind"]) => L(KIND_ZH[k], KIND_EN[k]);
+const FREQ_EN: Record<Todo["frequency"], string> = { each: "Every dose", daily: "Once a day", once: "Just once", none: "No reminder" };
+const freqLabel = (f: Todo["frequency"]) => L(frequencyLabel(f), FREQ_EN[f]);
 /** The kind is already said in front of the text. */
 const shown = (t: Pick<Todo, "kind" | "text">) => (t.kind === "followup" ? t.text.replace(/^复诊[：:]/, "") : t.text);
 
@@ -29,7 +34,7 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
       onClick={() => onChange(!on)}
       className="flex min-h-12 shrink-0 items-center gap-2.5 rounded-xl px-1 text-base font-medium text-ink-2 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
     >
-      <span className={cn(on && "text-ink")}>{on ? "提醒" : "不提醒"}</span>
+      <span className={cn(on && "text-ink")}>{on ? L("提醒", "Remind") : L("不提醒", "No reminder")}</span>
       <span className={cn("relative h-8 w-14 rounded-full transition-colors duration-300", on ? "bg-brand-600" : "bg-line-strong")}>
         <span
           className={cn(
@@ -53,16 +58,16 @@ function TodoRow({ todo, onChange }: { todo: Todo; onChange: (t: Todo) => void }
     <li className="border-t border-line py-4 first:border-t-0 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
         <p className="min-w-0 flex-1 text-lg leading-relaxed text-ink">
-          <span className="mr-2 inline-block rounded-full bg-brand-50 px-2.5 text-base leading-7 font-semibold text-brand-800">{KIND_LABEL[todo.kind]}</span>
+          <span className="mr-2 inline-block rounded-full bg-brand-50 px-2.5 text-base leading-7 font-semibold text-brand-800">{kindLabel(todo.kind)}</span>
           {shown(todo)}
         </p>
-        {canRemind && <Switch on={on} onChange={toggle} label={`提醒：${todo.text}`} />}
+        {canRemind && <Switch on={on} onChange={toggle} label={L(`提醒：${todo.text}`, `Remind: ${todo.text}`)} />}
       </div>
-      {!canRemind && <p className="mt-1.5 text-base leading-relaxed text-ink-2">医生没定具体日子，到时候按医生说的去。</p>}
+      {!canRemind && <p className="mt-1.5 text-base leading-relaxed text-ink-2">{L("医生没定具体日子，到时候按医生说的去。", "The doctor did not set a date. Go when the doctor said to.")}</p>}
       {on && todo.kind === "followup" && todo.at && <p className="mt-1.5 text-base text-ink">{scheduleText(todo)}</p>}
       {on && choices.length > 0 && (
         <div className="mt-3 space-y-3">
-          <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-[18px] bg-surface-3/80 p-1" role="radiogroup" aria-label="多久提醒一次">
+          <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-[18px] bg-surface-3/80 p-1" role="radiogroup" aria-label={L("多久提醒一次", "How often to remind")}>
             {choices.map((f) => (
               <button
                 key={f}
@@ -75,14 +80,14 @@ function TodoRow({ todo, onChange }: { todo: Todo; onChange: (t: Todo) => void }
                   todo.frequency === f ? "bg-surface text-ink shadow-pill" : "text-ink-2 hover:text-ink",
                 )}
               >
-                {frequencyLabel(f)}
+                {freqLabel(f)}
               </button>
             ))}
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 text-base font-medium text-ink-2">
               <Clock aria-hidden="true" className="h-5 w-5 text-brand-700" />
-              时间
+              {L("时间", "Time")}
             </span>
             <div className="mt-2 flex flex-wrap gap-2">
               {times.map((t, i) => (
@@ -90,7 +95,7 @@ function TodoRow({ todo, onChange }: { todo: Todo; onChange: (t: Todo) => void }
                   key={i}
                   type="time"
                   value={t}
-                  aria-label={`第 ${i + 1} 个提醒时间`}
+                  aria-label={L(`第 ${i + 1} 个提醒时间`, `Reminder time ${i + 1}`)}
                   onChange={(e) => {
                     const next = [...(todo.times ?? [])];
                     next[i] = e.target.value || t;
@@ -136,7 +141,8 @@ export function TodoCard({ item }: { item: Extract<ThreadItem, { kind: "todo" }>
     storeActions.pushThread({
       kind: "ai",
       text: made.length
-        ? `设好了 ${made.length} 条提醒：\n${made.map((r) => `· ${r.text}：${scheduleText(r)}`).join("\n")}\n到时间我会在这里提醒你${allowed ? "，也会弹出通知" : ""}。`
+        ? // saved into the conversation in Chinese, like everything the assistant says (inChinese keeps the times Chinese too)
+          `设好了 ${made.length} 条提醒：\n${made.map((r) => `· ${r.text}：${inChinese(() => scheduleText(r))}`).join("\n")}\n到时间我会在这里提醒你${allowed ? "，也会弹出通知" : ""}。`
         : "好的，这次不设提醒。上面的待办都留在记录里，随时可以看。",
     });
     // the browser asks once, right after the button press; the answer may take a while, so nothing waits for it
@@ -158,35 +164,35 @@ export function TodoCard({ item }: { item: Extract<ThreadItem, { kind: "todo" }>
           <IconTile>
             <ListChecks />
           </IconTile>
-          要做的事
+          {L("要做的事", "What to do")}
         </h2>
-        {set && <Badge tone="good">提醒已设好</Badge>}
+        {set && <Badge tone="good">{L("提醒已设好", "Reminders set")}</Badge>}
       </div>
       {item.todos.length === 0 ? (
-        <p className="t-body mt-4 border-t border-line pt-4 text-ink">这次的医嘱里没有认出要吃的药或要做的事。</p>
+        <p className="t-body mt-4 border-t border-line pt-4 text-ink">{L("这次的医嘱里没有认出要吃的药或要做的事。", "No medicines or tasks were found in these doctor's orders.")}</p>
       ) : set ? (
         <ul className="mt-5 divide-y divide-line border-t border-line pt-5">
           {item.todos.map((t) => {
             const r = mine.find((x) => x.todoId === t.id);
             return (
               <li key={t.id} className="py-3.5 text-lg leading-relaxed text-ink first:pt-0 last:pb-0">
-                <span className="mr-2 inline-block rounded-full bg-brand-50 px-2.5 text-base leading-7 font-semibold text-brand-800">{KIND_LABEL[t.kind]}</span>
+                <span className="mr-2 inline-block rounded-full bg-brand-50 px-2.5 text-base leading-7 font-semibold text-brand-800">{kindLabel(t.kind)}</span>
                 {shown(t)}
-                <span className="mt-0.5 block text-base text-ink-2">{r ? `提醒：${scheduleText(r)}${r.enabled ? "" : "（已关）"}` : "不提醒"}</span>
+                <span className="mt-0.5 block text-base text-ink-2">{r ? L(`提醒：${scheduleText(r)}${r.enabled ? "" : "（已关）"}`, `Reminder: ${scheduleText(r)}${r.enabled ? "" : " (off)"}`) : L("不提醒", "No reminder")}</span>
               </li>
             );
           })}
         </ul>
       ) : (
         <>
-          <p className="t-body mt-2 text-ink-2">打开的会按时提醒你，可以改时间和次数。</p>
+          <p className="t-body mt-2 text-ink-2">{L("打开的会按时提醒你，可以改时间和次数。", "Ones that are on will remind you on time. You can change the time and how often.")}</p>
           <ul className="mt-5 border-t border-line pt-5">
             {item.todos.map((t) => (
               <TodoRow key={t.id} todo={t} onChange={patch} />
             ))}
           </ul>
           <Button size="lg" className="mt-6 w-full" onClick={done}>
-            设好了
+            {L("设好了", "Done")}
           </Button>
         </>
       )}

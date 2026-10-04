@@ -20,6 +20,7 @@ import {
 } from "@/lib/thread";
 import { medicationLine } from "@/lib/after";
 import { cn, showDiagnosis } from "@/lib/utils";
+import { L } from "@/lib/lang";
 import { HintBanner } from "@/components/HintBanner";
 import { LogoMark } from "@/components/Logo";
 import { TodoCard } from "@/components/chat/TodoCard";
@@ -74,7 +75,7 @@ function OpenQuestion({ text, chips, onChip, opening }: { text: string; chips?: 
       )}
       <p className={cn("relative mt-3 whitespace-pre-wrap text-ink", opening ? "t-title mt-5 max-w-xl" : "t-heading")}>{text}</p>
       {chips && chips.length > 0 && (
-        <div className={cn("relative mt-5 flex flex-wrap gap-2.5", opening && "mt-8 justify-center")} aria-label="可以直接点的回答">
+        <div className={cn("relative mt-5 flex flex-wrap gap-2.5", opening && "mt-8 justify-center")} aria-label={L("可以直接点的回答", "Answers you can tap")}>
           {chips.map((c, i) => (
             <button
               key={c}
@@ -133,14 +134,14 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
 
   const instant = useMemo(() => (episode ? instantSummary(episode, state) : null), [episode, state]);
   if (!episode || item.state === "discarded") {
-    return <Note>这次的病情描述已放弃。</Note>;
+    return <Note>{L("这次的病情描述已放弃。", "This description was not kept.")}</Note>;
   }
   const view = !stale && episode.summary ? episode.summary : instant;
   if (!view) return null;
 
   const discard = () => {
     const kept = discardDescription(item.id);
-    if (kept) toast.show(`没有记「${kept.title}」`, "neutral", { label: "撤销", onClick: () => restoreDescription(item.id, kept) });
+    if (kept) toast.show(L(`没有记「${kept.title}」`, `Not kept: "${kept.title}"`), "neutral", { label: L("撤销", "Undo"), onClick: () => restoreDescription(item.id, kept) });
   };
 
   const draft = item.state === "draft";
@@ -148,8 +149,8 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
     <Card tone={draft ? "raised" : "plain"} className={cn("p-5", draft ? "animate-pop" : "animate-fade-up")}>
       <CardHead
         icon={<ClipboardList />}
-        title={<>病情描述 · {episode.title}</>}
-        aside={item.state === "saved" && <Badge tone="good">已保存</Badge>}
+        title={<>{L("病情描述", "Description")} · {episode.title}</>}
+        aside={item.state === "saved" && <Badge tone="good">{L("已保存", "Saved")}</Badge>}
       />
       {/* the document itself: the complaint in one line, then the story in reading type */}
       <div className="mt-5 border-t border-line pt-5">
@@ -159,19 +160,19 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
       {(busy || stale || reading) && (
         <p className="mt-4 flex items-center gap-2.5 text-base text-ink-2" role="status">
           <Spinner className="h-5 w-5" />
-          还在整理，稍等一下会更通顺
+          {L("还在整理，稍等一下会更通顺", "Still tidying up. It will read better in a moment.")}
         </p>
       )}
       {draft && (
         <div className="mt-6 grid grid-cols-3 gap-2">
           <Button size="lg" className="px-2" onClick={() => saveDescription(item.id)}>
-            保存
+            {L("保存", "Save")}
           </Button>
           <Button size="lg" variant="secondary" className="px-2" onClick={() => reviseDescription(item.id)}>
-            改一下
+            {L("改一下", "Change")}
           </Button>
           <Button size="lg" variant="ghost" className="px-2" onClick={discard}>
-            放弃
+            {L("放弃", "Discard")}
           </Button>
         </div>
       )}
@@ -182,7 +183,7 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
         <IconTile size="sm">
           <FileText />
         </IconTile>
-        <span className="min-w-0 flex-1">给医生看</span>
+        <span className="min-w-0 flex-1">{L("给医生看", "Show the doctor")}</span>
         <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" />
       </Link>
     </Card>
@@ -211,10 +212,10 @@ function TriageCard({ item }: { item: Extract<ThreadItem, { kind: "triage" }> })
         <IconTile tone={tone.tile} size="lg" className={emergency ? "animate-breathe" : undefined}>
           <tone.Icon />
         </IconTile>
-        <p className={cn("text-base font-semibold tracking-[-0.005em]", tone.label)}>分诊建议</p>
+        <p className={cn("text-base font-semibold tracking-[-0.005em]", tone.label)}>{L("分诊建议", "Where to go")}</p>
       </div>
       <p className="t-title mt-4 text-ink">{t.title}</p>
-      {t.department && <p className="t-lead mt-3 text-ink">可以挂：{t.department}</p>}
+      {t.department && <p className="t-lead mt-3 text-ink">{L("可以挂：", "Clinic to book: ")}{t.department}</p>}
       {t.note && <p className="t-body mt-2 text-ink-2">{t.note}</p>}
       {emergency && (
         <a
@@ -222,7 +223,7 @@ function TriageCard({ item }: { item: Extract<ThreadItem, { kind: "triage" }> })
           className="press tile-danger mt-5 flex min-h-14 w-full items-center justify-center gap-2.5 rounded-full px-6 text-xl font-semibold text-white transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-danger/30"
         >
           <Phone className="h-6 w-6" />
-          拨打 120
+          {L("拨打 120", "Call 120")}
         </a>
       )}
     </div>
@@ -242,17 +243,17 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 /** What the doctor wrote, read from a photo or from what the patient said, to be checked before it is saved. */
 function OrdersCard({ item, busy }: { item: Extract<ThreadItem, { kind: "orders" }>; busy: boolean }) {
   const r = item.result;
-  if (item.state === "discarded") return <Note>这次的医嘱没有保存。</Note>;
+  if (item.state === "discarded") return <Note>{L("这次的医嘱没有保存。", "These doctor's orders were not kept.")}</Note>;
   const draft = item.state === "draft";
   return (
     <Card tone={draft ? "raised" : "plain"} className={cn("p-5", draft ? "animate-pop" : "animate-fade-up")}>
-      <CardHead icon={<Stethoscope />} title="医嘱整理" aside={item.state === "saved" && <Badge tone="good">已保存</Badge>} />
+      <CardHead icon={<Stethoscope />} title={L("医嘱整理", "Doctor's orders")} aside={item.state === "saved" && <Badge tone="good">{L("已保存", "Saved")}</Badge>} />
       <dl className="mt-5 divide-y divide-line border-t border-line pt-5">
-        {(r.date || r.hospital || r.department) && <Row label="时间和地点">{[r.date, r.hospital, r.department].filter(Boolean).join(" · ")}</Row>}
-        <Row label="诊断">{r.diagnosis ? showDiagnosis(r.diagnosis) : "没有认出诊断"}</Row>
-        {r.findings.length > 0 && <Row label="检查结果">{r.findings.join("；")}</Row>}
+        {(r.date || r.hospital || r.department) && <Row label={L("时间和地点", "When and where")}>{[r.date, r.hospital, r.department].filter(Boolean).join(" · ")}</Row>}
+        <Row label={L("诊断", "Diagnosis")}>{r.diagnosis ? showDiagnosis(r.diagnosis) : L("没有认出诊断", "No diagnosis found")}</Row>
+        {r.findings.length > 0 && <Row label={L("检查结果", "Test results")}>{r.findings.join("；")}</Row>}
         {r.medications.length > 0 && (
-          <Row label="开的药">
+          <Row label={L("开的药", "Medicines")}>
             <ul className="space-y-1">
               {r.medications.map((m, i) => (
                 <li key={i}>{medicationLine(m)}</li>
@@ -260,27 +261,27 @@ function OrdersCard({ item, busy }: { item: Extract<ThreadItem, { kind: "orders"
             </ul>
           </Row>
         )}
-        {r.procedures.length > 0 && <Row label="其他处理">{r.procedures.join("；")}</Row>}
-        {r.advice && <Row label="医生叮嘱">{r.advice}</Row>}
-        {r.followUpNote && <Row label="复诊">{r.followUpNote}</Row>}
-        {r.unclear.length > 0 && <Row label="没认准的地方">{r.unclear.join("；")}</Row>}
+        {r.procedures.length > 0 && <Row label={L("其他处理", "Other treatment")}>{r.procedures.join("；")}</Row>}
+        {r.advice && <Row label={L("医生叮嘱", "Doctor's advice")}>{r.advice}</Row>}
+        {r.followUpNote && <Row label={L("复诊", "Follow-up visit")}>{r.followUpNote}</Row>}
+        {r.unclear.length > 0 && <Row label={L("没认准的地方", "Not sure about")}>{r.unclear.join("；")}</Row>}
       </dl>
       {draft ? (
         <div className="mt-6 grid grid-cols-2 gap-2">
           <Button size="lg" onClick={() => saveOrders(item.id)}>
-            保存
+            {L("保存", "Save")}
           </Button>
           <Button size="lg" variant="ghost" onClick={() => discardOrders(item.id)}>
-            放弃
+            {L("放弃", "Discard")}
           </Button>
         </div>
       ) : (
         <div className="mt-6 grid gap-2">
           <Button size="lg" variant="secondary" onClick={() => listTodos(item.id)}>
-            整理要做的事并提醒
+            {L("整理要做的事并提醒", "List what to do and remind me")}
           </Button>
           <Button size="lg" variant="secondary" disabled={busy} onClick={() => explainOrders(item.id)}>
-            给我解释一下
+            {L("给我解释一下", "Explain it to me")}
           </Button>
         </div>
       )}
@@ -306,7 +307,7 @@ export function Thread({ items, busy, onChip, opening }: { items: ThreadItem[]; 
             return (
               <Bubble key={item.id} from="user">
                 {item.text}
-                {item.photos ? <span className="block text-base text-white/90">{item.text ? "" : "发了"} {item.photos} 张照片</span> : null}
+                {item.photos ? <span className="block text-base text-white/90">{L(`${item.text ? "" : "发了"} ${item.photos} 张照片`, `${item.text ? "" : "Sent "}${item.photos} photo${item.photos === 1 ? "" : "s"}`)}</span> : null}
               </Bubble>
             );
           case "ai":
@@ -334,7 +335,7 @@ export function Thread({ items, busy, onChip, opening }: { items: ThreadItem[]; 
                   {item.text}
                   {item.sources.length > 0 && (
                     <span className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line pt-3 text-base text-ink-2">
-                      依据：
+                      {L("依据：", "Based on:")}
                       {item.sources.map((s, i) => (
                         <Link
                           key={i}

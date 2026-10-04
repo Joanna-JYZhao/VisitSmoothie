@@ -8,7 +8,9 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { BrandLogo, LogoMark } from "./Logo";
 import { TabBar } from "./TabBar";
+import { LangToggle } from "./LangToggle";
 import { focusRing } from "./ui";
+import { L } from "@/lib/lang";
 
 function Splash() {
   return (
@@ -28,13 +30,15 @@ function SosPill() {
     <Link
       href="/sos"
       data-guide="sos"
+      aria-label={L("应急", "Emergency")}
       className={cn(
         "press inline-flex min-h-12 shrink-0 items-center gap-1.5 rounded-full bg-danger px-4 text-base font-semibold text-white shadow-[0_2px_8px_rgba(193,44,53,0.25)] transition hover:brightness-95",
         focusRing,
       )}
     >
       <Siren className="h-5 w-5" aria-hidden="true" />
-      应急
+      {/* "Emergency" would not fit beside the logo and the language switch on a phone; SOS is understood everywhere */}
+      {L("应急", "SOS")}
     </Link>
   );
 }
@@ -86,9 +90,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.375rem)" }}
       >
         <Link href="/" className={cn("app-brand inline-flex rounded-lg", focusRing)} aria-label="VisitSmoothie">
-          <BrandLogo className="!w-[9rem]" />
+          <BrandLogo className="!w-[8rem]" />
         </Link>
-        <SosPill />
+        <div className="flex shrink-0 items-center gap-2">
+          <LangToggle segmented />
+          <SosPill />
+        </div>
       </header>
       <main key={pathname} className="page-enter flex min-w-0 flex-1 flex-col px-4 pt-3" style={{ paddingBottom: "calc(var(--tab-bar) + 2.25rem)" }}>
         {children}
