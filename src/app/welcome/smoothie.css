@@ -47,7 +47,7 @@
 .welcome-icon { display: block; width: 88px; height: 88px; margin: 0 auto 22px; }
 .welcome-eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 6px 14px; border-radius: 999px; background: var(--color-brand-50); color: var(--color-brand-800); font-size: 17px; font-weight: 500; }
 .welcome-eyebrow > span { width: 8px; height: 8px; border-radius: 50%; background: var(--color-brand-600); }
-.welcome-stage h1 { margin: 0 0 14px; font-family: var(--font-sans); font-size: 44px; font-weight: 750; line-height: 1.04; letter-spacing: -.045em; color: var(--color-brand-ink); }
+.welcome-stage h1 { margin: 0 0 14px; font-family: var(--font-sans); font-size: clamp(34px, 10vw, 44px); font-weight: 750; line-height: 1.04; letter-spacing: -.045em; color: var(--color-brand-ink); }
 .welcome-stage h1 em { font-style: normal; color: var(--color-brand-600); }
 .welcome-period { color: #f39a4a; }
 .welcome-description { max-width: 19em; margin: 0 auto 28px; text-wrap: balance; color: var(--color-ink-2); font-size: 18px; line-height: 1.65; }
@@ -111,7 +111,9 @@
 
 /* ---------- login ---------- */
 .login-layout { width: 100%; margin: 4px 0 16px; }
-.login-mark-tile { display: block; width: 72px; height: 72px; margin: 0 auto 18px; }
+.login-mark { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto 18px; }
+.login-mark-tile { display: block; width: 72px; height: 72px; }
+.login-mark-name { font-size: 20px; font-weight: 700; letter-spacing: -.02em; color: var(--color-brand-ink); }
 .login-card .registration-card-header { display: block; margin-bottom: 22px; text-align: center; }
 .login-card h1 { margin-bottom: 8px; }
 .login-card form { display: grid; gap: 18px; }

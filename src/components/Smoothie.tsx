@@ -5,7 +5,7 @@ import { BrandLogo, LogoMark } from "./Logo";
 
 /* The user's own logo, in the same link to the same place, with the same accessible name as before. */
 const brand = (
-  <Link className="smoothie-brand" href="/welcome" aria-label="Visit Smoothie">
+  <Link className="smoothie-brand" href="/welcome" aria-label="VisitSmoothie">
     <BrandLogo />
   </Link>
 );
@@ -23,7 +23,7 @@ export function SmoothieHeader({ right }: { right?: React.ReactNode }) {
 export function SmoothieFooter() {
   return (
     <footer className="onboarding-footer">
-      <span>Visit Smoothie</span>
+      <span>VisitSmoothie</span>
       <span>档案保存在这台电脑上。</span>
     </footer>
   );
@@ -34,5 +34,10 @@ export function SmoothieFooter() {
  * rather than a second, different fragment of the wordmark on the same screen.
  */
 export function SmoothieAppMark() {
-  return <LogoMark className="login-mark-tile" />;
+  return (
+    <div className="login-mark">
+      <LogoMark className="login-mark-tile" />
+      <span className="login-mark-name">VisitSmoothie</span>
+    </div>
+  );
 }

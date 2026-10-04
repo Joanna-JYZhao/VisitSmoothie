@@ -258,8 +258,12 @@ export function AskBox({ now }: { now: number }) {
                   <ChevronDown className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
                   收起
                 </button>
-                <span className="t-heading flex items-center gap-2 text-ink">
-                  <LogoMark className="h-7 w-7" />问 AI
+                <span className="flex items-center gap-2 text-ink">
+                  <LogoMark className="h-8 w-8" />
+                  <span className="flex flex-col leading-tight">
+                    <span className="t-heading leading-tight">问 AI</span>
+                    <span className="text-base font-medium text-ink-2">VisitSmoothie</span>
+                  </span>
                 </span>
                 <span aria-hidden="true" />
               </div>
@@ -268,7 +272,10 @@ export function AskBox({ now }: { now: number }) {
               {empty ? (
                 /* nothing asked yet: the icon, the invitation, and the questions worth asking */
                 <div className="flex min-h-full flex-col items-center justify-center gap-5 py-6 text-center">
-                  <LogoMark className="h-20 w-20" />
+                  <span className="flex flex-col items-center gap-2">
+                    <LogoMark className="h-20 w-20" />
+                    <span className="text-xl font-semibold tracking-tight text-brand-ink">VisitSmoothie</span>
+                  </span>
                   <p className="t-title max-w-[16em] text-balance text-ink">对吃药或就诊有疑问？问我</p>
                   {suggestions.length > 0 && (
                     <ul className="mt-1 w-full space-y-2.5 text-left">

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Siren } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { L } from "@/lib/lang";
 import { cn } from "@/lib/utils";
 import { BrandLogo, LogoMark } from "./Logo";
 import { TabBar } from "./TabBar";
@@ -16,7 +15,7 @@ function Splash() {
     <div className="phone-col flex items-center justify-center">
       <div className="flex animate-fade-up flex-col items-center gap-4 text-ink-2">
         <LogoMark className="h-[4.5rem] w-[4.5rem]" />
-        <span className="t-lead font-medium">{L("医伴", "Yiban")}</span>
+        <span className="t-lead font-semibold text-brand-ink">VisitSmoothie</span>
         <span className="spinner-ring h-6 w-6" aria-hidden="true" />
       </div>
     </div>

@@ -67,6 +67,7 @@ function OpenQuestion({ text, chips, onChip, opening }: { text: string; chips?: 
         <>
           <span aria-hidden="true" className="pool -top-10 left-1/2 h-64 w-64 -translate-x-1/2" />
           <LogoMark className="relative h-11 w-11 rounded-xl" />
+          <span className="relative mt-2 text-lg font-semibold tracking-tight text-brand-ink">VisitSmoothie</span>
         </>
       ) : (
         <Mark />

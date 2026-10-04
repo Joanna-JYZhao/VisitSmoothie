@@ -18,18 +18,18 @@
   --color-ink-2: #56565c;
   --color-ink-3: #66666e;
 
-  /* the accent: celadon teal. 600 carries white text (5.5:1); 700 and up are for text on white or 50. */
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #e0edff;
-  --color-brand-200: #b9d6ff;
-  --color-brand-300: #8abbfa;
-  --color-brand-400: #559bf0;
-  --color-brand-500: #2480e5;
-  --color-brand-600: #0066cc;
-  --color-brand-650: #005ebd;
-  --color-brand-700: #0058b0;
-  --color-brand-800: #00468d;
-  --color-brand-ink: #1c1c1e;
+  /* the accent: the logo's celadon green (the human's decision, 2026-10-04: no blue anywhere). 600 carries white text (5.4:1); 700 and up are for text on white or 50. */
+  --color-brand-50: #edf7f4;
+  --color-brand-100: #d8efe8;
+  --color-brand-200: #b0ddd1;
+  --color-brand-300: #7fc7b7;
+  --color-brand-400: #44ab98;
+  --color-brand-500: #13917d;
+  --color-brand-600: #007866;
+  --color-brand-650: #006d5d;
+  --color-brand-700: #006355;
+  --color-brand-800: #024d43;
+  --color-brand-ink: #0d3b40;
 
   /* Clinical meaning keeps its own tones (and always a written label), apart from the accent. */
   --color-good: #287738;
@@ -40,8 +40,9 @@
   --color-serious-bg: #fbeee6;
   --color-danger: #c12c35;
   --color-danger-bg: #fff0f0;
-  --color-info: #395da1;
-  --color-info-bg: #eef2fb;
+  /* info is a note, not a state of its own: it takes the accent green too */
+  --color-info: #006355;
+  --color-info-bg: #edf7f4;
   --color-series-2: #bd5b20;
   --radius-card: 12px;
   --radius-sheet: 16px;
@@ -134,11 +135,12 @@ h1, h2, h3 { letter-spacing: -0.02em; text-wrap: balance; }
 }
 .tab-bar { bottom: 0; z-index: 40; padding-bottom: env(safe-area-inset-bottom, 0px); background: rgba(255, 255, 255, 0.94); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); box-shadow: 0 -0.5px 0 var(--color-line), 0 -8px 24px rgba(13, 59, 64, 0.04); }
 /* the home button: the app icon standing up out of the bar */
-.tab-home { position: absolute; top: -1.6rem; left: 50%; translate: -50% 0; display: flex; align-items: center; justify-content: center; width: 4.25rem; height: 4.25rem; border-radius: 1.45rem; transition: translate 0.25s var(--ease-out-soft); }
+.tab-home { position: absolute; top: -1.9rem; left: 50%; translate: -50% 0; display: flex; align-items: center; justify-content: center; width: 4.25rem; height: 4.25rem; border-radius: 1.45rem; transition: translate 0.25s var(--ease-out-soft); }
 .tab-home:active { translate: -50% 1px; }
 .tab-home .app-icon { transition: transform 0.25s var(--ease-out-soft); }
 @media (hover: hover) { .tab-home:hover .app-icon { transform: translateY(-1px) scale(1.03); } }
-.tab-home[aria-current="page"]::after { content: ""; position: absolute; bottom: -0.55rem; width: 1.25rem; height: 0.2rem; border-radius: 99px; background: var(--color-brand-600); }
+/* the name sits under the raised icon on the same line as the other tab labels; the active tab shows in its colour */
+.tab-home-name { position: absolute; top: calc(100% + 0.05rem); left: 50%; translate: -50% 0; white-space: nowrap; pointer-events: none; }
 
 /* ---------- the "ask AI" sheet ----------
  * It grows from the bottom of the home into the whole screen, and sinks back. The page under it

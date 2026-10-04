@@ -2,13 +2,17 @@
 
 The current visual direction follows the grouped lists of Apple Reminders: neutral gray canvas,
 white groups, system typography, compact colored icons, and thin separators. The supplied
-VisitSmoothie logo remains the brand asset; there are no Apple assets or external fonts.
+VisitSmoothie logo remains the brand asset, and wherever the logo appears the name VisitSmoothie
+appears with it; there are no Apple assets or external fonts.
 
 ## Tokens
 
 - Canvas: `#F2F2F7`; surfaces: `#FFFFFF`; dividers: `#E2E2E7`.
 - Main text: `#1C1C1E`; secondary: `#56565C`; quiet text: `#66666E`.
-- Main action: `#0066CC`; profile icon: `#7056BF`; post icon: `#B96514`.
+- Main colour: celadon green from the logo, `#007866` (brand-600, white text 5.4:1; scale
+  brand-50 `#EDF7F4` … brand-800 `#024D43`, ink `#0D3B40`). By the human's decision on 2026-10-04 it
+  replaces the earlier main-action blue `#0066CC`: no blue anywhere (buttons, switches, links, active
+  tabs, focus rings, chat bubbles, info notes). Red stays for 应急 and danger; profile icon: `#7056BF`; post icon: `#B96514`.
 - Clinical warnings retain distinct red, amber, and green tones and written labels.
 - System sans throughout. Body text is 17px; headings are 24–34px.
 - Group radius: 12px; controls: 8–12px. White lists have no decorative shadows or gradients.

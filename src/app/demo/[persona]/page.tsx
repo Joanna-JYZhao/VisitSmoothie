@@ -61,6 +61,7 @@ export default function DemoLinkPage() {
             <Spinner className="absolute inset-0 h-28 w-28 border-[3px]" />
             <LogoMark className="h-[4.5rem] w-[4.5rem]" />
           </span>
+          <span className="text-xl font-semibold tracking-tight text-brand-ink">VisitSmoothie</span>
           <span className="t-lead font-medium text-ink">正在打开{PERSONAS[persona].name}的演示</span>
         </div>
         {/* the two halves of the home page, still empty */}

@@ -40,9 +40,7 @@ export default function WelcomePage() {
               你的健康故事，从这里开始
             </p>
             <h1>
-              Visit
-              <br />
-              <em>Smoothie</em>
+              Visit<em>Smoothie</em>
               <span className="welcome-period">.</span>
             </h1>
             <p className="welcome-description">
