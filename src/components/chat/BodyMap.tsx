@@ -12,7 +12,9 @@ import { IconTile } from "@/components/ui";
  */
 
 type Side = "右" | "左";
-type Detail = { kind: "knee" | "shoulder"; side: Side } | { kind: "belly" } | { kind: "back" };
+/** The close-up a block opens: a knee or a shoulder as seen from the side of the body that was tapped (正面 / 背面). */
+type View = "front" | "back";
+type Detail = { kind: "knee" | "shoulder"; side: Side; view: View } | { kind: "belly" } | { kind: "back" };
 
 interface Zone {
   /** 规范名称，点了就是它（有细分图的点了先放大） */
@@ -30,8 +32,8 @@ interface Zone {
 const FRONT: Zone[] = [
   { name: "头", x: 76, y: 4, w: 48, h: 53, r: 24 },
   { name: "颈部", x: 82, y: 57, w: 36, h: 26, r: 6 },
-  { name: "右肩", x: 36, y: 82, w: 32, h: 30, r: 12, detail: { kind: "shoulder", side: "右" } },
-  { name: "左肩", x: 132, y: 82, w: 32, h: 30, r: 12, detail: { kind: "shoulder", side: "左" } },
+  { name: "右肩", x: 36, y: 82, w: 32, h: 30, r: 12, detail: { kind: "shoulder", side: "右", view: "front" } },
+  { name: "左肩", x: 132, y: 82, w: 32, h: 30, r: 12, detail: { kind: "shoulder", side: "左", view: "front" } },
   { name: "胸部", x: 68, y: 82, w: 64, h: 48, r: 8 },
   { name: "上腹", x: 68, y: 130, w: 64, h: 40, r: 4, detail: { kind: "belly" } },
   { name: "下腹", x: 68, y: 170, w: 64, h: 44, r: 8, detail: { kind: "belly" } },
@@ -43,8 +45,8 @@ const FRONT: Zone[] = [
   { name: "左前臂和手", x: 140, y: 188, w: 30, h: 72, r: 12 },
   { name: "右大腿", x: 68, y: 214, w: 31, h: 72, r: 10 },
   { name: "左大腿", x: 101, y: 214, w: 31, h: 72, r: 10 },
-  { name: "右膝", x: 68, y: 286, w: 31, h: 32, r: 14, detail: { kind: "knee", side: "右" } },
-  { name: "左膝", x: 101, y: 286, w: 31, h: 32, r: 14, detail: { kind: "knee", side: "左" } },
+  { name: "右膝", x: 68, y: 286, w: 31, h: 32, r: 14, detail: { kind: "knee", side: "右", view: "front" } },
+  { name: "左膝", x: 101, y: 286, w: 31, h: 32, r: 14, detail: { kind: "knee", side: "左", view: "front" } },
   { name: "右小腿", x: 70, y: 318, w: 28, h: 50, r: 10 },
   { name: "左小腿", x: 102, y: 318, w: 28, h: 50, r: 10 },
   { name: "右脚踝和脚", x: 64, y: 368, w: 34, h: 28, r: 10 },
@@ -55,8 +57,8 @@ const FRONT: Zone[] = [
 const BACK: Zone[] = [
   { name: "后脑", x: 76, y: 4, w: 48, h: 53, r: 24 },
   { name: "后颈", x: 82, y: 57, w: 36, h: 26, r: 6 },
-  { name: "左肩", x: 36, y: 82, w: 32, h: 30, r: 12, detail: { kind: "shoulder", side: "左" } },
-  { name: "右肩", x: 132, y: 82, w: 32, h: 30, r: 12, detail: { kind: "shoulder", side: "右" } },
+  { name: "左肩", x: 36, y: 82, w: 32, h: 30, r: 12, detail: { kind: "shoulder", side: "左", view: "back" } },
+  { name: "右肩", x: 132, y: 82, w: 32, h: 30, r: 12, detail: { kind: "shoulder", side: "右", view: "back" } },
   { name: "上背", x: 68, y: 82, w: 64, h: 62, r: 8, detail: { kind: "back" } },
   { name: "腰", x: 68, y: 144, w: 64, h: 42, r: 4, detail: { kind: "back" } },
   { name: "臀部", x: 68, y: 186, w: 64, h: 40, r: 10 },
@@ -68,8 +70,8 @@ const BACK: Zone[] = [
   { name: "右手背和前臂", x: 140, y: 188, w: 30, h: 72, r: 12 },
   { name: "左大腿后侧", x: 68, y: 226, w: 31, h: 60, r: 10 },
   { name: "右大腿后侧", x: 101, y: 226, w: 31, h: 60, r: 10 },
-  { name: "左膝", x: 68, y: 286, w: 31, h: 32, r: 14, detail: { kind: "knee", side: "左" } },
-  { name: "右膝", x: 101, y: 286, w: 31, h: 32, r: 14, detail: { kind: "knee", side: "右" } },
+  { name: "左膝", x: 68, y: 286, w: 31, h: 32, r: 14, detail: { kind: "knee", side: "左", view: "back" } },
+  { name: "右膝", x: 101, y: 286, w: 31, h: 32, r: 14, detail: { kind: "knee", side: "右", view: "back" } },
   { name: "左小腿肚", x: 70, y: 318, w: 28, h: 50, r: 10 },
   { name: "右小腿肚", x: 102, y: 318, w: 28, h: 50, r: 10 },
   { name: "左脚跟", x: 64, y: 368, w: 34, h: 28, r: 10 },
@@ -122,9 +124,13 @@ function tileName(name: string): string {
 function detailTitle(d: Detail): string {
   switch (d.kind) {
     case "knee":
-      return L(`${d.side}膝，从正面看`, `${d.side === "右" ? "Right" : "Left"} knee, seen from the front`);
+      return d.view === "front"
+        ? L(`${d.side}膝，从正面看`, `${d.side === "右" ? "Right" : "Left"} knee, seen from the front`)
+        : L(`${d.side}膝，从背后看`, `${d.side === "右" ? "Right" : "Left"} knee, seen from behind`);
     case "shoulder":
-      return L(`${d.side}肩`, `${d.side === "右" ? "Right" : "Left"} shoulder`);
+      return d.view === "front"
+        ? L(`${d.side}肩，从正面看`, `${d.side === "右" ? "Right" : "Left"} shoulder, seen from the front`)
+        : L(`${d.side}肩，从背后看`, `${d.side === "右" ? "Right" : "Left"} shoulder, seen from behind`);
     case "belly":
       return L("肚子，从正面看", "Belly, seen from the front");
     case "back":
@@ -135,21 +141,28 @@ function detailTitle(d: Detail): string {
 /** 细分图：一块块大格子，按身上的位置排 */
 function detailOf(d: Detail): { title: string; cols: number; zones: (string | null)[]; whole: string } {
   switch (d.kind) {
-    case "knee":
-      // 正面看右膝：外侧在画面左边，内侧在右边
+    case "knee": {
+      // 正面看：只有前面的几块，患者右膝的外侧在画面左边；背后看：腘窝在中间，患者右膝的外侧在画面右边
+      const outerLeft = (d.side === "右") === (d.view === "front");
+      const [l, r] = outerLeft ? [`${d.side}膝外侧`, `${d.side}膝内侧`] : [`${d.side}膝内侧`, `${d.side}膝外侧`];
       return {
-        title: `${d.side}膝，从正面看`,
+        title: d.view === "front" ? `${d.side}膝，从正面看` : `${d.side}膝，从背后看`,
         cols: 3,
-        zones: [null, `${d.side}膝前面（膝盖骨）`, null, d.side === "右" ? `${d.side}膝外侧` : `${d.side}膝内侧`, `${d.side}膝正中`, d.side === "右" ? `${d.side}膝内侧` : `${d.side}膝外侧`, null, `${d.side}膝后面（腘窝）`, null],
+        zones: d.view === "front" ? [null, `${d.side}膝前面（膝盖骨）`, null, l, `${d.side}膝正中`, r] : [l, `${d.side}膝后面（腘窝）`, r],
         whole: `${d.side}膝`,
       };
-    case "shoulder":
+    }
+    case "shoulder": {
+      // 正面看是肩的前面，背后看是肩的后面；外侧总在离身体远的那一边
+      const outerLeft = (d.side === "右") === (d.view === "front");
+      const face = d.view === "front" ? `${d.side}肩前面` : `${d.side}肩后面`;
       return {
-        title: `${d.side}肩`,
+        title: d.view === "front" ? `${d.side}肩，从正面看` : `${d.side}肩，从背后看`,
         cols: 3,
-        zones: [null, `${d.side}肩顶`, null, d.side === "右" ? `${d.side}肩外侧` : `${d.side}肩前面`, `${d.side}肩关节`, d.side === "右" ? `${d.side}肩前面` : `${d.side}肩外侧`, null, `${d.side}肩后面`, null],
+        zones: [null, `${d.side}肩顶`, null, outerLeft ? `${d.side}肩外侧` : `${d.side}肩关节`, face, outerLeft ? `${d.side}肩关节` : `${d.side}肩外侧`],
         whole: `${d.side}肩`,
       };
+    }
     case "belly":
       // 患者的右边在画面左边
       return {
@@ -177,11 +190,17 @@ function zoneHas(z: Zone, picked: string[]): boolean {
   return picked.some((p) => p === d.whole || d.zones.includes(p));
 }
 
+/**
+ * The figure is drawn on a 200 × 400 grid and shown 0.78 as tall, with every block kept: the whole body
+ * fits on a phone screen together with the front / back switch and the 选好了 button.
+ */
+const SQUASH = 0.78;
+
 /* the figure: soft brand-tinted blocks, lit from above like the tiles of an app icon; a block fills in under the finger, and stays filled once picked */
 function Figure({ zones, onZone, picked }: { zones: Zone[]; onZone: (z: Zone) => void; picked: string[] }) {
   const id = useId();
   return (
-    <svg viewBox="0 0 200 400" className="mx-auto block h-auto w-full max-w-[280px]" role="group" aria-label={L("身体图", "Body map")}>
+    <svg viewBox={`0 0 200 ${400 * SQUASH}`} className="mx-auto block h-auto max-h-[46vh] w-full max-w-[260px]" role="group" aria-label={L("身体图", "Body map")}>
       <defs>
         <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
           {/* the theme's own tints (a CSS variable only works in style, not in the attribute) */}
@@ -212,10 +231,10 @@ function Figure({ zones, onZone, picked }: { zones: Zone[]; onZone: (z: Zone) =>
         >
           <rect
             x={z.x + 1}
-            y={z.y + 1}
+            y={z.y * SQUASH + 1}
             width={z.w - 2}
-            height={z.h - 2}
-            rx={z.r ?? 6}
+            height={z.h * SQUASH - 2}
+            rx={Math.min(z.r ?? 6, (z.h * SQUASH - 2) / 2)}
             fill={`url(#${id}-fill)`}
             filter={`url(#${id}-shadow)`}
             className={cn("transition-[fill,stroke] duration-200", on ? "fill-brand-400 stroke-brand-700" : "stroke-brand-300/80")}
@@ -364,8 +383,8 @@ export function BodyMap({ onPick, prompt = L("点一下不舒服的地方", "Tap
           </button>
         ))}
       </div>
-      <p className="t-heading mt-5 text-center text-ink">{prompt}</p>
-      <div className="relative mt-3">
+      <p className="t-heading mt-3 text-center text-ink">{prompt}</p>
+      <div className="relative mt-2">
         <div className="pointer-events-none absolute inset-x-0 top-1/3 flex justify-between px-1 text-lg font-semibold text-ink-3" aria-hidden>
           <span>{view === "front" ? L("右", "Right") : L("左", "Left")}</span>
           <span>{view === "front" ? L("左", "Left") : L("右", "Right")}</span>

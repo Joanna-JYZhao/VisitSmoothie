@@ -148,3 +148,10 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 - `src/app/post/page.tsx`：不再自动预选最近的 pre，按用户的回答关联。
 
 验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1570 项全部通过；`npm run build` 通过；/pre、/post 本地能打开。
+
+## 2026-10-04 改动：身体图正面、背面的细分对应上，人体图变矮（Yueran，推 main）
+
+- `src/components/chat/BodyMap.tsx`：膝、肩的细分图跟着点的那一面走——正面点膝是膝盖骨、外侧、正中、内侧，背面点膝是腘窝和内外侧（从背后看）；正面点肩是肩的前面，背面点肩是肩的后面；左右和外侧位置按那一面的朝向排。正面胸部、肚子，背面上背、腰、臀部不变。
+- 人体图所有部位都保留，高度压到原来的 0.78，最高不超过屏幕高度的 46%，手机上一屏能看到整个人。
+
+验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1570 项全部通过；`npm run build` 通过。
