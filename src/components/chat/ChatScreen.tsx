@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { getState, storeActions, useStore } from "@/lib/store";
 import { compressImage } from "@/lib/image";
 import {
@@ -24,8 +23,6 @@ import { draftChoiceOf, draftChoices, draftPrompt, isDraftPrompt, unsavedCards }
 import { Thread } from "@/components/chat/Thread";
 import { Composer } from "@/components/chat/Composer";
 import { useToast } from "@/components/Toast";
-import { IconTile } from "@/components/ui";
-import { ChevronRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { L } from "@/lib/lang";
 
@@ -82,7 +79,6 @@ const say = (text: string) => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   const { state } = useStore();
-  const router = useRouter();
   const toast = useToast();
   const busy = useThreadBusy();
   const end = useRef<HTMLDivElement>(null);
@@ -128,11 +124,6 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
 
   if (!state.profile) return null;
 
-  // the newest complaint being followed: its page for the doctor is one tap away
-  const latest = [...state.episodes].filter((e) => e.status === "active").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
-  const report = latest ? `/doctor/${latest.id}` : null;
-  const reportTitle = latest?.title ?? "";
-
   const photos = async (files: File[]) => {
     try {
       const images = await Promise.all(files.slice(0, MAX_PHOTOS).map((f) => compressImage(f)));
@@ -156,7 +147,7 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
 
   /*
    * A phone chat, like Messages: the title at the top, the conversation in the middle, and docked
-   * right on top of the tab bar the one way to answer (with the report one tap away above it). The
+   * right on top of the tab bar the one way to answer. The
    * screen fills the column from the header down to the tab bar (flex-1, and -mb-9 takes back the
    * room <main> keeps under its content), so the dock always sits flush on the tab bar and the
    * thread scrolls up under it.
@@ -191,26 +182,9 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
             }
           />
         ) : (
-          (report || going) && (
-            <div className="flex items-center gap-2">
-              {report && (
-                <button
-                  type="button"
-                  onClick={() => router.push(report)}
-                  className="press flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-xl bg-brand-50 py-1 pr-3 pl-1.5 text-left text-base font-medium text-brand-800 transition duration-200 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
-                >
-                  <IconTile size="sm" tone="solid">
-                    <FileText />
-                  </IconTile>
-                  <span className="min-w-0 flex-1 truncate">{L(`给医生看的报告（${reportTitle}）`, `Report for the doctor (${reportTitle})`)}</span>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-brand-700" />
-                </button>
-              )}
-              {going && (
-                <div className={cn("shrink-0", !report && "ml-auto")}>
-                  <StartOver compact confirming={false} onAsk={() => setConfirmNew(true)} onCancel={() => setConfirmNew(false)} onConfirm={() => undefined} what="" />
-                </div>
-              )}
+          going && (
+            <div className="flex justify-end">
+              <StartOver compact confirming={false} onAsk={() => setConfirmNew(true)} onCancel={() => setConfirmNew(false)} onConfirm={() => undefined} what="" />
             </div>
           )
         )}

@@ -140,3 +140,11 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 - 测试：`post-link.test.ts` 加疗程识别、状态、下次复诊、复诊关联保存、手动结束、给 AI 的上一次记录。
 
 验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1570 项全部通过；`npm run build` 通过；各页面在本地都能打开。
+
+## 2026-10-04 改动：pre 底栏去掉「给医生看的报告」长条，post 直接问是不是复诊、用没用过 pre（Yueran，推 main）
+
+- `src/components/chat/ChatScreen.tsx`：底栏只留「开新的」、复诊选择和输入框，去掉「给医生看的报告（…）」按钮。
+- `src/components/RecordLinkPicker.tsx`：post 不再折叠，录音/上传上方直接两个问题——「这次是复诊吗？」（是 → 选关联哪条看过医生的记录）、「这次看医生之前，用过『看医生之前』吗？」（用过 → 选哪条 pre，和这次存成一条）；都可以选否。pre 的折叠复诊选择不变。
+- `src/app/post/page.tsx`：不再自动预选最近的 pre，按用户的回答关联。
+
+验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1570 项全部通过；`npm run build` 通过；/pre、/post 本地能打开。

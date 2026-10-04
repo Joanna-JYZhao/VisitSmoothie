@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AudioLines, Camera, ChevronDown, ImageUp, TriangleAlert, X } from "lucide-react";
-import type { Episode, Todo } from "@/lib/types";
+import type { Todo } from "@/lib/types";
 import { getState, storeActions, useStore } from "@/lib/store";
 import { createBusy } from "@/lib/busy";
 import { StartOver } from "@/components/StartOver";
@@ -26,9 +26,6 @@ const MAX_PHOTOS = 6;
 /** Prescriptions have small print: photos are sent larger than elsewhere. */
 const PHOTO_SIDE = 2000;
 
-/** The pre record most likely written before this visit: the newest complaint still followed, not yet seen by a doctor. */
-const latestPre = (episodes: Episode[]) =>
-  [...episodes].filter((e) => e.status === "active" && !e.visit).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] ?? null;
 
 /**
  * Reading the photos and the recording takes up to a minute, and the patient may go to another page
@@ -62,12 +59,9 @@ export default function PostPage() {
   const plan = state.postDraft ?? null;
   const [saving, setSaving] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
-  // which records this visit goes with, picked above the recording and the upload: the pre record of
-  // this visit (one record with it), and the earlier record it follows up (复诊)
-  const [link, setLink] = useState<RecordLink>(() => {
-    const pre = latestPre(getState().episodes);
-    return { pre: pre?.id ?? null, followUpOf: pre?.followUpOf ?? null };
-  });
+  // which records this visit goes with, asked above the recording and the upload: the earlier record it
+  // follows up (复诊), and the pre record of this visit (one record with it); nothing is picked until asked
+  const [link, setLink] = useState<RecordLink>({ pre: null, followUpOf: null });
   const router = useRouter();
   const toast = useToast();
   const cameraRef = useRef<HTMLInputElement>(null);
