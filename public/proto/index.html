@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>医伴 第三版 · 可点击样子</title>
+<style>
+  :root { --brand:#017a9e; --brand-d:#004b63; --brand-l:#eff9fd; --line:#e4eaef; --ink:#0f1b2d; --ink2:#4a5a6b; --red:#c8373e; --red-l:#fef0f1; --warm:#9a5b00; --warm-l:#fff4e0; --good:#18794e; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body { font-family:-apple-system,"PingFang SC","Hiragino Sans GB",sans-serif; color:var(--ink); background:linear-gradient(180deg,#e6f2f8,#f5f7f9); display:flex; align-items:center; justify-content:center; gap:36px; min-height:100vh; padding:16px; }
+  .side { width:280px; font-size:15px; line-height:1.6; color:var(--ink2); }
+  .side h1 { font-size:22px; color:var(--brand-d); margin:0 0 6px; }
+  .side ol { padding-left:20px; margin:8px 0; } .side li { margin-bottom:4px; }
+  .side button { margin-top:10px; border:1px solid var(--brand); background:#fff; color:var(--brand-d); border-radius:10px; padding:8px 14px; font-size:15px; cursor:pointer; }
+  .phone { width:390px; height:820px; border:12px solid #0f1b2d; border-radius:52px; background:#fff; overflow:hidden; position:relative; box-shadow:0 30px 60px -20px rgba(15,27,45,.4); flex-shrink:0; }
+  .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#0f1b2d; border-radius:0 0 16px 16px; z-index:20; }
+  .screen { position:absolute; inset:0; display:none; flex-direction:column; background:#f5f7f9; }
+  .screen.on { display:flex; }
+  .status { height:34px; flex-shrink:0; }
+  .top { height:50px; display:flex; align-items:center; justify-content:space-between; padding:0 14px; background:#fff; border-bottom:1px solid var(--line); flex-shrink:0; }
+  .top .t { font-weight:600; font-size:17px; }
+  .av { width:36px; height:36px; border-radius:50%; background:var(--brand-l); border:1px solid #b2dff4; display:flex; align-items:center; justify-content:center; color:var(--brand-d); cursor:pointer; font-size:17px; }
+  .back { color:var(--brand-d); cursor:pointer; font-size:16px; min-width:60px; }
+  .sos { background:var(--red); color:#fff; border-radius:99px; padding:6px 14px; font-size:15px; font-weight:600; cursor:pointer; }
+  .body { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .body > * { flex-shrink: 0; }
+  .ai, .me { max-width:85%; padding:10px 13px; border-radius:16px; font-size:16px; line-height:1.5; }
+  .ai { align-self:flex-start; background:#fff; border:1px solid var(--line); border-top-left-radius:5px; }
+  .me { align-self:flex-end; background:var(--brand); color:#fff; border-top-right-radius:5px; }
+  .card { background:#fff; border:1px solid #b2dff4; border-radius:14px; overflow:hidden; font-size:15.5px; line-height:1.55; }
+  .card .h { background:var(--brand-l); color:var(--brand-d); font-weight:600; padding:7px 12px; }
+  .card .b { padding:10px 12px; }
+  .card.warm { border-color:#e9c98f; } .card.warm .h { background:var(--warm-l); color:var(--warm); }
+  .card.red { border-color:#eab3b6; } .card.red .h { background:var(--red); color:#fff; }
+  .row { display:flex; gap:10px; padding:4px 0; border-bottom:1px solid var(--line); } .row:last-child { border:0; }
+  .row .k { color:var(--ink2); width:44px; flex-shrink:0; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; }
+  .chip { border:1.5px solid #7ec6e6; background:var(--brand-l); color:var(--brand-d); border-radius:99px; padding:7px 13px; font-size:15px; cursor:pointer; }
+  .chip:hover { background:#d7f0fb; }
+  .btns { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .btn { border-radius:10px; padding:9px 14px; font-size:15px; font-weight:600; cursor:pointer; border:1.5px solid var(--brand); background:#fff; color:var(--brand-d); }
+  .btn.p { background:var(--brand); color:#fff; } .btn.full { flex:1; text-align:center; }
+  .note { align-self:center; font-size:13.5px; color:var(--ink2); background:#fff; border:1px solid var(--line); border-radius:99px; padding:4px 12px; }
+  .bottom { background:#fff; border-top:1px solid var(--line); padding:8px 12px 18px; flex-shrink:0; }
+  .quick { display:flex; gap:7px; margin-bottom:8px; }
+  .bar { display:flex; gap:8px; align-items:center; }
+  .ic { width:44px; height:44px; border-radius:12px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:19px; background:#fff; }
+  .mic { flex:1; height:48px; border-radius:14px; background:var(--brand); color:#fff; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:600; cursor:pointer; user-select:none; }
+  .mic.rec { background:var(--red); }
+  .typing { display:none; flex:1; } .typing input { width:100%; height:44px; border:1.5px solid #cfd8e0; border-radius:12px; padding:0 12px; font-size:16px; }
+  .bodymap { display:flex; justify-content:center; gap:30px; padding:6px 0; }
+  .zone { cursor:pointer; } .zone:hover { fill:#d7f0fb; } .zone.sel { fill:var(--brand); }
+  .tog { width:42px; height:24px; border-radius:99px; background:#cfd8e0; position:relative; cursor:pointer; flex-shrink:0; }
+  .tog::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:.15s; }
+  .tog.on { background:var(--brand); } .tog.on::after { left:21px; }
+  .list { background:#fff; border:1px solid var(--line); border-radius:14px; }
+  .li { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line); cursor:pointer; font-size:16px; } .li:last-child { border:0; }
+  .li small { display:block; color:var(--ink2); font-size:13.5px; }
+  .sec { font-weight:600; color:var(--brand-d); margin:6px 2px 0; font-size:15px; }
+  .field { display:flex; flex-direction:column; gap:5px; font-size:15px; }
+  .field select, .field textarea { border:1.5px solid #cfd8e0; border-radius:12px; padding:10px 12px; font-size:16px; font-family:inherit; background:#fff; color:var(--ink); }
+  .field select { height:44px; padding:0 10px; }
+  .field textarea { resize:vertical; line-height:1.45; }
+  .opt { font-size:13px; color:var(--ink2); background:#f0f4f7; border-radius:99px; padding:1px 8px; margin-left:4px; }
+  .skip { border:1.5px dashed #7ec6e6; background:var(--brand-l); border-radius:12px; padding:10px 12px; margin-top:10px; color:var(--brand-d); }
+  .field input { height:44px; border:1.5px solid #cfd8e0; border-radius:12px; padding:0 12px; font-size:16px; }
+  .seg { display:flex; gap:6px; flex-wrap:wrap; }
+  .seg span { border:1.5px solid #cfd8e0; border-radius:10px; padding:7px 12px; cursor:pointer; font-size:15px; background:#fff; }
+  .seg span.sel { border-color:var(--brand); background:var(--brand-l); color:var(--brand-d); font-weight:600; }
+  .red-top { background:var(--red); color:#fff; padding:12px 14px; flex-shrink:0; }
+  .toast { position:absolute; top:96px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:9px 16px; border-radius:12px; font-size:14.5px; opacity:0; transition:.2s; pointer-events:none; z-index:30; white-space:nowrap; }
+  .toast.on { opacity:1; }
+  .sheet { position:absolute; inset:0; background:rgba(15,27,45,.4); display:none; align-items:flex-end; z-index:25; }
+  .sheet.on { display:flex; }
+  .sheet .in { background:#fff; width:100%; border-radius:20px 20px 0 0; padding:18px 16px 26px; }
+  .sheet .in h3 { margin:0 0 10px; font-size:18px; }
+  @media (max-width: 760px) { .side { display:none; } body { padding:0; } .phone { border:0; border-radius:0; width:100vw; height:100vh; box-shadow:none; } .notch { display:none; } }
+</style>
+</head>
+<body>
+<div class="side">
+  <h1>医伴 第三版 · 可点击样子</h1>
+  <p>内容是写死的示例，不接 AI，用来看「只有一个对话」是什么感觉。</p>
+  <div id="side-reg">
+    <b>注册：七项</b>
+    <ol style="margin-top:4px">
+      <li>昵称、出生日期、性别、学历必填。年龄由出生日期自动算。</li>
+      <li>家族遗传病、过敏史选填。</li>
+    </ol>
+    <div class="skip"><b>基础病可以跳过</b><br>不清楚或者不想现在填，就空着。以后在「我的资料」里随时补，问诊时也会顺着问。</div>
+  </div>
+  <div id="side-use" style="display:none">
+    <ol>
+      <li>点「按住 说话」：模拟说一句「右膝盖疼」，跟着点 AI 给的回答，走到病情描述和分诊。</li>
+      <li>点输入栏右边的相机：模拟拍医嘱，看整理结果，再选「提醒」或「解释」。</li>
+      <li>点三个快捷选项、左上角头像、右上角「应急」。</li>
+    </ol>
+  </div>
+  <button onclick="restart()">从头再来</button>
+</div>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- 注册 -->
+  <div class="screen on" id="s-reg">
+    <div class="status"></div>
+    <div class="body">
+      <div style="font-size:24px;font-weight:700;color:var(--brand-d)">先认识一下</div>
+      <div style="color:var(--ink2);font-size:15px;margin-top:-4px">带 * 的要填，其余可以以后在「我的资料」里补。</div>
+      <label class="field">昵称 *<input id="f-name" placeholder="在医伴里怎么称呼你" value="王阿姨"></label>
+      <label class="field">出生日期 *<input id="f-birth" type="date" value="1968-05-20" max="2026-10-03" oninput="showAge()"><small id="f-age" style="color:var(--brand-d);font-weight:600"></small></label>
+      <label class="field">性别 *<select id="f-sex"><option value="">请选择</option><option>男</option><option selected>女</option></select></label>
+      <label class="field">学历 *<select id="f-edu"><option value="">请选择</option><option>小学</option><option>初中</option><option selected>高中/中专</option><option>大专</option><option>本科及以上</option></select>
+        <small style="color:var(--ink2)">只用来决定我解释时说得多细，不给医生看。</small></label>
+      <label class="field">基础病 <span class="opt">选填，可跳过</span><textarea id="f-cond" rows="2" placeholder="比如：高血压、糖尿病。不清楚可以先空着">高血压（5 年）、2 型糖尿病</textarea></label>
+      <label class="field">家族遗传病 <span class="opt">选填</span><textarea id="f-fam" rows="2" placeholder="比如：母亲 糖尿病。没有可不填">母亲 2 型糖尿病</textarea></label>
+      <label class="field">过敏史 <span class="opt">选填</span><textarea id="f-allergy" rows="2" placeholder="对什么药物或食物过敏，比如：青霉素、海鲜">磺胺类药物</textarea></label>
+      <div id="f-err" style="color:var(--red);font-weight:600;display:none"></div>
+      <div class="btn p full" style="padding:13px" onclick="register()">开始用</div>
+      <div style="text-align:center;color:var(--brand-d);font-size:15px;cursor:pointer" onclick="toast('（示例）会打开相机拍体检报告，帮你填好')">有体检报告？拍一下，我帮你填</div>
+    </div>
+  </div>
+
+  <!-- 对话主界面 -->
+  <div class="screen" id="s-chat">
+    <div class="status"></div>
+    <div class="top"><div class="av" onclick="go('s-me')" title="我的资料">👤</div><div class="t">医伴</div><div class="sos" onclick="go('s-sos')">应急</div></div>
+    <div class="body" id="chat"></div>
+    <div class="bottom">
+      <div class="quick">
+        <span class="chip" onclick="quick('visit')">去看医生</span>
+        <span class="chip" onclick="quick('history')">讲解病史</span>
+        <span class="chip" onclick="quick('export')">导出</span>
+      </div>
+      <div class="bar">
+        <div class="ic" onclick="toggleType()" id="kb" title="切到打字">⌨</div>
+        <div class="mic" id="mic" onclick="speak()">🎙 按住 说话</div>
+        <div class="typing" id="typing"><input placeholder="打字，回车发送" onkeydown="if(event.key==='Enter'&&this.value.trim()){said(this.value.trim());this.value=''}"></div>
+        <div class="ic" onclick="photo()" title="拍照">📷</div>
+      </div>
+    </div>
+    <div class="sheet" id="sheet" onclick="if(event.target===this)this.classList.remove('on')">
+      <div class="in">
+        <h3>导出</h3>
+        <div class="list">
+          <div class="li" onclick="closeSheet('已存成 PDF（示例）')">存成 PDF<span>›</span></div>
+          <div class="li" onclick="closeSheet('已发送到打印（示例）')">打印<span>›</span></div>
+          <div class="li" onclick="closeSheet('已复制，可以粘贴发给医生')">复制成文字<span>›</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 给医生的一页 -->
+  <div class="screen" id="s-doc">
+    <div class="status"></div>
+    <div class="top"><div class="back" onclick="go('s-chat')">‹ 对话</div><div class="t">给医生看</div><div class="sos" onclick="go('s-sos')">应急</div></div>
+    <div class="body">
+      <div class="card"><div class="h"><span data-p="name"></span> · <span data-p="sex"></span> · <span data-p="age"></span> 岁</div><div class="b">基础病：<span data-p="cond"></span><br><b style="color:var(--red)">过敏：<span data-p="allergy"></span></b><br>长期用药：缬沙坦、二甲双胍缓释片</div></div>
+      <div class="card"><div class="h">这次：右膝疼</div><div class="b" style="font-size:17px;font-weight:600;line-height:1.7">· 右膝内侧疼痛约 2 天<br>· 上下楼时加重，休息后减轻<br>· 没有外伤，没有用药<br>· 以前：2024 年右膝扭伤过一次</div></div>
+      <div class="card"><div class="h">时间线</div><div class="b">10月1日　开始疼，上下楼明显<br>10月3日　疼法是酸胀，内侧最疼</div></div>
+      <div class="card"><div class="h">可以问医生的问题</div><div class="b">1. 这次和 2024 年那次扭伤有关系吗？<br>2. 我有糖尿病，用止痛药要注意什么？</div></div>
+      <div class="btns"><div class="btn full" onclick="toast('（示例）打印')">打印</div><div class="btn full" onclick="toast('已复制')">复制文字</div></div>
+      <div style="text-align:center;color:var(--ink2);font-size:13.5px">患者自己记录、医伴整理的内容，不是诊断。</div>
+    </div>
+  </div>
+
+  <!-- 我的资料 -->
+  <div class="screen" id="s-me">
+    <div class="status"></div>
+    <div class="top"><div class="back" onclick="go('s-chat')">‹ 对话</div><div class="t">我的资料</div><div class="sos" onclick="go('s-sos')">应急</div></div>
+    <div class="body">
+      <div class="card"><div class="h"><span data-p="name"></span> · <span data-p="age"></span> 岁 · <span data-p="sex"></span> · <span data-p="edu"></span></div><div class="b">出生日期：<span data-p="birth"></span><br>基础病：<span data-p="cond"></span><br>家族：<span data-p="fam"></span><br><b style="color:var(--red)">过敏：<span data-p="allergy"></span></b></div></div>
+      <div class="sec">就诊记录</div>
+      <div class="list">
+        <div class="li" onclick="go('s-doc')"><div>右膝疼 · 10 月 3 日<small>问诊 + 医嘱</small></div><span>›</span></div>
+        <div class="li" onclick="toast('（示例）年度复诊的记录')"><div>年度复诊 · 9 月 12 日<small>医嘱</small></div><span>›</span></div>
+      </div>
+      <div class="sec">更多</div>
+      <div class="list">
+        <div class="li" onclick="toast('（示例）提醒列表')">提醒（3 条）<span>›</span></div>
+        <div class="li" onclick="toast('（示例）血糖、血压的趋势图')">血糖和血压<span>›</span></div>
+        <div class="li" onclick="toast('（示例）补充以前的病史、改资料')">补充病史、改资料<span>›</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 应急 -->
+  <div class="screen" id="s-sos">
+    <div class="status" style="background:var(--red)"></div>
+    <div class="red-top"><div style="display:flex;justify-content:space-between;align-items:center"><span class="back" style="color:#fff" onclick="go('s-chat')">‹ 返回</span><span style="background:#fff;color:var(--red);border-radius:12px;padding:8px 14px;font-weight:700;cursor:pointer" onclick="toast('（示例）拨打 120')">📞 拨打 120</span></div>
+      <div style="font-size:22px;font-weight:700;margin-top:8px">应急手册</div><div>我出了状况的话，请看这一页</div></div>
+    <div class="body" style="background:#fff">
+      <div class="card red"><div class="h">我是<span data-p="name"></span>，<span data-p="sex"></span>，<span data-p="age"></span> 岁</div><div class="b">我有：<span data-p="cond"></span><br><b style="color:var(--red)">过敏：<span data-p="allergy"></span></b><br>紧急联系人：女儿 陈静 138 0000 0002</div></div>
+      <div class="card"><div class="h">如果我晕倒了、叫不醒</div><div class="b">1. 拍拍我的肩膀，大声叫我。<br>2. 没有反应：马上拨打 120，同时请人去找 AED。<br>3. 有呼吸：让我侧躺，松开领口；不要喂水喂药。<br>4. 没有呼吸：马上做胸外按压。</div></div>
+      <div class="card warm"><div class="h">我有糖尿病</div><div class="b">我晕倒、出冷汗、手抖，可能是血糖太低。我还清醒、能咽东西：给我吃四五块糖或半杯果汁。叫不醒：不要往嘴里放东西，拨打 120。</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const chat = () => document.getElementById('chat');
+  function go(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+  function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 2200); }
+  function add(html) { const c = chat(); const d = document.createElement('div'); d.innerHTML = html.trim(); const n = d.firstElementChild; c.appendChild(n); c.scrollTop = c.scrollHeight; return n; }
+  function me(t) { add(`<div class="me">${t}</div>`); }
+  function ai(t, delay = 500) { return new Promise(r => setTimeout(() => { add(`<div class="ai">${t}</div>`); r(); }, delay)); }
+  function later(fn, ms = 500) { setTimeout(fn, ms); }
+  function chips(list, onPick) { const n = add(`<div class="chips">${list.map(x => `<span class="chip">${x}</span>`).join('')}</div>`);
+    n.querySelectorAll('.chip').forEach(c => c.onclick = () => { n.remove(); onPick(c.textContent); }); }
+
+  // the registration chips
+  document.querySelectorAll('.seg').forEach(seg => seg.querySelectorAll('span').forEach(sp => sp.onclick = () => {
+    if (seg.hasAttribute('data-one')) seg.querySelectorAll('span').forEach(x => x.classList.remove('sel'));
+    sp.classList.toggle('sel');
+  }));
+
+  const P = {};
+  function ageOf(d) { const b = new Date(d + 'T00:00:00'), n = new Date(); let a = n.getFullYear() - b.getFullYear();
+    if (n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) a--; return a; }
+  function showAge() { const v = document.getElementById('f-birth').value; document.getElementById('f-age').textContent = v ? `${ageOf(v)} 岁` : ''; }
+  function register() {
+    const v = id => document.getElementById(id).value.trim(); const err = document.getElementById('f-err');
+    const miss = !v('f-name') ? '请填一下昵称' : !v('f-birth') ? '请选一下出生日期' : ageOf(v('f-birth')) < 0 ? '出生日期不对' : !v('f-sex') ? '请选一下性别' : !v('f-edu') ? '请选一下学历' : '';
+    if (miss) { err.textContent = miss; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    const [y, m, d] = v('f-birth').split('-');
+    Object.assign(P, { name: v('f-name'), birth: `${+y}年${+m}月${+d}日`, age: ageOf(v('f-birth')), sex: v('f-sex'), edu: v('f-edu'),
+      cond: v('f-cond') || '还没填', fam: v('f-fam') || '没填', allergy: v('f-allergy') || '没有填' });
+    document.querySelectorAll('[data-p]').forEach(el => el.textContent = P[el.dataset.p]);
+    document.getElementById('side-reg').style.display = 'none'; document.getElementById('side-use').style.display = 'block';
+    go('s-chat'); greet();
+    if (!v('f-cond')) later(() => add('<div class="note">基础病还没填，以后在「我的资料」里随时补</div>'), 700);
+  }
+  showAge();
+  let greeted = false;
+  function greet() { if (greeted) return; greeted = true;
+    add(`<div class="ai">早上好，${P.name}。哪里不舒服，或者有什么想问的，直接跟我说。</div>`);
+    add('<div class="ai">看完医生，把医嘱拍给我就行。</div>'); }
+
+  let typing = false;
+  function toggleType() { typing = !typing; document.getElementById('mic').style.display = typing ? 'none' : 'flex';
+    document.getElementById('typing').style.display = typing ? 'block' : 'none'; document.getElementById('kb').textContent = typing ? '🎙' : '⌨'; }
+
+  // the scripted consultation
+  let step = 0;
+  function speak() { const m = document.getElementById('mic'); m.classList.add('rec'); m.textContent = '正在听… 再点一下结束';
+    if (m._rec) { clearTimeout(m._rec); } m._rec = setTimeout(() => { m.classList.remove('rec'); m.textContent = '🎙 按住 说话';
+      said(step === 0 ? '这两天右膝盖疼，上下楼更厉害' : '今天好一点了'); }, 1100); }
+  function said(t) {
+    me(t);
+    if (/胸|喘不上气/.test(t)) { later(() => add('<div class="card red"><div class="h">⚠ 请马上处理</div><div class="b">胸口不舒服加上喘不上气是危险信号。请立即拨打 120 或去急诊。<div class="btns"><div class="btn p" onclick="toast(\'（示例）拨打 120\')">拨打 120</div></div></div></div>')); return; }
+    if (/吗|？|\?|能不能|怎么/.test(t) && step === 0) { later(() => add('<div class="card"><div class="h">回答</div><div class="b">（示例）我会按你的档案和以前的记录回答，并告诉你依据是哪一条。比如问「上次医生说了什么」，我直接念记录原文。</div></div>')); return; }
+    if (step === 0) { step = 1;
+      ai('记下了。什么时候开始的？').then(() => chips(['今天', '两天前', '一周以上', '记不清'], v => { me(v);
+        ai('点一下图上最疼的地方。').then(bodyMap); }));
+    } else { ai('好，我记进去了。'); }
+  }
+  function bodyMap() {
+    const n = add(`<div class="card"><div class="h">哪里最疼（右膝）</div><div class="b"><div class="bodymap">
+      <svg width="150" height="150" viewBox="0 0 150 150"><path d="M40 0 L110 0 L106 150 L44 150 Z" fill="#f0f4f7" stroke="#cfd8e0"/>
+        <ellipse class="zone" data-z="外侧" cx="52" cy="70" rx="11" ry="20" fill="#fff" stroke="#7ec6e6" stroke-width="2"/>
+        <ellipse class="zone" data-z="前面" cx="75" cy="70" rx="10" ry="17" fill="#fff" stroke="#7ec6e6" stroke-width="2"/>
+        <ellipse class="zone" data-z="内侧" cx="98" cy="70" rx="11" ry="20" fill="#fff" stroke="#7ec6e6" stroke-width="2"/>
+        <text x="40" y="108" font-size="12" fill="#4a5a6b">外侧</text><text x="64" y="108" font-size="12" fill="#4a5a6b">前面</text><text x="88" y="108" font-size="12" fill="#4a5a6b">内侧</text></svg>
+      <svg width="80" height="150" viewBox="0 0 80 150"><path d="M18 0 L62 0 L60 150 L20 150 Z" fill="#f0f4f7" stroke="#cfd8e0"/>
+        <ellipse class="zone" data-z="后面" cx="40" cy="72" rx="15" ry="18" fill="#fff" stroke="#7ec6e6" stroke-width="2"/>
+        <text x="28" y="110" font-size="11" fill="#4a5a6b">后面</text></svg></div>
+      <div style="text-align:center;color:var(--ink2);font-size:14px">正面　　　　　　背面</div></div></div>`);
+    n.querySelectorAll('.zone').forEach(z => z.onclick = () => { n.querySelectorAll('.zone').forEach(x => x.classList.remove('sel')); z.classList.add('sel');
+      me('右膝 ' + z.dataset.z);
+      ai('是怎么个疼法？').then(() => chips(['酸胀', '刺痛', '扭着疼', '说不清'], v => { me(v);
+        if (v === '扭着疼') { ai('是一阵一阵拧着的那种疼吗？医生管这个叫「绞痛」。').then(() => chips(['是', '不是'], w => { me(w); askMeds(); })); }
+        else askMeds(); })); }, { once: false });
+  }
+  function askMeds() { ai('吃过或用过什么药吗？').then(() => chips(['没用药', '贴了膏药', '吃了止痛药'], v => { me(v);
+    ai('你 2024 年右膝扭伤过一次，这次和那次像吗？').then(() => chips(['有点像', '不像', '不清楚'], w => { me(w); finish(); })); })); }
+  function finish() {
+    ai('好了，我都记下了。这是给医生看的病情描述：', 600).then(() => {
+      const d = add(`<div class="card"><div class="h">给医生的病情描述</div><div class="b">右膝内侧疼痛 2 天，上下楼时加重，休息后减轻。疼法：酸胀。没有外伤，没有用药。以前：2024 年右膝扭伤过一次。
+        <div class="btns"><div class="btn p" data-a="save">保存</div><div class="btn" data-a="edit">改一下</div><div class="btn" data-a="drop">放弃</div><div class="btn" data-a="doc">给医生看</div></div></div></div>`);
+      add('<div class="card warm"><div class="h">建议这几天去看医生 · 骨科</div><div class="b">去之前把这一页给医生看。要是膝盖红肿发热，或者走不了路，当天就去。</div></div>');
+      d.querySelectorAll('.btn').forEach(b => b.onclick = () => { const a = b.dataset.a;
+        if (a === 'save') { d.querySelector('.btns').innerHTML = '<span style="color:var(--good);font-weight:600">✓ 已存进就诊记录</span>'; add('<div class="note">明天我会问你膝盖怎么样了</div>'); }
+        if (a === 'edit') ai('哪里不对，直接告诉我，我重新写。', 200);
+        if (a === 'drop') { d.remove(); add('<div class="note">这次的记录已放弃</div>'); }
+        if (a === 'doc') go('s-doc'); });
+      step = 2;
+    });
+  }
+
+  // the doctor's orders
+  function photo() {
+    add('<div class="me" style="padding:6px"><div style="width:120px;height:86px;border-radius:10px;background:#fff;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:10px"><div style="height:5px;background:#cfd8e0;border-radius:3px"></div><div style="height:5px;background:#cfd8e0;border-radius:3px;width:80%"></div><div style="height:5px;background:#cfd8e0;border-radius:3px;width:90%"></div></div><div style="font-size:13px;margin-top:4px">医嘱照片</div></div>');
+    ai('正在认照片上的字…', 300).then(() => later(() => {
+      const c = add(`<div class="card"><div class="h">我从医嘱里认出了这些</div><div class="b">
+        <div class="row"><span class="k">诊断</span><span>右膝内侧副韧带轻度损伤</span></div>
+        <div class="row"><span class="k">药</span><span>洛索洛芬钠片，每日三次，饭后</span></div>
+        <div class="row"><span class="k">注意</span><span>两周内不要爬山、上下楼梯少走</span></div>
+        <div class="row"><span class="k">其他</span><span>戴护膝，冰敷每次 15 分钟</span></div>
+        <div class="row"><span class="k">时间</span><span>10月3日 · 市人民医院 骨科</span></div>
+        <div class="row"><span class="k">复诊</span><span>两周后（10月17日）</span></div>
+        <div class="btns"><div class="btn p full" data-a="todo">整理要做的事并提醒</div><div class="btn full" data-a="explain">给我解释一下</div></div></div></div>`);
+      c.querySelectorAll('.btn').forEach(b => b.onclick = () => b.dataset.a === 'todo' ? todo() : explain());
+    }, 900));
+  }
+  function todo() {
+    const n = add(`<div class="card"><div class="h">要做的事</div><div class="b">
+      <div class="row" style="justify-content:space-between"><span>吃药：洛索洛芬钠片<br><small style="color:var(--ink2)">早、中、晚饭后</small></span><span class="tog on"></span></div>
+      <div class="row" style="justify-content:space-between"><span>冰敷、戴护膝</span><span class="tog"></span></div>
+      <div class="row" style="justify-content:space-between"><span>复诊：10月17日</span><span class="tog on"></span></div>
+      <div style="margin:8px 0 4px;font-weight:600;color:var(--brand-d)">吃药多久提醒一次</div>
+      <div class="seg" data-one><span class="sel">每次都提醒</span><span>每天一次</span><span>不提醒</span></div>
+      <div class="btns"><div class="btn p full">设好了</div></div></div></div>`);
+    n.querySelectorAll('.tog').forEach(t => t.onclick = () => t.classList.toggle('on'));
+    n.querySelectorAll('.seg span').forEach(sp => sp.onclick = () => { n.querySelectorAll('.seg span').forEach(x => x.classList.remove('sel')); sp.classList.add('sel'); });
+    n.querySelector('.btn.p').onclick = () => { n.querySelector('.btns').innerHTML = '<span style="color:var(--good);font-weight:600">✓ 提醒已设好（3 条）</span>'; ai('设好了。要改随时跟我说，比如「晚上那次不用提醒了」。复诊前一天我会帮你准备要跟医生说的话。'); };
+  }
+  function explain() {
+    ai('想先了解哪一部分？').then(() => chips(['诊断是什么意思', '这个药是干什么的', '有什么副作用', '为什么要冰敷'], v => { me(v);
+      const ans = { '诊断是什么意思': '「副韧带」是膝盖内侧连着骨头的一条韧带，「轻度损伤」是拉伤了一点。具体严不严重以医生说的为准。',
+        '这个药是干什么的': '洛索洛芬钠是止痛消炎的药。医生开的是每日三次、饭后吃。说明书上一般写饭后吃，可以减少对胃的刺激。具体以说明书和医生的话为准。',
+        '有什么副作用': '说明书上常见的是胃不舒服、恶心。你有糖尿病和高血压，吃药期间如果胃痛、黑便，要马上告诉医生。',
+        '为什么要冰敷': '受伤后头几天冰敷可以减轻肿和疼。每次 15 分钟左右，不要直接把冰贴在皮肤上。' }[v];
+      add(`<div class="card"><div class="h">${v}</div><div class="b">${ans}</div></div>`); }));
+  }
+
+  function quick(k) {
+    if (k === 'visit') { me('我要去看医生'); ai('好，这是整理好的一页，可以直接给医生看。').then(() => add('<div class="card"><div class="h">给医生看：右膝疼</div><div class="b">右膝内侧疼痛 2 天 · 上下楼加重 · 以前扭伤过<div class="btns"><div class="btn p" onclick="go(\'s-doc\')">打开给医生的一页</div></div></div></div>')); }
+    if (k === 'history') { me('讲解病史'); ai('讲给医生，还是讲给你自己听？').then(() => chips(['讲给医生', '讲给我自己'], v => { me(v);
+      add(v === '讲给医生' ? '<div class="card"><div class="h">病史（给医生）</div><div class="b">患者女，58 岁。高血压 5 年，2 型糖尿病 1 年，长期服用缬沙坦、二甲双胍缓释片。磺胺类药物过敏。2024 年右膝扭伤一次。母亲有 2 型糖尿病。</div></div>'
+        : '<div class="card"><div class="h">你的情况（大白话）</div><div class="b">你有高血压和糖尿病，每天吃两种药控制。对磺胺类的药过敏，看病时一定要告诉医生。你的血糖这一年控制得越来越好。</div></div>'); })); }
+    if (k === 'export') document.getElementById('sheet').classList.add('on');
+  }
+  function closeSheet(t) { document.getElementById('sheet').classList.remove('on'); toast(t); }
+  function restart() { location.reload(); }
+</script>
+</body>
+</html>
