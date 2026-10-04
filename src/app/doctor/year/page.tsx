@@ -79,13 +79,15 @@ export default function DoctorYearPage() {
   const working = busy || stale;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="no-print -mb-2">
         <BackButton href="/" />
       </div>
       <DoctorTabs current="year" episodeHref={active ? `/doctor/${active.id}` : null} yearHref="/doctor/year" />
 
       <GlanceSheet profile={profile} subject={L("这一年", "This year")} lines={view.glance} generatedAt={view.generatedAt} busy={working} />
+      {/* what can be done with the sheet, in one place right under it */}
+      <SheetActions text={() => annualToText(view, profile, facts)} onRefresh={() => void refreshAnnual()} busy={busy} />
 
       <SheetDetails>
         <SheetSection
@@ -163,7 +165,6 @@ export default function DoctorYearPage() {
       </SheetDetails>
 
       {!working && <QuestionsCard questions={view.questionsForDoctor} />}
-      <SheetActions text={() => annualToText(view, profile, facts)} onRefresh={() => void refreshAnnual()} busy={busy} />
       <SheetFootnote />
     </div>
   );

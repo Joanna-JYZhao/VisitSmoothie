@@ -20,6 +20,7 @@ export function MicButton({
   onText,
   maxSeconds = 120,
   big = false,
+  pill = false,
   label = L("说给我听", "Speak to me"),
   className,
   disabled,
@@ -27,6 +28,8 @@ export function MicButton({
   onText: (text: string) => void;
   maxSeconds?: number;
   big?: boolean;
+  /** with `big`: a filled capsule, the height of the round buttons beside it (the chat's input bar) */
+  pill?: boolean;
   label?: string;
   className?: string;
   disabled?: boolean;
@@ -112,8 +115,15 @@ export function MicButton({
         disabled={disabled || phase === "working"}
         aria-label={phase === "recording" ? L("说完了，停止录音", "Done speaking, stop recording") : label}
         className={cn(
-          "press relative flex min-h-14 w-full flex-wrap items-center justify-center gap-2 overflow-hidden rounded-xl border px-3 py-2 text-center transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
-          phase === "recording" ? "border-danger/20 bg-danger-bg" : "material border-line/70 bg-surface hover:border-brand-200",
+          "press relative flex w-full flex-wrap items-center justify-center gap-2 overflow-hidden text-center transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+          pill ? "min-h-12 rounded-full px-3 py-1.5" : "min-h-14 rounded-xl border px-3 py-2",
+          pill
+            ? phase === "recording"
+              ? "bg-danger-bg"
+              : "bg-surface-2 hover:bg-brand-50"
+            : phase === "recording"
+              ? "border-danger/20 bg-danger-bg"
+              : "material border-line/70 bg-surface hover:border-brand-200",
           phase !== "working" && "disabled:opacity-60",
           className,
         )}

@@ -30,8 +30,8 @@ export function SmoothieFooter() {
 }
 
 /**
- * The app's own mark above the login card: the same celadon tile the rest of the app uses, rather
- * than a second, different fragment of the wordmark on the same screen.
+ * The app's own mark above the login card: the same app icon as the home button in the tab bar,
+ * rather than a second, different fragment of the wordmark on the same screen.
  */
 export function SmoothieAppMark() {
   return <LogoMark className="login-mark-tile" />;

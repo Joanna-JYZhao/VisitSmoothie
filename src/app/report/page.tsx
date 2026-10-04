@@ -33,13 +33,13 @@ export default function ReportPage() {
   ].sort((a, b) => b.at - a.at);
 
   return (
-    <div className="space-y-8">
-      <header className="animate-fade-up">
+    <div className="space-y-5">
+      <header className="animate-fade-up pt-1">
         <h1 className="t-display text-ink">report · 就诊记录</h1>
       </header>
       {rows.length === 0 && <Notice icon={<FolderOpen className="h-6 w-6" />} title="还没有记录。" />}
       {rows.length > 0 && (
-        <ol className="space-y-4">
+        <ol className="space-y-3">
           {rows.map((r, i) => (
             <li key={r.key} className={cn("animate-rise", `rise-${Math.min(i + 1, 4)}`)}>
               <RecordCard row={r} first={i === 0} />
@@ -52,14 +52,14 @@ export default function ReportPage() {
 }
 
 const actionCls = cn(
-  "press flex min-h-14 flex-1 items-center justify-center gap-0.5 text-base font-semibold text-brand-700 transition duration-200 hover:bg-brand-50",
+  "press flex min-h-14 flex-1 items-center justify-center gap-0.5 text-lg font-semibold text-brand-700 transition-colors duration-200 hover:bg-surface-2/70",
   focusRing,
   "focus-visible:ring-inset",
 );
 
 /**
- * One record: what it was and when, on a card; the ways into it are a row of equal doors along
- * the bottom. The most recent record is the raised one.
+ * One record, as one inset group: what it was and when on top, and the ways into it as a row of
+ * equal doors along the bottom, split by a hairline. The most recent record has the solid tile.
  */
 function RecordCard({
   row: r,
@@ -70,20 +70,20 @@ function RecordCard({
 }) {
   const Icon = r.icon;
   return (
-    <Card tone={first ? "raised" : "plain"} className="lift overflow-hidden">
-      <div className="flex items-start gap-4 px-5 pt-5 sm:px-6 sm:pt-6">
+    <Card tone={first ? "raised" : "plain"} className="overflow-hidden">
+      <div className="flex items-start gap-3 px-4 pt-4 pb-4">
         <IconTile tone={first ? "solid" : "brand"} size="lg">
           <Icon />
         </IconTile>
-        <div className="min-w-0 flex-1 pt-0.5">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <h2 className="t-title min-w-0 text-ink">{r.title}</h2>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h2 className="min-w-0 text-[1.25rem] leading-snug font-semibold tracking-[-0.015em] text-ink">{r.title}</h2>
             <Badge tone="brand">{r.kind}</Badge>
           </div>
-          <p className="t-body mt-2 text-ink-2">{r.line}</p>
+          <p className="t-body mt-1 text-ink-2">{r.line}</p>
         </div>
       </div>
-      <div className="mt-5 flex divide-x divide-line border-t border-line">
+      <div className="flex divide-x divide-line border-t border-line">
         {r.doctor && (
           <Link href={r.doctor} className={actionCls}>
             给医生看

@@ -24,7 +24,7 @@ export function ExplainCard({ item }: { item: Extract<ThreadItem, { kind: "expla
   };
 
   return (
-    <Card tone="raised" className="animate-pop p-6">
+    <Card tone="raised" className="animate-pop p-5">
       <h2 className="t-heading flex items-center gap-3 text-ink">
         <IconTile>
           <MessageCircleQuestion />

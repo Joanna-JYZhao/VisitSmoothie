@@ -8,7 +8,6 @@ import { useStore } from "@/lib/store";
 import { L } from "@/lib/lang";
 import { ask, suggestedQuestions, usePendingAsk } from "@/lib/ask";
 import { HintBanner } from "@/components/HintBanner";
-import { LogoMark } from "@/components/Logo";
 import { SpeakInput } from "@/components/SpeakInput";
 import { useToast } from "@/components/Toast";
 import { BackLink, Card, IconTile, LinkButton, TextButton, TextLink, TypingDots } from "@/components/ui";
@@ -80,44 +79,46 @@ export default function AskPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-2">
+      {/* the same top as the home's 问 AI sheet: the way back on the left, the name beside it, 清空 at the right */}
+      <div className="flex min-h-12 items-center gap-1">
         <BackLink href="/">{L("返回", "Back")}</BackLink>
+        <h1 className="t-heading min-w-0 flex-1 animate-fade-up truncate text-ink">{L("问医伴", "Ask Yiban")}</h1>
         {turns.length > 0 && !busy && (
-          <TextButton tone="plain" className="-mr-2 text-ink-2" onClick={clear}>
+          <TextButton tone="muted" className="-mr-2" onClick={clear}>
             {L("清空", "Clear")}
           </TextButton>
         )}
       </div>
-      <h1 className="t-display mt-1 animate-fade-up text-balance text-ink">{L("问医伴", "Ask Yiban")}</h1>
-      <p className="t-lead mt-3 animate-fade-up text-ink-2">
+      <p className="t-body mt-2 animate-fade-up text-ink-2">
         {L(
           "关于你自己的健康，记不清的都可以问我。我按你的档案和看病记录回答，不做诊断。",
           "Ask me what you can't quite remember about your own health. I answer from your records and your doctor visits. I do not diagnose.",
         )}
       </p>
 
-      <div className="mt-8 space-y-6" aria-live="polite">
+      <div className="mt-6 space-y-3" aria-live="polite">
         {turns.map((t) => (
           <Turn key={t.id} turn={t} />
         ))}
         {pending && (
-          <div className="space-y-3">
+          <div className="animate-fade-up rounded-card bg-surface px-4 py-4">
             <Question text={pending.question} />
             {/* raised by rule the moment the question is sent: a warning never waits for an answer */}
-            {pending.hint?.level === "urgent" && <HintBanner hint={pending.hint} />}
-            <div className="flex items-start gap-3">
-              <LogoMark className="mt-1 h-9 w-9 shadow-glow" />
-              <div className="material flex animate-fade-up items-center gap-3 rounded-[22px] rounded-tl-md border border-line/80 px-5 py-4 text-lg text-ink-2">
-                <span>{L("正在查你的记录", "Checking your records")}</span>
-                <TypingDots label={L("医伴正在查记录", "Yiban is checking your records")} />
+            {pending.hint?.level === "urgent" && (
+              <div className="mt-3">
+                <HintBanner hint={pending.hint} />
               </div>
-            </div>
+            )}
+            <p className="mt-3 flex items-center gap-3 text-lg text-ink-2">
+              <span>{L("正在查你的记录", "Checking your records")}</span>
+              <TypingDots label={L("医伴正在查记录", "Yiban is checking your records")} />
+            </p>
           </div>
         )}
       </div>
 
       {!busy && suggestions.length > 0 && (
-        <section className="mt-8 animate-fade-up" aria-label={L("可以这样问", "You can ask")}>
+        <section className="mt-6 animate-fade-up" aria-label={L("可以这样问", "You can ask")}>
           <p className="text-base font-medium text-ink-2">{turns.length ? L("还可以问", "You can also ask") : L("可以这样问", "You can ask")}</p>
           <div className="mt-3 flex flex-wrap gap-2.5">
             {suggestions.map((q, i) => (
@@ -125,7 +126,7 @@ export default function AskPage() {
                 key={q}
                 type="button"
                 onClick={() => send(q)}
-                className={`press material rise-${Math.min(i + 1, 4)} min-h-12 rounded-full border border-line/80 px-5 py-2 text-left text-lg leading-snug text-ink transition duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200`}
+                className={`press material rise-${Math.min(i + 1, 4)} min-h-12 rounded-xl border border-line/80 px-4 py-2 text-left text-base leading-snug font-medium text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200`}
               >
                 {q}
               </button>
@@ -136,7 +137,7 @@ export default function AskPage() {
 
       {/* Nothing on file yet: say what would make this page useful, instead of an empty screen. */}
       {!busy && !turns.length && !suggestions.length && (
-        <Card tone="raised" className="mt-8 animate-pop px-6 py-10 text-center sm:px-10">
+        <Card tone="raised" className="mt-6 animate-pop px-5 py-8 text-center">
           <IconTile size="xl" tone="brand" className="mx-auto mb-5 animate-breathe">
             <MessageCircleQuestion />
           </IconTile>
@@ -158,14 +159,14 @@ export default function AskPage() {
       )}
 
       <div ref={spacer} className="h-36" aria-hidden="true" />
-      <div ref={bar} className="glass no-print fixed inset-x-0 bottom-0 z-20 border-t border-line/80">
-        <div className="mx-auto w-full max-w-[36rem] px-4 pt-3.5 pb-3.5">
+      {/* docked on the tab bar like the input of the pre chat; the deeper bottom padding keeps the tab bar's raised mark clear */}
+      <div ref={bar} className="glass no-print phone-fixed z-20 shadow-[0_-1px_0_var(--color-line)]" style={{ bottom: "var(--tab-bar)" }}>
+        <div className="px-4 pt-2.5 pb-8">
           <SpeakInput
             placeholder={L("说一句或打一句，比如：上次医生说了什么", "Ask a question")}
             ariaLabel={L("问医伴", "Ask Yiban")}
             onSubmit={send}
             disabled={busy}
-            className="shadow-float"
           />
           <p className="mt-1.5 text-center text-base text-ink-2">{L("急事不要等我回答，直接拨打 120。", "Emergency? Don't wait for me. Call 120.")}</p>
         </div>
@@ -174,12 +175,9 @@ export default function AskPage() {
   );
 }
 
+/** The question at the head of its answer, as on the home's 问 AI sheet. */
 function Question({ text }: { text: string }) {
-  return (
-    <div className="flex justify-end">
-      <div className="max-w-[86%] animate-fade-up rounded-[22px] rounded-br-md bg-linear-to-b from-brand-600 to-brand-650 px-5 py-3 text-lg leading-relaxed whitespace-pre-wrap text-white shadow-btn">{text}</div>
-    </div>
-  );
+  return <p className="t-heading whitespace-pre-wrap text-ink">{text}</p>;
 }
 
 /** A piece that starts a line of its own even without a label in front of it. */
@@ -200,56 +198,57 @@ function recordLines(text: string): string[] {
 }
 
 const chipCls =
-  "press inline-flex min-h-11 items-center gap-1.5 rounded-full bg-brand-50 px-3.5 text-left text-base font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
+  "press inline-flex min-h-12 items-center gap-1.5 rounded-full bg-brand-50 px-3.5 text-left text-base font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
 
 function Turn({ turn: t }: { turn: AskTurn }) {
   // which of the records under the answer is open
   const [open, setOpen] = useState<number | null>(null);
   const shown = open != null ? t.sources[open] : undefined;
   return (
-    <div className="space-y-3">
+    <div className="animate-fade-up rounded-card bg-surface px-4 py-4">
       <Question text={t.question} />
-      {t.hint && t.hint.level === "urgent" && <HintBanner hint={t.hint} />}
-      <div className="flex items-start gap-3">
-        <LogoMark className="mt-1 h-9 w-9 shadow-glow" />
-        <div className="material min-w-0 flex-1 animate-fade-up rounded-[22px] rounded-tl-md border border-line/80 px-5 py-4">
-          <p className="t-body whitespace-pre-wrap text-ink">{t.answer}</p>
-          {t.sources.length > 0 && (
-            <div className="mt-3.5 border-t border-line pt-3">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-base text-ink-2">{L("我查的是", "I checked")}</span>
-                {t.sources.map((s, i) =>
-                  s.text ? (
-                    // the record opens right here, as it stood when the answer was given
-                    <button key={`${s.href}-${i}`} type="button" aria-expanded={open === i} onClick={() => setOpen(open === i ? null : i)} className={chipCls}>
-                      <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      {s.label}
-                      {open === i ? <ChevronUp className="h-4 w-4 shrink-0" aria-hidden="true" /> : <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />}
-                    </button>
-                  ) : (
-                    // an answer saved before records were kept with it: all there is to do is go and look
-                    <Link key={`${s.href}-${i}`} href={s.href} className={chipCls}>
-                      <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      {s.label}
-                    </Link>
-                  ),
-                )}
-              </div>
-              {shown?.text && (
-                <div className="mt-3 animate-fade-up rounded-2xl border border-line/80 bg-surface-2 px-4 pt-3.5 pb-1">
-                  <ul className="space-y-1.5 text-base leading-relaxed text-ink">
-                    {recordLines(shown.text).map((line, i) => (
-                      <li key={i}>{line}</li>
-                    ))}
-                  </ul>
-                  <TextLink href={shown.href} className="-ml-2">
-                    {L("打开这条记录", "Open this record")}
-                  </TextLink>
-                </div>
+      {t.hint && t.hint.level === "urgent" && (
+        <div className="mt-3">
+          <HintBanner hint={t.hint} />
+        </div>
+      )}
+      <div className="mt-2 min-w-0">
+        <p className="t-body whitespace-pre-wrap text-ink">{t.answer}</p>
+        {t.sources.length > 0 && (
+          <div className="mt-3.5 border-t border-line pt-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-base text-ink-2">{L("我查的是", "I checked")}</span>
+              {t.sources.map((s, i) =>
+                s.text ? (
+                  // the record opens right here, as it stood when the answer was given
+                  <button key={`${s.href}-${i}`} type="button" aria-expanded={open === i} onClick={() => setOpen(open === i ? null : i)} className={chipCls}>
+                    <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {s.label}
+                    {open === i ? <ChevronUp className="h-4 w-4 shrink-0" aria-hidden="true" /> : <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                  </button>
+                ) : (
+                  // an answer saved before records were kept with it: all there is to do is go and look
+                  <Link key={`${s.href}-${i}`} href={s.href} className={chipCls}>
+                    <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {s.label}
+                  </Link>
+                ),
               )}
             </div>
-          )}
-        </div>
+            {shown?.text && (
+              <div className="mt-3 animate-fade-up rounded-2xl border border-line/80 bg-surface-2 px-4 pt-3.5 pb-1">
+                <ul className="space-y-1.5 text-base leading-relaxed text-ink">
+                  {recordLines(shown.text).map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ul>
+                <TextLink href={shown.href} className="-ml-2">
+                  {L("打开这条记录", "Open this record")}
+                </TextLink>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

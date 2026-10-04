@@ -73,7 +73,7 @@ export function Questions({ result }: { result: AfterResult }) {
 
   return (
     <div className="space-y-6">
-      <Card className="animate-fade-up p-6">
+      <Card className="animate-fade-up p-5">
         <div className="flex items-center gap-4">
           <IconTile tone="brand" size="lg">
             <MessageCircleQuestion />
@@ -135,13 +135,13 @@ export function Questions({ result }: { result: AfterResult }) {
 
       {answers.map((x, i) => (
         <Card key={i} className="animate-rise overflow-hidden">
-          <div className="flex items-start gap-3.5 border-b border-line bg-brand-50/50 px-6 py-4">
+          <div className="flex items-start gap-3.5 border-b border-line bg-brand-50/50 px-5 py-4">
             <IconTile tone="brand" size="sm" className="mt-0.5">
               <MessageCircleQuestion className="h-5 w-5" />
             </IconTile>
             <p className="min-w-0 flex-1 pt-1 text-lg leading-snug font-semibold text-brand-800">{x.q}</p>
           </div>
-          <div className="px-6 py-5">
+          <div className="px-5 py-5">
             {x.hint && (
               <div className="mb-4">
                 <HintBanner hint={x.hint} />
@@ -162,7 +162,7 @@ export function Questions({ result }: { result: AfterResult }) {
       )}
 
       {phase === "chat" && (
-        <Card className="animate-fade-up p-6">
+        <Card className="animate-fade-up p-5">
           <div className="mb-4 flex items-center gap-3.5">
             <IconTile tone="brand" size="md">
               <Sparkles className="h-5 w-5" />

@@ -22,7 +22,7 @@ function TypeBox({ onSend, disabled }: { onSend: (text: string) => void; disable
     setText("");
   };
   return (
-    <div className="flex items-end gap-1.5 rounded-xl border border-line/80 bg-surface p-1.5 transition duration-200 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100">
+    <div className="flex items-end gap-1 rounded-[1.5rem] bg-surface-2 p-0.5 transition duration-200 focus-within:ring-2 focus-within:ring-brand-400">
       <textarea
         ref={box}
         rows={1}
@@ -37,14 +37,14 @@ function TypeBox({ onSend, disabled }: { onSend: (text: string) => void; disable
         }}
         placeholder="在这里打字"
         aria-label="对医伴说"
-        className="min-h-11 min-w-0 flex-1 resize-none bg-transparent px-3 py-2 text-base leading-relaxed text-ink outline-none placeholder:text-ink-3"
+        className="min-h-11 min-w-0 flex-1 resize-none bg-transparent py-2 pr-1 pl-3.5 text-base leading-relaxed text-ink outline-none placeholder:text-ink-3"
       />
       <button
         type="button"
         onClick={send}
         disabled={disabled || !text.trim()}
         aria-label="发送"
-        className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white transition duration-200 hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:bg-line-strong disabled:bg-none disabled:shadow-none"
+        className="press relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white transition duration-200 after:absolute after:-inset-1 hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:bg-line-strong disabled:bg-none disabled:shadow-none"
       >
         <ArrowUp className="h-6 w-6" strokeWidth={2.4} />
       </button>
@@ -52,9 +52,9 @@ function TypeBox({ onSend, disabled }: { onSend: (text: string) => void; disable
   );
 }
 
-/** the round controls either side of the box: white sheets with a hairline edge, brand under the hand */
+/** the round controls either side of the box: the same quiet grey fill as the box, brand under the hand */
 const side =
-  "press bg-surface flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line/70 text-ink-2 transition duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:opacity-50";
+  "press flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-2 transition duration-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:opacity-50";
 
 /** The three things a patient asks for most, said for them with one tap. */
 export function QuickOptions({ onPick, disabled }: { onPick: (which: "visit" | "history" | "export") => void; disabled?: boolean }) {
@@ -71,7 +71,7 @@ export function QuickOptions({ onPick, disabled }: { onPick: (which: "visit" | "
           type="button"
           disabled={disabled}
           onClick={() => onPick(o.key)}
-          className="press material min-h-11 rounded-lg border border-line/70 px-2 text-base font-medium text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:opacity-50"
+          className="press material min-h-12 rounded-xl border border-line/70 px-2 text-base font-medium text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:opacity-50"
         >
           {o.label}
         </button>
@@ -110,7 +110,7 @@ export function Composer({
         {keyboard ? (
           <TypeBox onSend={onSend} disabled={disabled} />
         ) : (
-          <MicButton big label="按一下，开始说" maxSeconds={180} onText={onSend} disabled={disabled} />
+          <MicButton big pill label="按一下，开始说" maxSeconds={180} onText={onSend} disabled={disabled} />
         )}
       </div>
       <button type="button" className={side} onClick={() => file.current?.click()} disabled={disabled} aria-label="拍照或从相册选">

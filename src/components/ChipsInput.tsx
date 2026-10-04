@@ -28,7 +28,7 @@ export function ChipsInput({
     <div>
       <div
         className={cn(
-          "flex min-h-13 flex-wrap items-center gap-2 rounded-2xl border-[1.5px] border-line-strong bg-surface p-1.5 shadow-[inset_0_1px_2px_rgba(20,38,47,0.04)] transition duration-200",
+          "flex min-h-13 flex-wrap items-center gap-2 rounded-lg border border-line-strong bg-surface p-1 transition duration-200",
           "focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-100",
         )}
       >
@@ -63,7 +63,7 @@ export function ChipsInput({
           }}
           onBlur={() => text && add(text)}
           placeholder={value.length ? "继续添加…" : placeholder}
-          className="h-11 min-w-[140px] flex-1 bg-transparent px-2.5 text-lg text-ink outline-none placeholder:text-ink-3"
+          className="h-12 min-w-[8rem] flex-1 bg-transparent px-2.5 text-lg text-ink outline-none placeholder:text-ink-3"
         />
       </div>
       {suggestions.length > 0 && (
@@ -75,7 +75,7 @@ export function ChipsInput({
                 key={s}
                 type="button"
                 onClick={() => add(s)}
-                className="press min-h-11 rounded-full bg-surface px-4 text-base font-medium text-ink-2 shadow-edge transition duration-200 hover:bg-brand-50 hover:text-brand-800 hover:shadow-pill focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                className="press min-h-12 rounded-full border border-line bg-surface px-4 text-base font-medium text-ink-2 transition duration-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
                 + {s}
               </button>

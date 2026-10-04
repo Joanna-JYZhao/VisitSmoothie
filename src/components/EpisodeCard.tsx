@@ -93,7 +93,7 @@ export function EpisodeCard({ episode: e, now, quiet = false }: { episode: Episo
   };
 
   return (
-    <Card tone="raised" className="animate-fade-up p-5 sm:p-6">
+    <Card tone="raised" className="animate-fade-up p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
           <h2 className="t-title text-ink">{e.title}</h2>

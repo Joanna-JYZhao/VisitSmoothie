@@ -192,7 +192,7 @@ function After() {
     const where = [r.hospital, r.department].filter(Boolean).join(" ");
     const short = (r.diagnosis?.length ?? 0) <= 12;
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <PageHeader back={{ href: back }} title="我整理成这样" sub="看一眼对不对，对就存档。" />
 
         {r.unclear.length > 0 && (
@@ -218,7 +218,7 @@ function After() {
 
         {/* the visit as one typeset sheet: the diagnosis as its title, the medicines as hairline rows, the rest quieter */}
         <Card tone="raised" className="animate-rise divide-y divide-line overflow-hidden">
-          <div className="px-6 pt-6 pb-6 sm:px-8 sm:pt-8 sm:pb-7">
+          <div className="px-5 pt-5 pb-5">
             <p className="flex items-center gap-2.5 text-base leading-snug font-medium text-brand-700">
               <IconTile tone="brand" size="sm">
                 <Stethoscope className={ic} />
@@ -326,7 +326,7 @@ function After() {
   const working = stage.kind === "working";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         back={{ href: back }}
         title="看完医生了"
@@ -345,7 +345,7 @@ function After() {
       {working ? (
         // the sheet taking shape: a spinner on top, the outline of the result shimmering under it
         <div className="space-y-6">
-          <Card tone="raised" className="flex animate-fade-up flex-col items-center gap-4 px-6 py-12 text-center" role="status">
+          <Card tone="raised" className="flex animate-fade-up flex-col items-center gap-4 px-5 py-10 text-center" role="status">
             <IconTile tone="brand" size="xl" className="mb-1 bg-surface shadow-glow">
               <Spinner className="h-8 w-8" />
             </IconTile>
@@ -353,11 +353,11 @@ function After() {
             <p className="t-body text-ink-2">一般不到十秒。</p>
           </Card>
           <Card aria-hidden="true" className="divide-y divide-line overflow-hidden">
-            <div className="space-y-4 px-6 pt-7 pb-6">
+            <div className="space-y-4 px-5 pt-6 pb-5">
               <Skeleton className="h-4 max-w-28" />
               <Skeleton className="h-9 max-w-[60%]" />
             </div>
-            <div className="space-y-3 px-6 py-6">
+            <div className="space-y-3 px-5 py-5">
               <Skeleton className="h-4 max-w-20" />
               <div className="flex items-center gap-4 pt-1">
                 <Skeleton className="h-10 max-w-10 shrink-0" />
@@ -368,7 +368,7 @@ function After() {
                 <Skeleton className="h-5 max-w-[40%]" />
               </div>
             </div>
-            <div className="space-y-3 px-6 py-6">
+            <div className="space-y-3 px-5 py-5">
               <Skeleton className="h-4 max-w-24" />
               <Skeleton className="h-5 w-full" />
               <Skeleton className="h-5 max-w-[80%]" />
@@ -403,12 +403,12 @@ function After() {
 
           {aiAvailable && (
             <div className="rise-1">
-              <button type="button" onClick={() => cameraRef.current?.click()} className={cn(bigTileCls, "sm:min-h-0")}>
+              <button type="button" onClick={() => cameraRef.current?.click()} className={cn(bigTileCls, "bg-surface")}>
                 <IconTile tone="solid" size="xl" className="animate-breathe transition-transform duration-300 group-hover:scale-105">
                   <Camera strokeWidth={2.2} />
                 </IconTile>
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="t-heading">拍照</span>
+                  <span className="t-title">拍照</span>
                   <span className="text-base leading-snug text-ink-2">病历、处方、药盒、化验单都行</span>
                 </span>
               </button>
@@ -505,7 +505,7 @@ function Block({
   children: React.ReactNode;
 }) {
   return (
-    <section className={cn("px-6 py-5 sm:px-8 sm:py-6", className)}>
+    <section className={cn("px-5 py-5", className)}>
       <p className="flex items-center gap-2.5 text-base leading-snug font-medium text-ink-2">
         <IconTile tone={tone} size="sm">
           {icon}
@@ -536,7 +536,7 @@ function Question({
 }) {
   return (
     <div className="pt-4">
-      <Card tone="raised" className="animate-pop p-6 sm:p-8">
+      <Card tone="raised" className="animate-pop p-5">
         <p className="flex items-center gap-3 text-lg leading-snug font-semibold text-good">
           <IconTile tone="good" size="md">
             <CircleCheck className="h-5 w-5" />
@@ -596,9 +596,9 @@ function EditResult({ result, onCancel, onDone }: { result: AfterResult; onCance
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader title="改一下" />
-      <Card className="grid animate-fade-up gap-6 p-6">
+      <Card className="grid animate-fade-up gap-6 p-5">
         <Field label="医生的诊断">
           <Input value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} placeholder="比如：急性咽炎" />
         </Field>

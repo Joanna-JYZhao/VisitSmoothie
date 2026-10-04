@@ -4,7 +4,6 @@ import { StoreProvider } from "@/lib/store";
 import { ToastProvider } from "@/components/Toast";
 import { AppShell } from "@/components/AppShell";
 import { CheckInScheduler } from "@/components/CheckInScheduler";
-import { DevSwitch } from "@/components/DevSwitch";
 
 export const metadata: Metadata = {
   title: { default: "医伴 · 你的私人医生助理", template: "%s · 医伴" },
@@ -12,8 +11,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // the colour at the very top of every page, so the browser's own bar blends into the celadon wash
-  themeColor: "#e4f0ea",
+  // the colour at the very top of every page, so the browser's own bar blends into the white header
+  themeColor: "#fbfcfc",
   width: "device-width",
   initialScale: 1,
 };
@@ -24,9 +23,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full">
         <StoreProvider>
           <ToastProvider>
-            <div className="px-3 pt-2 md:contents">
-              <DevSwitch />
-            </div>
             <AppShell>{children}</AppShell>
             <CheckInScheduler />
           </ToastProvider>
