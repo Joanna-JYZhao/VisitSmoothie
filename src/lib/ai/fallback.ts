@@ -987,7 +987,7 @@ function answerKind(answer: string): string | null {
 
 /** A note that is an answer to one of the questions, written as "部位：右膝内侧" or "绞痛（患者原话：拧着疼）". */
 export function isConsultPoint(note: string): boolean {
-  return /^(部位|疼法|最近血糖|最近血压|伤口|和以前比|开始时间|用药|其他不舒服|什么时候更重|以前有没有过)：/.test(note) || /（患者原话：/.test(note) || /^患者原话：/.test(note);
+  return /^(部位|疼法|最近血糖|最近血压|伤口|和以前比|开始时间|用药|其他不舒服|什么时候更重|以前有没有过|对生活工作的影响|想请医生)：/.test(note) || /（患者原话：/.test(note) || /^患者原话：/.test(note);
 }
 
 /** 一句回答写进记录时的样子：确认过的口语、身体图点的部位都写成医生看得懂的说法。 */
@@ -1184,6 +1184,44 @@ function knownDiagnosis(d: string | null | undefined): boolean {
   return Boolean(d && d !== NO_DIAGNOSIS && !/没有(明确|新的)?诊断|无明确诊断|原因待查/.test(d));
 }
 
+/**
+ * The description in the patient's own voice, put together by rule: 我46岁，从9月27日起左膝内侧酸痛。…
+ * Only what is on record: the answers to the questions, the history on file, what they want to ask.
+ */
+function narrativeByRule(req: SummaryRequest, points: string[], onsetKnown: boolean): string {
+  const { profile, episode } = req;
+  const answer = (label: string) => points.find((p) => p.startsWith(`${label}：`))?.slice(label.length + 1).trim() ?? "";
+  const none = (v: string) => /^(没有?|没有别的|没别的|无|不清楚|说不清|说不太清|没发现规律)/.test(v);
+  // picked on the body map at the start, or answered later
+  const where = answer("部位") || sortedEntries(episode)[0]?.location || "";
+  const lines: string[] = [];
+  const age = profile.birthYear ? new Date().getFullYear() - profile.birthYear : null;
+  lines.push(
+    `我${age != null ? `${age}岁，` : ""}${onsetKnown ? `从${fmtDate(episode.startedAt)}起` : "最近"}${where && !episode.title.includes(where) ? `${where}` : ""}${episode.title}${answer("疼法") ? `，感觉是${answer("疼法")}` : ""}。`,
+  );
+  const worse = answer("什么时候更重");
+  if (worse && !none(worse)) lines.push(`${worse}的时候更明显。`);
+  const other = answer("其他不舒服");
+  if (other) lines.push(none(other) ? "没有注意到别的不舒服。" : `同时还有${other}。`);
+  const before = answer("以前有没有过");
+  if (before) lines.push(/第一次|没有/.test(before) ? "以前没有这样过。" : `${before.startsWith("以前") ? before : `以前${before}`}类似的情况。`);
+  const compared = answer("和以前比");
+  if (compared) lines.push(`和以前那次比：${compared}。`);
+  const taken = answer("用药");
+  if (taken) lines.push(/没吃|没用|没有|没处理|没管/.test(taken) ? "这次还没有用药。" : `这次用药：${taken}。`);
+  const impact = answer("对生活工作的影响");
+  if (impact) lines.push(/没什么|没有|不影响/.test(impact) ? "对生活工作没什么影响。" : `已经${impact.replace(/^已经/, "")}。`);
+  for (const label of ["最近血压", "最近血糖"]) if (answer(label)) lines.push(`${label}${answer(label)}。`);
+  if (profile.conditions.length) lines.push(`我有${profile.conditions.join("、")}。`);
+  if (profile.medications.length) lines.push(`长期在用${profile.medications.join("、")}。`);
+  if (profile.allergies.length) lines.push(`对${profile.allergies.join("、")}过敏。`);
+  const wish = answer("想请医生");
+  const own = ownQuestions(episode.entries.filter((e) => e.source === "user").map((e) => e.note).join("\n"));
+  if (wish && !/没有特别/.test(wish)) lines.push(`想请医生帮我看看${wish.replace(/^(帮我)?看看/, "")}。`);
+  else lines.push(own.length ? `想问医生：${own.join("")}` : "想请医生看看需要怎么处理。");
+  return lines.join("");
+}
+
 function summaryByRule(req: SummaryRequest): SummaryResponse {
   const { profile, episode, related } = req;
   const entries = sortedEntries(episode);
@@ -1304,6 +1342,8 @@ function summaryByRule(req: SummaryRequest): SummaryResponse {
     ...(req.vitals ?? []),
   ].filter(Boolean);
 
+  const narrative = narrativeByRule(req, points, onsetKnown);
+
   const questionsForDoctor = ["这次需要做哪些检查？", "吃的喝的有什么要注意的？", "什么情况下要再来，或者去急诊？"];
   if (related[0])
     questionsForDoctor.unshift(
@@ -1316,6 +1356,7 @@ function summaryByRule(req: SummaryRequest): SummaryResponse {
     mode: "fallback",
     summary: {
       glance: glance.slice(0, 5),
+      narrative,
       chiefComplaint,
       presentIllness,
       timeline: recordedTimeline(episode),

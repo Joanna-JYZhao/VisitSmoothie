@@ -584,6 +584,7 @@ export function normalizeSummary(raw: unknown, req: SummaryRequest): DoctorSumma
     // The first screen is built from the records by rule. It is on screen at once, every line can be
     // traced to something recorded, and it does not change when the model's version arrives.
     glance: base.glance,
+    narrative: clean(o.narrative) || base.narrative,
     chiefComplaint: clean(o.chiefComplaint) || base.chiefComplaint,
     presentIllness: clean(o.presentIllness) || base.presentIllness,
     // The timeline is never the model's: it is the recorded entries themselves, so nothing in it can be made up.

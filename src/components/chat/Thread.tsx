@@ -123,7 +123,8 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
   const busy = summaryBusy.use(item.episodeId);
   const reading = useReplyPending(item.episodeId);
   const stale = episode ? summaryIsStale(episode) : false;
-  const live = Boolean(episode) && item.state !== "discarded";
+  const replaced = item.state === "replaced";
+  const live = Boolean(episode) && item.state !== "discarded" && !replaced;
 
   // the same rule as on the doctor's page: whatever was said since the last version is worked in
   useEffect(() => {
@@ -131,6 +132,28 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
   }, [item.episodeId, live, stale, busy, reading]);
 
   const instant = useMemo(() => (episode ? instantSummary(episode, state) : null), [episode, state]);
+
+  // corrected with 改一下: what it said then, greyed, with the new one further down
+  if (replaced) {
+    const old = item.snapshot;
+    if (!old) return <Note>这条描述改过了，新的在下面。</Note>;
+    return (
+      <Card tone="plain" className="animate-fade-up p-6 opacity-70">
+        <CardHead icon={<ClipboardList />} title={<>病情描述 · {episode?.title ?? ""}</>} aside={<Badge>旧版本</Badge>} />
+        <div className="mt-5 border-t border-line pt-5">
+          {old.narrative ? (
+            <p className="t-body text-ink-2">{old.narrative}</p>
+          ) : (
+            <>
+              <p className="t-heading text-ink-2">{old.chiefComplaint}</p>
+              <p className="t-body mt-3 text-ink-2">{old.presentIllness}</p>
+            </>
+          )}
+        </div>
+        <p className="mt-4 text-base text-ink-3">改过了，以下面的新描述为准。</p>
+      </Card>
+    );
+  }
   if (!episode || item.state === "discarded") {
     return <Note>这次的病情描述已放弃。</Note>;
   }
@@ -150,10 +173,16 @@ function DescriptionCard({ item }: { item: Extract<ThreadItem, { kind: "descript
         title={<>病情描述 · {episode.title}</>}
         aside={item.state === "saved" && <Badge tone="good">已保存</Badge>}
       />
-      {/* the document itself: the complaint in one line, then the story in reading type */}
+      {/* the document itself: what the patient will hand the doctor, in their own voice */}
       <div className="mt-5 border-t border-line pt-5">
-        <p className="t-heading text-ink">{view.chiefComplaint}</p>
-        <p className="t-body mt-3 text-ink">{view.presentIllness}</p>
+        {view.narrative ? (
+          <p className="t-body text-ink">{view.narrative}</p>
+        ) : (
+          <>
+            <p className="t-heading text-ink">{view.chiefComplaint}</p>
+            <p className="t-body mt-3 text-ink">{view.presentIllness}</p>
+          </>
+        )}
       </div>
       {(busy || stale || reading) && (
         <p className="mt-4 flex items-center gap-2.5 text-base text-ink-2" role="status">
@@ -354,10 +383,13 @@ export function Thread({ items, busy, onChip, opening }: { items: ThreadItem[]; 
           case "explain":
             return <ExplainCard key={item.id} item={item} />;
           case "bodymap":
-            // once tapped (or answered in words), the answer is in the bubble below: the picture goes
+            // once picked (or answered in words), the answer is in the bubble below: the picture goes
             return item.state === "open" && !busy ? (
-              <div key={item.id} className="max-w-md animate-pop">
-                <BodyMap onPick={(area) => void pickBodyArea(item.id, area)} />
+              <div key={item.id} className={cn("max-w-md animate-pop", !item.episodeId && "mx-auto w-full")}>
+                <BodyMap
+                  prompt={item.episodeId ? "点一下疼的地方" : "点一下不舒服的地方"}
+                  onPick={(areas) => void pickBodyArea(item.id, areas)}
+                />
               </div>
             ) : null;
           case "note":

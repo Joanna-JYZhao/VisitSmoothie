@@ -4,7 +4,7 @@ import type { ChatMeasurement, Episode, Hint, ThreadItem } from "./types";
 import { getState, storeActions } from "./store";
 import { createBusy } from "./busy";
 import { relatedEpisodesOf, requestReply, sendMessage, supplement } from "./episodeAI";
-import { refreshSummary } from "./summaries";
+import { instantSummary, refreshSummary, summaryIsStale } from "./summaries";
 import { extractMeasurements, instantAlert } from "./ai/fallback";
 import { METRICS, evaluateMeasurement, formatValue } from "./metrics";
 import { followUpDate, saveAfter } from "./after";
@@ -124,7 +124,7 @@ export const useThreadBusy = () => working.use(THREAD);
 /** The complaint whose description the next sentence corrects. Set by "改一下". */
 let revising: string | null = null;
 
-const say = (text: string, extra: { chips?: string[]; episodeId?: string } = {}) => storeActions.pushThread({ kind: "ai", text, ...extra });
+const say = (text: string, extra: { chips?: string[]; episodeId?: string; areas?: string; wrap?: "impact" | "wish" } = {}) => storeActions.pushThread({ kind: "ai", text, ...extra });
 
 const latestActive = (episodes: Episode[]) =>
   [...episodes].filter((e) => e.status === "active").sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] ?? null;
@@ -152,19 +152,92 @@ function showReply(episodeId: string, res: { reply: string; suggestedReplies: st
   say(res.reply, res.done ? { episodeId } : { chips: res.suggestedReplies, episodeId });
   // asking where it hurts: a body picture to tap, right under the question
   if (!res.done && res.widget === "bodymap") storeActions.pushThread({ kind: "bodymap", episodeId, state: "open" });
-  if (res.done) finishIntake(episodeId);
+  if (res.done) wrapUp(episodeId);
 }
 
-/** A place tapped on the body map: said as "部位：右膝内侧", the answer to the question above it. */
-export async function pickBodyArea(itemId: string, area: string): Promise<void> {
+/* ---------- two more things before the description: what it gets in the way of, what to ask the doctor ---------- */
+
+const WRAP: Record<"impact" | "wish", { label: string; question: string; chips: string[] }> = {
+  impact: { label: "对生活工作的影响", question: "还有两件事，问完就整理：这对你的生活、工作有影响吗？", chips: ["没什么影响", "影响走路", "影响上班", "影响睡觉"] },
+  wish: { label: "想请医生", question: "最后一个：这次看医生，你最想请医生帮你看什么？", chips: ["要不要做检查", "怎么治", "平时要注意什么", "没有特别的"] },
+};
+const WRAP_ORDER = ["impact", "wish"] as const;
+
+/** The wrap-up question still waiting for its answer, if the last thing said is one. */
+export function pendingWrap(thread: ThreadItem[]): { episodeId: string; step: "impact" | "wish" } | null {
+  for (let i = thread.length - 1; i >= 0; i--) {
+    const x = thread[i];
+    if (x.kind === "alert" || x.kind === "note") continue;
+    return x.kind === "ai" && x.wrap && x.episodeId ? { episodeId: x.episodeId, step: x.wrap } : null;
+  }
+  return null;
+}
+
+/** Asks the next wrap-up question not yet on record, or writes the description when both are. */
+function wrapUp(episodeId: string, after?: "impact" | "wish"): void {
+  const episode = getState().episodes.find((e) => e.id === episodeId);
+  if (!episode) return;
+  const start = after ? WRAP_ORDER.indexOf(after) + 1 : 0;
+  const next = WRAP_ORDER.slice(start).find((k) => !episode.entries.some((x) => x.note.startsWith(`${WRAP[k].label}：`)));
+  if (next) say(WRAP[next].question, { chips: WRAP[next].chips, episodeId, wrap: next });
+  else finishIntake(episodeId);
+}
+
+/** The answer to a wrap-up question goes on the record as "想请医生：要不要做检查", then on to the next. */
+async function answerWrap(episodeId: string, step: "impact" | "wish", said: string): Promise<void> {
+  await supplement(episodeId, `${WRAP[step].label}：${said}`);
+  wrapUp(episodeId, step);
+}
+
+/* ---------- opening pre: where, then how ---------- */
+
+/** Asked once places are picked on the opening body map. */
+export const HOW_QUESTION = (areas: string) => (areas.includes("、") ? "这几个地方是怎么不舒服？" : `${areas}是怎么不舒服？`);
+export const HOW_CHIPS = ["疼", "酸痛", "胀", "麻", "痒"];
+
+/** The places picked on the opening body map, while the question about how they feel is still unanswered. */
+export function pendingAreas(thread: ThreadItem[]): string | null {
+  for (let i = thread.length - 1; i >= 0; i--) {
+    const x = thread[i];
+    if (x.kind === "alert" || x.kind === "note") continue;
+    return x.kind === "ai" && x.areas ? x.areas : null;
+  }
+  return null;
+}
+
+/** The first sentence of a complaint started from the body map: "左膝内侧、腰正中酸痛". */
+export function complaintFromAreas(areas: string, said: string): string {
+  const how = said.trim().replace(/[。.]+$/, "");
+  if (!how) return `${areas}不舒服`;
+  return how.length <= 4 ? `${areas}${how}` : `${areas}，${how}`;
+}
+
+/** Starts the complaint from the places picked and the answer about how they feel. Then the questions go on as usual. */
+async function startFromAreas(areas: string, said: string, alert: Hint | null): Promise<void> {
+  const episode = storeActions.createEpisode({ text: complaintFromAreas(areas, said), hint: alert });
+  // where it is was picked on the picture: it is on the record as picked, not read back out of the sentence
+  storeActions.updateEpisode(episode.id, (e) => ({ ...e, entries: e.entries.map((x, i) => (i === 0 ? { ...x, location: areas } : x)) }));
+  showReply(episode.id, await requestReply(episode.id, "intake"));
+}
+
+/** Places picked on the body map: said as "部位：右膝内侧、腰正中", the answer to the question above it. */
+export async function pickBodyArea(itemId: string, picked: string | string[]): Promise<void> {
   const item = itemOf(itemId);
   if (item?.kind !== "bodymap" || item.state !== "open" || working.has(THREAD)) return;
+  const area = (Array.isArray(picked) ? picked : [picked]).filter(Boolean).join("、");
+  if (!area) return;
   storeActions.patchThread(itemId, (x) => (x.kind === "bodymap" ? { ...x, state: "done", picked: area } : x));
   const said = `部位：${area}`;
   storeActions.pushThread({ kind: "user", text: said });
+  // on opening there is no complaint yet: ask how these places feel, and start it from the answer
+  if (!item.episodeId) {
+    say(HOW_QUESTION(area), { chips: HOW_CHIPS, areas: area });
+    return;
+  }
+  const episodeId = item.episodeId;
   working.start(THREAD);
   try {
-    showReply(item.episodeId, await sendMessage(item.episodeId, said));
+    showReply(episodeId, await sendMessage(episodeId, said));
   } catch (err) {
     console.warn("[医伴] 身体图这一轮没有走完", err);
     say("这次没弄成，再点一下试试，或者直接说哪里疼。");
@@ -182,13 +255,24 @@ export async function sendTurn(text: string, images: string[] = []): Promise<voi
   const state = getState();
   if ((!said && !images.length) || !state.profile || working.has(THREAD)) return;
   const routed = routeTurn({ text: said, photos: images.length }, { episodes: state.episodes, thread: state.thread, revising });
+  // the answer to 怎么不舒服 after places were picked on the opening body map
+  const areas = !images.length && !revising ? pendingAreas(state.thread) : null;
+  const wrap = !images.length && !revising ? pendingWrap(state.thread) : null;
+  // said or typed instead of tapped: the opening body map has had its answer
+  for (const x of state.thread) {
+    if (x.kind === "bodymap" && x.state === "open" && !x.episodeId) storeActions.patchThread(x.id, (y) => (y.kind === "bodymap" ? { ...y, state: "done" } : y));
+  }
   storeActions.pushThread(images.length ? { kind: "user", text: said, photos: images.length } : { kind: "user", text: said });
   // a danger signal is answered by rule, before any model is asked
   if (routed.alert) storeActions.pushThread({ kind: "alert", hint: routed.alert });
 
   working.start(THREAD);
   try {
-    if (routed.route === "photo") {
+    if (areas) {
+      await startFromAreas(areas, said, routed.alert);
+    } else if (wrap && getState().episodes.some((e) => e.id === wrap.episodeId)) {
+      await answerWrap(wrap.episodeId, wrap.step, said);
+    } else if (routed.route === "photo") {
       storeActions.pushThread({ kind: "note", text: "正在看照片，大约十几秒。" });
       const seen = await describeSymptomPhoto(images);
       if (typeof seen !== "string") {
@@ -212,8 +296,12 @@ export async function sendTurn(text: string, images: string[] = []): Promise<voi
       }
     } else if (routed.route === "revise" && routed.episodeId) {
       revising = null;
+      // the card that was corrected keeps what it said; the corrected description comes in below it
+      freezeDescription(routed.episodeId);
       await supplement(routed.episodeId, said);
-      say("改好了，上面的描述已经更新。还有不对的，点「改一下」再说。");
+      say("好，按你说的改了，新的描述在下面。还有不对的，点「改一下」再说。");
+      storeActions.pushThread({ kind: "description", episodeId: routed.episodeId, state: "draft" });
+      void refreshSummary(routed.episodeId);
     } else if (routed.route === "checkin" && routed.episodeId && routed.answer) {
       const episode = state.episodes.find((e) => e.id === routed.episodeId);
       if (episode) {
@@ -261,6 +349,25 @@ export async function sendTurn(text: string, images: string[] = []): Promise<voi
 /* ---------- the buttons on the cards ---------- */
 
 const itemOf = (id: string) => getState().thread.find((x) => x.id === id);
+
+/** The newest description card of a complaint that still follows the record. */
+function liveDescription(episodeId: string) {
+  return getState().thread.findLast(
+    (x): x is Extract<ThreadItem, { kind: "description" }> => x.kind === "description" && x.episodeId === episodeId && (x.state === "draft" || x.state === "saved"),
+  );
+}
+
+/** Before a correction: the card as it reads now is kept on it, and it stops following the record. */
+function freezeDescription(episodeId: string): void {
+  const state = getState();
+  const card = liveDescription(episodeId);
+  const episode = state.episodes.find((e) => e.id === episodeId);
+  if (!card || !episode) return;
+  const view = !summaryIsStale(episode) && episode.summary ? episode.summary : instantSummary(episode, state);
+  if (!view) return;
+  const snapshot = { chiefComplaint: view.chiefComplaint, presentIllness: view.presentIllness, narrative: view.narrative };
+  storeActions.patchThread(card.id, (x) => (x.kind === "description" ? { ...x, state: "replaced", snapshot } : x));
+}
 
 export function saveDescription(itemId: string): void {
   storeActions.patchThread(itemId, (x) => (x.kind === "description" ? { ...x, state: "saved" } : x));
@@ -362,9 +469,12 @@ export function needsGreeting(thread: ThreadItem[], episodes: Episode[], now: nu
   return true;
 }
 
+/** 今天哪里不舒服？ with the body picture right under it: pick the places first, then say how they feel. */
 export function greet(): void {
   const { thread, episodes } = getState();
-  if (needsGreeting(thread, episodes)) say(GREETING);
+  if (!needsGreeting(thread, episodes)) return;
+  say(GREETING);
+  storeActions.pushThread({ kind: "bodymap", state: "open" });
 }
 
 /* ---------- the three shortcuts ---------- */
