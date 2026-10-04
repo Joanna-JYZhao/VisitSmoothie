@@ -52,7 +52,7 @@
 
 ```bash
 npm install
-cp .env.example .env.local   # 填入 Anthropic 的 API Key（可以不填）
+cp .env.example .env.local   # 填入智谱或 Anthropic 的 API Key（可以不填）
 npm run dev
 ```
 
@@ -60,10 +60,15 @@ npm run dev
 
 | 变量 | 说明 | 默认 |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Anthropic 的 API Key，对话、整理和识别照片都用它。留空时用内置规则引擎回答，拍照不可用 | 空 |
-| `CLAUDE_MODEL` | 对话、整理和识别照片用的模型 | `claude-opus-5-5` |
-| `GLM_API_KEY` | 智谱开放平台的 API Key，只用于语音转文字。留空时语音不可用 | 空 |
+| `AI_PROVIDER` | 对话、整理和识别照片用哪家：`glm`（智谱）或 `claude`（Anthropic） | 有 `ANTHROPIC_API_KEY` 时 `claude`，否则 `glm` |
+| `GLM_API_KEY` | 智谱开放平台的 API Key。`glm` 时对话、整理、照片都用它；语音转文字总是用它。留空时语音不可用 | 空 |
+| `GLM_MODEL` | `glm` 时对话和整理用的模型 | `glm-5` |
+| `GLM_VISION_MODEL` | `glm` 时识别照片用的模型 | `glm-4.6v` |
 | `GLM_ASR_MODEL` | 语音转文字用的模型 | `glm-asr-2512` |
+| `ANTHROPIC_API_KEY` | Anthropic 的 API Key，`claude` 时用 | 空 |
+| `CLAUDE_MODEL` | `claude` 时对话、整理和识别照片用的模型 | `claude-opus-5-5` |
+
+两家都没有 Key 时用内置规则引擎回答，拍照不可用。
 | `GLM_BASE_URL` | OpenAI 兼容接口地址 | `https://open.bigmodel.cn/api/paas/v4` |
 
 Key 只在服务端的 `/api` 路由里使用，不会进入浏览器，也不在仓库里。没有 Key 或接口出错时自动改用内置规则。

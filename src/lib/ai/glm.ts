@@ -1,6 +1,8 @@
 /**
- * Server-side model client. Chat and photos go to Claude (Anthropic API); speech to text stays on
- * Zhipu GLM, which Claude has no counterpart for. The exported names are kept from the GLM days.
+ * Server-side model client. Chat and photos go to the provider set in AI_PROVIDER: "glm" (Zhipu,
+ * OpenAI-compatible API) or "claude" (Anthropic API). Left unset, it is Claude when an Anthropic key
+ * is configured and GLM otherwise. Speech to text is always Zhipu GLM, which Claude has no counterpart
+ * for. The exported names are kept from the GLM days.
  */
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -11,10 +13,23 @@ export interface GlmMessage {
   content: string;
 }
 
+const has = (v: string | undefined) => Boolean(v && v.trim());
+
+/** Which provider answers chat and reads photos. */
+export function aiProvider(): "glm" | "claude" {
+  const set = process.env.AI_PROVIDER?.trim().toLowerCase();
+  if (set === "glm" || set === "claude") return set;
+  return has(process.env.ANTHROPIC_API_KEY) ? "claude" : "glm";
+}
+
 let client: Anthropic | null = null;
 function anthropic() {
   client ??= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 1 });
   return client;
+}
+
+function glmBaseUrl() {
+  return (process.env.GLM_BASE_URL || "https://open.bigmodel.cn/api/paas/v4").replace(/\/$/, "");
 }
 
 /** While the app is in English, the last user turn carries the instruction to answer in English. */
@@ -26,11 +41,11 @@ function inLanguage(messages: GlmMessage[]): GlmMessage[] {
 }
 
 export function glmModel() {
-  return process.env.CLAUDE_MODEL || "claude-opus-5-5";
+  return aiProvider() === "glm" ? process.env.GLM_MODEL || "glm-5" : process.env.CLAUDE_MODEL || "claude-opus-5-5";
 }
 
 export function glmConfigured() {
-  return Boolean(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY.trim());
+  return aiProvider() === "glm" ? has(process.env.GLM_API_KEY) : has(process.env.ANTHROPIC_API_KEY);
 }
 
 /** The model answered, but not in JSON. `content` is what it said. */
@@ -58,11 +73,7 @@ export function parseJSONContent<T>(content: string): T {
  * against max_tokens, so the callers' small token caps are not passed on; low effort keeps it quick.
  * Sampling parameters (temperature) are not accepted by the model either.
  */
-async function claudeText(
-  system: string,
-  messages: Anthropic.Beta.BetaMessageParam[],
-  timeoutMs: number,
-): Promise<string> {
+async function claudeText(system: string, messages: Anthropic.Beta.BetaMessageParam[], timeoutMs: number): Promise<string> {
   const res = await anthropic().beta.messages.create(
     {
       model: glmModel(),
@@ -85,17 +96,53 @@ async function claudeText(
   return content;
 }
 
+/** One request to GLM's chat endpoint (also used for photos, with the vision model), returning its text. */
+async function glmText(body: Record<string, unknown>, timeoutMs: number, what = "GLM"): Promise<string> {
+  const key = process.env.GLM_API_KEY;
+  if (!key) throw new Error("GLM_API_KEY 未配置");
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${glmBaseUrl()}/chat/completions`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ thinking: { type: "disabled" }, ...body }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`${what} ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = data?.choices?.[0]?.message?.content ?? "";
+    if (!content) throw new Error(`${what} 返回为空`);
+    return content;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function glmJSON<T>(
   messages: GlmMessage[],
   opts: { temperature?: number; maxTokens?: number; timeoutMs?: number } = {},
 ): Promise<T> {
-  if (!glmConfigured()) throw new Error("ANTHROPIC_API_KEY 未配置");
+  if (!glmConfigured()) throw new Error(aiProvider() === "glm" ? "GLM_API_KEY 未配置" : "ANTHROPIC_API_KEY 未配置");
   const all = inLanguage(messages);
-  const system = all.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
-  const turns = all
-    .filter((m) => m.role !== "system")
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
-  const content = await claudeText(system, turns, opts.timeoutMs ?? 90_000);
+  const timeoutMs = opts.timeoutMs ?? 90_000;
+  let content: string;
+  if (aiProvider() === "glm") {
+    content = await glmText(
+      {
+        model: glmModel(),
+        messages: all,
+        temperature: opts.temperature ?? 0.5,
+        max_tokens: opts.maxTokens ?? 800,
+        response_format: { type: "json_object" },
+      },
+      timeoutMs,
+    );
+  } else {
+    const system = all.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
+    const turns = all.filter((m) => m.role !== "system").map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+    content = await claudeText(system, turns, timeoutMs);
+  }
   try {
     return parseJSONContent<T>(content);
   } catch {
@@ -124,7 +171,7 @@ export async function glmPing(): Promise<{ ok: boolean; latencyMs: number; error
         { role: "system", content: '只输出 JSON：{"ok": true}' },
         { role: "user", content: "ping" },
       ],
-      { timeoutMs: 30_000 },
+      { maxTokens: 20, timeoutMs: 30_000 },
     );
     return { ok: true, latencyMs: Date.now() - start };
   } catch (err) {
@@ -135,7 +182,7 @@ export async function glmPing(): Promise<{ ok: boolean; latencyMs: number; error
 /* ---------- photos and speech ---------- */
 
 export function glmVisionModel() {
-  return glmModel();
+  return aiProvider() === "glm" ? process.env.GLM_VISION_MODEL || "glm-4.6v" : glmModel();
 }
 
 export function glmAsrModel() {
@@ -153,14 +200,21 @@ function imageBlock(dataUrl: string): Anthropic.Beta.BetaImageBlockParam {
 
 /** Reads one or more photos (data URLs) with the vision model and returns its JSON answer. */
 export async function glmVisionJSON<T>(prompt: string, images: string[], opts: { maxTokens?: number } = {}): Promise<T> {
-  void opts;
-  if (!glmConfigured()) throw new Error("ANTHROPIC_API_KEY 未配置");
+  if (!glmConfigured()) throw new Error(aiProvider() === "glm" ? "GLM_API_KEY 未配置" : "ANTHROPIC_API_KEY 未配置");
   const text = getLang() === "en" ? `${prompt}\n\n${ENGLISH_OUTPUT}` : prompt;
-  const content = await claudeText(
-    "",
-    [{ role: "user", content: [...images.map(imageBlock), { type: "text", text }] }],
-    90_000,
-  );
+  const content =
+    aiProvider() === "glm"
+      ? await glmText(
+          {
+            model: glmVisionModel(),
+            temperature: 0.1,
+            max_tokens: opts.maxTokens ?? 1200,
+            messages: [{ role: "user", content: [{ type: "text", text }, ...images.map((url) => ({ type: "image_url", image_url: { url } }))] }],
+          },
+          90_000,
+          "GLM vision",
+        )
+      : await claudeText("", [{ role: "user", content: [...images.map(imageBlock), { type: "text", text }] }], 90_000);
   try {
     return parseJSONContent<T>(content);
   } catch {
@@ -168,12 +222,8 @@ export async function glmVisionJSON<T>(prompt: string, images: string[], opts: {
   }
 }
 
-function glmBaseUrl() {
-  return (process.env.GLM_BASE_URL || "https://open.bigmodel.cn/api/paas/v4").replace(/\/$/, "");
-}
-
 export function glmAsrConfigured() {
-  return Boolean(process.env.GLM_API_KEY && process.env.GLM_API_KEY.trim());
+  return has(process.env.GLM_API_KEY);
 }
 
 /** Speech to text (Zhipu GLM). The service accepts WAV or MP3, at most 30 seconds per request. */
