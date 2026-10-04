@@ -19,8 +19,8 @@ import { DRAFT_CHOICES, draftPrompt, isDraftPrompt, unsavedCards } from "@/lib/d
 import { Thread } from "@/components/chat/Thread";
 import { Composer } from "@/components/chat/Composer";
 import { useToast } from "@/components/Toast";
-import { IconTile } from "@/components/ui";
-import { ChevronRight, FileText } from "lucide-react";
+import { IconTile, LinkButton } from "@/components/ui";
+import { ArrowRight, ChevronRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MAX_PHOTOS = 4;
@@ -141,7 +141,20 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   return (
     <div className="-mb-9 flex min-w-0 flex-1 flex-col">
       {/* while the page is an invitation the name of the page steps back and the question is the headline */}
-      <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-center text-ink-2" : "t-title mb-4 text-ink")}>看医生之前</h1>
+      <div className="relative">
+        <h1 className={cn("animate-fade-up transition-all duration-500", opening ? "t-heading pt-1 text-center text-ink-2" : "t-title mb-4 text-ink")}>看医生之前</h1>
+        {/* 看完医生直接跳到 post；回主页还是底部栏中间那个图标（或左上角 logo） */}
+        <LinkButton
+          href="/post"
+          variant="soft"
+          size="sm"
+          aria-label="看完医生了？去 post 整理"
+          className="press absolute top-1/2 right-0 -translate-y-1/2 gap-1 rounded-full"
+        >
+          next · post
+          <ArrowRight className="h-4.5 w-4.5" aria-hidden="true" />
+        </LinkButton>
+      </div>
       <div className={cn("flex flex-1 flex-col pt-2 pb-5", opening ? "justify-center" : "justify-end")}>
         <Thread items={state.thread} busy={busy} onChip={say} opening={opening} />
         {/* scrolled to with room for the dock and the tab bar below it (the page simply stops at its end) */}
