@@ -26,7 +26,7 @@ import type {
 import { autoTags, findSimilarEpisodes, nowISO, provisionalTitle, uid, uniq } from "./utils";
 import { buildLinState } from "./demo-lin";
 import { getLang, setLang } from "./lang";
-import { SESSION_KEY, currentAccountId, dataKey } from "./accounts";
+import { SESSION_KEY, currentAccountId, dataKey, isDemoAccountId } from "./accounts";
 
 export type { DemoPersona };
 
@@ -154,10 +154,11 @@ export function migrate(raw: unknown): AppState {
 let memory: AppState | null = null;
 const listeners = new Set<() => void>();
 
-/** Where the logged-in account's records are kept; null when nobody is logged in. */
+/** 只有演示账号（虚构数据）还写 localStorage；真实账号的数据只存内存，
+ *  持久化走服务端加密存储（/api/data，见 src/lib/server/secure-db.ts）。 */
 function storeKey(): string | null {
   const id = currentAccountId();
-  return id ? dataKey(id) : null;
+  return id && isDemoAccountId(id) ? dataKey(id) : null;
 }
 
 function read(): AppState {
@@ -180,12 +181,112 @@ function write(next: AppState) {
   setLang(next.settings.lang);
   try {
     const key = storeKey();
-    // nobody logged in: nothing is written anywhere
+    // 演示账号：写 localStorage。真实账号：安排同步到服务端加密存储。
     if (key) localStorage.setItem(key, JSON.stringify(next));
+    else scheduleServerSync();
   } catch (err) {
     console.warn("无法保存本地数据", err);
   }
   listeners.forEach((l) => l());
+}
+
+/* ---------- 真实账号的服务端同步 ---------- */
+
+/** 服务端数据的版本号；0 表示还没读过/还没有数据。 */
+let serverVersion = 0;
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let pushing = false;
+let pulling = false;
+
+/** 把内存里的最新状态整体推到服务端（覆盖式 + 乐观并发）。 */
+async function pushToServer() {
+  const id = currentAccountId();
+  if (!id || isDemoAccountId(id) || !memory || pushing) return;
+  pushing = true;
+  try {
+    const res = await fetch("/api/data", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state: memory, baseVersion: serverVersion }),
+    });
+    if (res.ok) {
+      const d = (await res.json()) as { version: number };
+      serverVersion = d.version;
+    } else if (res.status === 409) {
+      // 另一个标签页/设备写过了：以服务端为准，本地重新加载
+      const d = (await res.json()) as { version: number; state: unknown };
+      serverVersion = d.version;
+      memory = migrate(d.state);
+      setLang(memory.settings.lang);
+      listeners.forEach((l) => l());
+    } else if (res.status === 401) {
+      markSessionGone();
+    }
+  } catch {
+    // 离线或服务不可用：数据还在内存里，下次 write 会再试
+  } finally {
+    pushing = false;
+  }
+}
+
+function scheduleServerSync() {
+  const id = currentAccountId();
+  if (!id || isDemoAccountId(id)) return;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    syncTimer = null;
+    void pushToServer();
+  }, 800);
+}
+
+/** 会话失效：清掉本地"已登录"标记，数据只留在服务端。 */
+function markSessionGone() {
+  serverVersion = 0;
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+  memory = EMPTY;
+  listeners.forEach((l) => l());
+}
+
+/** 从服务端拉取当前账号的数据并灌进内存（登录后、应用启动时调用）。 */
+export async function hydrateFromServer(): Promise<void> {
+  const id = currentAccountId();
+  if (!id || isDemoAccountId(id) || pulling) return;
+  pulling = true;
+  try {
+    const res = await fetch("/api/data", { cache: "no-store" });
+    if (res.status === 401) {
+      markSessionGone();
+      return;
+    }
+    if (!res.ok) return;
+    const d = (await res.json()) as { state: unknown; version: number };
+    serverVersion = d.version;
+    // 服务端有数据就以服务端为准；服务端是空的就保留内存（比如刚注册完正在填档案）
+    if (d.state) {
+      memory = migrate(d.state);
+      setLang(memory.settings.lang);
+      listeners.forEach((l) => l());
+    }
+  } catch {
+    // 服务暂时不可用：先用内存里的，同步会在下次 write 时重试
+  } finally {
+    pulling = false;
+  }
+}
+
+// 页面隐藏/关闭前把未同步的修改立刻推上去
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden" && syncTimer) {
+      clearTimeout(syncTimer);
+      syncTimer = null;
+      void pushToServer();
+    }
+  });
 }
 
 function update(fn: (prev: AppState) => AppState) {
@@ -210,8 +311,10 @@ function subscribe(listener: () => void) {
 /** After logging in or out: forget what was read and show the new account's records. */
 export function reloadAccount() {
   memory = null;
+  serverVersion = 0;
   forgetWelcome();
   listeners.forEach((l) => l());
+  void hydrateFromServer();
 }
 
 const serverSnapshot = () => EMPTY;
@@ -459,8 +562,13 @@ const StoreContext = createContext<StoreApi | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const state = useSyncExternalStore(subscribe, read, serverSnapshot);
   const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
+  // 第一次渲染前先尝试从服务端拉一次数据，避免已登录用户看到一闪而过的空状态
+  const [booted, setBooted] = useState(false);
+  useEffect(() => {
+    void hydrateFromServer().finally(() => setBooted(true));
+  }, []);
   const api = useMemo<StoreApi>(() => ({ state, ready, ...actions }), [state, ready]);
-  return <StoreContext.Provider value={api}>{children}</StoreContext.Provider>;
+  return <StoreContext.Provider value={api}>{booted ? children : null}</StoreContext.Provider>;
 }
 
 export function useStore(): StoreApi {
