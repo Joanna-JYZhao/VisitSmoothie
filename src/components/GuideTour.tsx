@@ -106,12 +106,14 @@ export function GuideTour({ onFinish }: { onFinish: () => void }) {
   const EST_H = 280; // a bubble with a two-line body at 17px
   let bubblePos: React.CSSProperties = { width: bw, left: colLeft + colW / 2, top: "50%", transform: "translate(-50%,-50%)" };
   let arrowUp = false; // 气泡在目标下方时，小箭头朝上指
+  let arrowX: number | null = null; // 箭头在气泡里的水平位置：始终指着目标正中
   if (hl) {
     const belowY = hl.top + hl.height + 16;
     const room = belowY + EST_H <= vh;
     arrowUp = room;
     const centerX = hl.left + hl.width / 2;
     const left = Math.min(Math.max(colLeft + 16, centerX - bw / 2), colLeft + colW - bw - 16);
+    arrowX = Math.min(Math.max(24, centerX - left), bw - 24);
     // above the target: anchored by its bottom edge, so however tall the text makes it, it never covers the target
     bubblePos = room ? { width: bw, top: belowY, left } : { width: bw, bottom: Math.max(16, vh - hl.top + 16), left };
   }
@@ -139,8 +141,8 @@ export function GuideTour({ onFinish }: { onFinish: () => void }) {
             className="absolute h-3.5 w-3.5 rotate-45 border-line/70 bg-surface"
             style={
               arrowUp
-                ? { top: -8, left: "calc(50% - 7px)", borderLeftWidth: 1, borderTopWidth: 1 }
-                : { bottom: -8, left: "calc(50% - 7px)", borderRightWidth: 1, borderBottomWidth: 1 }
+                ? { top: -8, left: (arrowX ?? bw / 2) - 7, borderLeftWidth: 1, borderTopWidth: 1 }
+                : { bottom: -8, left: (arrowX ?? bw / 2) - 7, borderRightWidth: 1, borderBottomWidth: 1 }
             }
           />
         )}
