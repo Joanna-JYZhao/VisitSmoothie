@@ -1,13 +1,13 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IconTile } from "@/components/ui";
 
 /*
- * 疼痛定位：点一下身体图告诉医伴哪里疼。正面、背面各一张，点膝、肩、腹部、腰背时再放大成细分图。
- * 点完调用 onPick("右膝内侧") 这样的规范名称。左右都按患者自己的身体说：正面图上，患者的右边在画面左边。
+ * 疼痛定位：在身体图上点出哪里不舒服，可以点好几处。正面、背面各一张，点膝、肩、腹部、腰背时再放大成细分图。
+ * 点「选好了」调用 onPick(["左膝内侧", "腰正中"]) 这样的规范名称。左右都按患者自己的身体说：正面图上，患者的右边在画面左边。
  */
 
 type Side = "右" | "左";
@@ -112,26 +112,38 @@ function detailOf(d: Detail): { title: string; cols: number; zones: (string | nu
   }
 }
 
-/* the figure: soft brand-tinted blocks, lit from above like the tiles of an app icon; a block fills in under the finger */
-function Figure({ zones, onZone }: { zones: Zone[]; onZone: (z: Zone) => void }) {
+/** Is anything picked inside this block: the block itself, or a part of its close-up? */
+function zoneHas(z: Zone, picked: string[]): boolean {
+  if (picked.includes(z.name)) return true;
+  if (!z.detail) return false;
+  const d = detailOf(z.detail);
+  return picked.some((p) => p === d.whole || d.zones.includes(p));
+}
+
+/* the figure: soft brand-tinted blocks, lit from above like the tiles of an app icon; a block fills in under the finger, and stays filled once picked */
+function Figure({ zones, onZone, picked }: { zones: Zone[]; onZone: (z: Zone) => void; picked: string[] }) {
   const id = useId();
   return (
     <svg viewBox="0 0 200 400" className="mx-auto block h-auto w-full max-w-[280px]" role="group" aria-label="身体图">
       <defs>
         <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
-          <stop stopColor="#f7fbf9" />
-          <stop offset="1" stopColor="#dfede6" />
+          {/* the theme's own tints (a CSS variable only works in style, not in the attribute) */}
+          <stop style={{ stopColor: "var(--color-surface)" }} />
+          <stop offset="1" style={{ stopColor: "var(--color-brand-100)" }} />
         </linearGradient>
         <filter id={`${id}-shadow`} x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodColor="#173c35" floodOpacity="0.12" />
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" style={{ floodColor: "var(--color-ink)", floodOpacity: 0.12 }} />
         </filter>
       </defs>
-      {zones.map((z) => (
+      {zones.map((z) => {
+        const on = zoneHas(z, picked);
+        return (
         <g
           key={z.name + z.x}
           role="button"
           tabIndex={0}
           aria-label={z.name}
+          aria-pressed={z.detail ? undefined : on}
           className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-brand-600 [&:focus-visible>rect]:stroke-[2.5] [&:hover>rect]:fill-brand-200 [&:hover>rect]:stroke-brand-500 [&:active>rect]:fill-brand-300"
           onClick={() => onZone(z)}
           onKeyDown={(e) => {
@@ -149,12 +161,13 @@ function Figure({ zones, onZone }: { zones: Zone[]; onZone: (z: Zone) => void })
             rx={z.r ?? 6}
             fill={`url(#${id}-fill)`}
             filter={`url(#${id}-shadow)`}
-            className="stroke-brand-300/80 transition-[fill,stroke] duration-200"
-            strokeWidth={1}
+            className={cn("transition-[fill,stroke] duration-200", on ? "fill-brand-400 stroke-brand-700" : "stroke-brand-300/80")}
+            strokeWidth={on ? 2 : 1}
           />
           <title>{z.name}</title>
         </g>
-      ))}
+        );
+      })}
     </svg>
   );
 }
@@ -164,26 +177,64 @@ const panel = "material rounded-card border border-line/80 bg-surface p-5";
 const tile =
   "press material min-h-16 rounded-2xl border border-line/70 px-2 py-2 text-lg leading-snug font-medium text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
 
-export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
+const tileOn = "border-brand-600 bg-brand-100 text-brand-800 ring-2 ring-brand-600/40";
+
+/** What has been picked so far, each with a way to take it back, and the button that sends them. */
+function Picked({ picked, onRemove, onDone }: { picked: string[]; onRemove: (name: string) => void; onDone: () => void }) {
+  return (
+    <div className="mt-5 border-t border-line pt-4">
+      {picked.length > 0 ? (
+        <div className="flex flex-wrap gap-2" aria-label="已经选的地方">
+          {picked.map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => onRemove(name)}
+              aria-label={`去掉${name}`}
+              className="press inline-flex min-h-11 items-center gap-1.5 rounded-full bg-brand-50 pr-3 pl-4 text-lg font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+            >
+              {name}
+              <X className="h-4 w-4 text-brand-600" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-base text-ink-2">可以点好几个地方，点错了再点一下就去掉。</p>
+      )}
+      <button
+        type="button"
+        disabled={!picked.length}
+        onClick={onDone}
+        className="press mt-4 min-h-14 w-full rounded-full bg-linear-to-b from-brand-600 to-brand-700 px-6 text-xl font-semibold text-white shadow-btn transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {picked.length ? `选好了（${picked.length} 处）` : "选好了"}
+      </button>
+    </div>
+  );
+}
+
+export function BodyMap({ onPick, prompt = "点一下不舒服的地方" }: { onPick: (areas: string[]) => void; prompt?: string }) {
   const [view, setView] = useState<"front" | "back">("front");
   const [detail, setDetail] = useState<Detail | null>(null);
-  const [picked, setPicked] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [sent, setSent] = useState(false);
 
-  const pick = (name: string) => {
-    if (picked) return;
-    setPicked(name);
-    onPick(name);
+  const toggle = (name: string) => setPicked((p) => (p.includes(name) ? p.filter((x) => x !== name) : [...p, name]));
+  const zone = (z: Zone) => (z.detail ? setDetail(z.detail) : toggle(z.name));
+  const done = () => {
+    if (sent || !picked.length) return;
+    setSent(true);
+    onPick(picked);
   };
-  const zone = (z: Zone) => (z.detail ? setDetail(z.detail) : pick(z.name));
 
-  if (picked) {
+  if (sent) {
     return (
       <div className={cn(panel, "flex animate-pop items-center gap-3 text-lg text-ink")}>
         <IconTile tone="good">
           <Check />
         </IconTile>
         <span>
-          你点的是：<span className="font-semibold text-brand-700">{picked}</span>
+          你选的是：<span className="font-semibold text-brand-700">{picked.join("、")}</span>
         </span>
       </div>
     );
@@ -193,15 +244,16 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
     const d = detailOf(detail);
     return (
       <div className={panel}>
-        <p className="t-heading text-ink">{d.title}：具体是哪一块？</p>
+        <p className="t-heading text-ink">{d.title}：具体是哪一块？可以选几块。</p>
         <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: `repeat(${d.cols}, minmax(0, 1fr))` }}>
           {d.zones.map((name, i) =>
             name ? (
               <button
                 key={name}
                 type="button"
-                onClick={() => pick(name)}
-                className={tile}
+                aria-pressed={picked.includes(name)}
+                onClick={() => toggle(name)}
+                className={cn(tile, picked.includes(name) && tileOn)}
               >
                 {name.replace(/^(右膝|左膝|右肩|左肩)/, "")}
               </button>
@@ -213,8 +265,12 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
         <div className="mt-5 grid grid-cols-2 gap-2 border-t border-line pt-4">
           <button
             type="button"
-            onClick={() => pick(d.whole)}
-            className="press min-h-13 rounded-full border-[1.5px] border-brand-600 bg-surface px-3 text-lg font-medium text-brand-800 shadow-edge transition duration-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+            aria-pressed={picked.includes(d.whole)}
+            onClick={() => toggle(d.whole)}
+            className={cn(
+              "press min-h-13 rounded-full border-[1.5px] border-brand-600 bg-surface px-3 text-lg font-medium text-brand-800 shadow-edge transition duration-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+              picked.includes(d.whole) && "bg-brand-100",
+            )}
           >
             说不清，就是{d.whole}
           </button>
@@ -226,6 +282,7 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
             返回全身图
           </button>
         </div>
+        <Picked picked={picked} onRemove={toggle} onDone={done} />
       </div>
     );
   }
@@ -249,14 +306,15 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
           </button>
         ))}
       </div>
-      <p className="t-heading mt-5 text-center text-ink">点一下疼的地方</p>
+      <p className="t-heading mt-5 text-center text-ink">{prompt}</p>
       <div className="relative mt-3">
         <div className="pointer-events-none absolute inset-x-0 top-1/3 flex justify-between px-1 text-lg font-semibold text-ink-3" aria-hidden>
           <span>{view === "front" ? "右" : "左"}</span>
           <span>{view === "front" ? "左" : "右"}</span>
         </div>
-        <Figure zones={view === "front" ? FRONT : BACK} onZone={zone} />
+        <Figure zones={view === "front" ? FRONT : BACK} onZone={zone} picked={picked} />
       </div>
+      <Picked picked={picked} onRemove={toggle} onDone={done} />
     </div>
   );
 }

@@ -96,7 +96,7 @@ export function LongTermCard({ now, onAlert }: { now: number; onAlert: (h: Hint)
   };
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className="p-4">
       {!tracked.length ? (
         <div className="flex items-start gap-4">
           <IconTile size="lg" className="animate-breathe">

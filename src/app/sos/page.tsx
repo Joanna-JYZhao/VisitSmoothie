@@ -47,7 +47,7 @@ export default function SosPage() {
     <div className="min-h-screen">
       <header className="glass sticky top-0 z-10 border-b border-line/80 print:static print:border-0 print:bg-transparent">
         {/* on paper the content runs the full width, so the title has to line up with it */}
-        <div className="mx-auto w-full max-w-[36rem] px-4 pt-3 pb-3.5 print:max-w-none print:px-0 print:pt-0">
+        <div className="mx-auto w-full max-w-[36rem] px-4 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-3.5 print:max-w-none print:px-0 print:pt-0">
           <div className="flex items-center gap-3">
             <IconTile tone="danger" size="lg" className="print:hidden">
               <Siren aria-hidden="true" />
@@ -73,16 +73,16 @@ export default function SosPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[36rem] space-y-6 px-4 pt-6 pb-16">
+      <main className="mx-auto w-full max-w-[36rem] space-y-5 px-4 pt-5 pb-[calc(env(safe-area-inset-bottom,0px)+3rem)]">
         {plan ? (
           /* the card a stranger reads first, like the Medical ID on a phone: who, what, who to call */
           <section
             aria-label={L("我是谁", "Who I am")}
             className="rise-1 material-raised light overflow-hidden rounded-card border border-line/60 bg-surface print:border print:bg-transparent print:shadow-none"
           >
-            <div className="p-6 print:p-0">
-              {/* on a phone the tile sits above the name, so even a long name keeps one line */}
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="p-5 print:p-0">
+              {/* the tile sits above the name, so even a long name keeps one line in the phone column */}
+              <div className="flex flex-col gap-4">
                 <IconTile tone="solid" size="lg" className="print:hidden">
                   <UserRound />
                 </IconTile>
@@ -105,7 +105,7 @@ export default function SosPage() {
                 </Fact>
               </dl>
             </div>
-            <div className="border-t border-line bg-surface-2/60 px-6 py-5 print:border-t print:bg-transparent print:px-0">
+            <div className="border-t border-line bg-surface-2/60 px-5 py-5 print:border-t print:bg-transparent print:px-0">
               {plan.contact ? (
                 <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-4">
                   <div className="flex min-w-0 items-center gap-3 text-xl leading-relaxed text-ink">
@@ -128,7 +128,7 @@ export default function SosPage() {
                   ) : (
                     <a
                       href={`tel:${dialable(plan.contact.phone)}`}
-                      className="press no-print inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-linear-to-b from-brand-600 to-brand-650 px-6 text-xl font-semibold text-white shadow-btn transition duration-200 hover:from-brand-650 hover:to-brand-700 hover:shadow-hero focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 sm:w-auto"
+                      className="press no-print inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-linear-to-b from-brand-600 to-brand-650 px-6 text-xl font-semibold text-white shadow-btn transition duration-200 hover:from-brand-650 hover:to-brand-700 hover:shadow-hero focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
                     >
                       <Phone className="h-5 w-5" aria-hidden="true" />
                       {L(`打给${plan.contact.relation || plan.contact.name}`, `Call ${plan.contact.relation || contactName(plan.contact.name)}`)}
@@ -154,7 +154,7 @@ export default function SosPage() {
             </div>
           </section>
         ) : (
-          <Card tone="raised" className="rise-1 p-6">
+          <Card tone="raised" className="rise-1 p-5">
             <div className="flex items-start gap-4">
               <IconTile tone="neutral" size="lg">
                 <UserRound />
@@ -182,7 +182,7 @@ export default function SosPage() {
           <Steps key={b.key} block={b} tone={i <= lead ? "danger" : "plain"} index={i + 2} />
         ))}
         {plan && plan.medications.length > 0 && (
-          <Card className="p-6 print:border-0 print:p-0 print:shadow-none">
+          <Card className="p-5 print:border-0 print:p-0 print:shadow-none">
             <div className="flex items-center gap-3">
               <IconTile tone="brand" className="print:hidden">
                 <Pill />
@@ -212,7 +212,7 @@ export default function SosPage() {
         </section>
 
         <div className="no-print space-y-4 border-t border-line pt-6">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3">
             <Button variant="secondary" size="lg" onClick={() => window.print()}>
               <Printer className="h-5 w-5" aria-hidden="true" />
               {L("打印随身带", "Print to carry")}
@@ -269,7 +269,7 @@ function Steps({ block, tone, index }: { block: SosBlock; tone: "danger" | "plai
   return (
     <section
       className={cn(
-        "rounded-card border border-line/80 bg-surface p-6 shadow-card print:border-0 print:p-0 print:shadow-none",
+        "rounded-card border border-line/80 bg-surface p-5 shadow-card print:border-0 print:p-0 print:shadow-none",
         index <= 4 && `rise-${index}`,
       )}
     >
@@ -302,7 +302,7 @@ function SelfGroup({ group }: { group: SosSelfGroup }) {
   return (
     <div
       className={cn(
-        "rounded-card border p-6",
+        "rounded-card border p-5",
         call ? "border-danger/15 bg-danger-bg/70" : "material border-line/80 bg-surface",
         "print:border-0 print:bg-transparent print:p-0 print:shadow-none",
       )}

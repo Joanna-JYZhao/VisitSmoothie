@@ -564,9 +564,13 @@ function hintsByRule(req: ChatRequest): { urgent: Hint | null; warn: Hint | null
  * 有模型时，下一步问什么由这里定、模型来措辞；没有模型时，规则引擎照这里一个个问完。
  */
 
-export const MAX_QUESTIONS = 7;
+/**
+ * No limit on how many questions: they go on until everything a doctor needs is known and every
+ * everyday word has been put into the doctor's words. This only stops a runaway conversation.
+ */
+export const MAX_QUESTIONS = 30;
 
-export type ConsultKey = "confirm" | "onset" | "severity" | "measures" | "location" | "link" | "quality" | "associated" | "pattern" | "history";
+export type ConsultKey = "confirm" | "onset" | "severity" | "measures" | "location" | "link" | "quality" | "associated" | "pattern" | "relief" | "history";
 
 export interface ConsultStep {
   key: ConsultKey;
@@ -590,6 +594,7 @@ export const CONSULT_LABELS: Record<ConsultKey, string> = {
   quality: "怎么个疼法",
   associated: "伴随的其他不舒服",
   pattern: "什么时候、什么情况下会不舒服或更重",
+  relief: "做什么会减轻",
   history: "以前有没有过",
 };
 
@@ -666,6 +671,10 @@ const PATTERN_QUICK: Record<Region, string[]> = {
   throat: ["吞东西", "早上起来", "说话多了", "没发现规律"],
   other: ["活动后", "吃完饭", "夜里", "没发现规律"],
 };
+
+const RELIEF_SAID = /好一点|好些|好点|减轻|缓解|轻一点|舒服点|舒服些|没那么(疼|痛)|就不(疼|痛)了|休息.{0,4}(好|轻)|怎么都不(好|减轻)|没什么能/;
+const RELIEF_ASKED = /好一点|减轻|缓解|舒服(一)?些|好受/;
+const RELIEF_QUICK = ["休息一下", "热敷", "吃了药", "没发现"];
 
 const HISTORY_SAID = /以前|第一次|老毛病|又犯|上次|从来没|头一回|之前也/;
 const HISTORY_ASKED = /以前.{0,6}(有过|这样|也)|第一次|头一回/;
@@ -807,10 +816,13 @@ export function questionsAsked(messages: { role: string; content: string }[]): n
   return messages.filter((m) => m.role === "assistant" && /[?？]/.test(m.content)).length;
 }
 
-/** 问了至少 4 个，对方连着两次只回「嗯」：不想多说了，收尾 */
+/** 患者自己说不想再答了 */
+const WANTS_TO_STOP = /就这些|就这样吧?$|不想(说|答|回答)了|够了|别问了|不用(再)?问了|先这样/;
+
+/** 对方说了「就这些」「不想说了」：收尾。只回「嗯」不算，问题照样问完。 */
 export function evasive(messages: { role: string; content: string }[]): boolean {
-  const users = messages.filter((m) => m.role === "user").map((m) => m.content.trim());
-  return questionsAsked(messages) >= 4 && users.length >= 2 && users.slice(-2).every((u) => FILLER.test(u));
+  const last = [...messages].reverse().find((m) => m.role === "user")?.content.trim() ?? "";
+  return WANTS_TO_STOP.test(last);
 }
 
 export function isPainComplaint(text: string): boolean {
@@ -853,8 +865,6 @@ function planOf(req: ChatRequest): { next: ConsultStep | null; missing: ConsultK
   const users = userTexts(req);
   const assistants = assistantTexts(req);
   const all = [req.episode.title, ...users].join("\n");
-  const lastUser = users[users.length - 1] ?? "";
-  const lastAssistant = assistants[assistants.length - 1] ?? "";
   const askedAny = (re: RegExp, q?: string) => assistants.some((a) => re.test(a) || (q != null && a.includes(q)));
   // the name of the complaint says where it is first; what was said later only fills in
   const regionNamed = regionOf(req.episode.title) ?? regionOf(all);
@@ -864,13 +874,23 @@ function planOf(req: ChatRequest): { next: ConsultStep | null; missing: ConsultK
   const known: ConsultKey[] = [];
   const add = (step: Omit<ConsultStep, "label">) => steps.push({ ...step, label: CONSULT_LABELS[step.key] });
 
-  // 1. 口语确认：这一轮刚说的口语词。刚点的是疼法的选项就不再确认，直接记。
+  // 1. 口语确认：说过的每个口语词都要换成医生的说法，确认完才收尾。
+  // 回答疼法时点的、说的口语选项已经直接写成医生的说法，不再确认。
   const confirmed = assistants.map(termAsked).filter(Boolean) as string[];
-  const tappedQuality = QUALITY_ASKED.test(lastAssistant);
-  if (!tappedQuality && confirmed.length < 2) {
-    const hit = findColloquial(lastUser).find((h) => !confirmed.includes(h.term));
-    if (hit) add({ key: "confirm", question: confirmQuestion(hit), quick: ["是", "不是"], required: true });
+  for (let i = 0, prev = ""; i < req.messages.length; i++) {
+    const m = req.messages[i];
+    if (m.role === "assistant") {
+      prev = m.content;
+      continue;
+    }
+    if (QUALITY_ASKED.test(prev)) continue;
+    for (const hit of findColloquial(m.content.replace(/^【定时记录】/, ""))) {
+      if (confirmed.includes(hit.term) || steps.some((s) => s.key === "confirm" && s.question === confirmQuestion(hit))) continue;
+      add({ key: "confirm", question: confirmQuestion(hit), quick: ["是", "不是"], required: true });
+    }
   }
+  // the newest word first: it is the one just said
+  steps.reverse();
 
   // 2-4. 医生最先问的三件事
   for (const s of STEPS.filter((x) => x.key !== "associated")) {
@@ -883,7 +903,7 @@ function planOf(req: ChatRequest): { next: ConsultStep | null; missing: ConsultK
   const specific = picked || (regionNamed != null && SPECIFIC[regionNamed].test(all.replace(/[，,。]/g, "")));
   if (pain && !specific && !askedAny(LOCATION_ASKED)) {
     if (regionNamed === "head") {
-      add({ key: "location", question: "具体是哪个位置疼？", quick: ["额头", "太阳穴", "后脑勺", "整个头"], required: false });
+      add({ key: "location", question: "具体是哪个位置疼？", quick: ["额头", "太阳穴", "后脑勺", "整个头"], required: true });
     } else if (regionNamed !== "throat" && regionNamed !== "chest") {
       add({ key: "location", question: "具体是哪个位置疼？在下面的图上点一下就行。", quick: ["说不太清"], widget: "bodymap", required: true });
     }
@@ -900,23 +920,27 @@ function planOf(req: ChatRequest): { next: ConsultStep | null; missing: ConsultK
   if (pain) {
     const said = QUALITY_WORDS.test(all) || users.some((u) => findColloquial(u).some((h) => h.quality));
     if (said || askedAny(QUALITY_ASKED)) known.push("quality");
-    else add({ key: "quality", question: "是怎么个疼法？", quick: QUALITY_QUICK[region], required: false });
+    else add({ key: "quality", question: "是怎么个疼法？", quick: QUALITY_QUICK[region], required: true });
   }
 
   // 8. 伴随症状
   // the first sentence names the complaint itself: it only answers this when it names two kinds of trouble
   const associatedSaid = ASSOCIATED_SAID.test(users.slice(1).join("\n")) || detectSymptoms(users[0] ?? "").length >= 2 || /没有?(别的|其他)/.test(users[0] ?? "");
   if (associatedSaid || askedAny(ASSOCIATED_ASKED)) known.push("associated");
-  else add({ key: "associated", question: "还有别的不舒服吗？", quick: ASSOCIATED_QUICK[region], required: false });
+  else add({ key: "associated", question: "还有别的不舒服吗？", quick: ASSOCIATED_QUICK[region], required: true });
 
   // 9. 什么时候、什么情况下更重
   if (PATTERN_SAID.test(users.join("\n")) || askedAny(PATTERN_ASKED)) known.push("pattern");
-  else add({ key: "pattern", question: "一般什么时候、做什么的时候更难受？", quick: PATTERN_QUICK[region], required: false });
+  else add({ key: "pattern", question: "一般什么时候、做什么的时候更难受？", quick: PATTERN_QUICK[region], required: true });
+
+  // 9b. 怎么会减轻
+  if (RELIEF_SAID.test(users.join("\n")) || askedAny(RELIEF_ASKED)) known.push("relief");
+  else add({ key: "relief", question: "做什么会好一点？", quick: RELIEF_QUICK, required: true });
 
   // 10. 病史：档案和以前的记录里有的直接用，没有才问一句这次相关的
   const onFile = req.profile.conditions.length > 0 || req.related.length > 0 || steps.some((s) => s.key === "link") || assistants.some((a) => /像吗/.test(a));
   if (onFile || HISTORY_SAID.test(users.join("\n")) || askedAny(HISTORY_ASKED)) known.push("history");
-  else add({ key: "history", question: "以前也这样过吗？", quick: ["第一次", "以前有过"], required: false });
+  else add({ key: "history", question: "以前也这样过吗？", quick: ["第一次", "以前有过"], required: true });
 
   const missing = steps.map((s) => s.key);
   const over = questionsAsked(req.messages) >= MAX_QUESTIONS || evasive(req.messages);
@@ -934,6 +958,7 @@ const ANSWER_LABELS: [RegExp, string][] = [
   [LOCATION_ASKED, "部位"],
   [ASSOCIATED_ASKED, "其他不舒服"],
   [PATTERN_ASKED, "什么时候更重"],
+  [RELIEF_ASKED, "怎么会减轻"],
   [HISTORY_ASKED, "以前有没有过"],
 ];
 
@@ -959,6 +984,8 @@ function answerFits(label: string, answer: string): boolean {
       return PATTERN_SAID.test(answer) || ALL_OPTIONS.has(answer);
     case "以前有没有过":
       return HISTORY_SAID.test(answer) || /有过|没有过|第一次/.test(answer);
+    case "怎么会减轻":
+      return true;
     case "部位":
       return regionOf(answer) != null || extractLocation(answer) != null;
     case "最近血糖":
@@ -987,7 +1014,7 @@ function answerKind(answer: string): string | null {
 
 /** A note that is an answer to one of the questions, written as "部位：右膝内侧" or "绞痛（患者原话：拧着疼）". */
 export function isConsultPoint(note: string): boolean {
-  return /^(部位|疼法|最近血糖|最近血压|伤口|和以前比|开始时间|用药|其他不舒服|什么时候更重|以前有没有过)：/.test(note) || /（患者原话：/.test(note) || /^患者原话：/.test(note);
+  return /^(部位|疼法|最近血糖|最近血压|伤口|和以前比|开始时间|用药|其他不舒服|什么时候更重|怎么会减轻|以前有没有过|对生活工作的影响|想请医生)：/.test(note) || /（患者原话：/.test(note) || /^患者原话：/.test(note);
 }
 
 /** 一句回答写进记录时的样子：确认过的口语、身体图点的部位都写成医生看得懂的说法。 */
@@ -1184,6 +1211,51 @@ function knownDiagnosis(d: string | null | undefined): boolean {
   return Boolean(d && d !== NO_DIAGNOSIS && !/没有(明确|新的)?诊断|无明确诊断|原因待查/.test(d));
 }
 
+/**
+ * The description in the patient's own voice, put together by rule: 我46岁，从9月27日起左膝内侧酸痛。…
+ * Only what is on record: the answers to the questions, the history on file, what they want to ask.
+ */
+function narrativeByRule(req: SummaryRequest, points: string[], onsetKnown: boolean): string {
+  const { profile, episode } = req;
+  // "绞痛（患者原话：拧着疼）" is said the patient's way with the doctor's word after it: "拧着疼（绞痛）"
+  const spoken = (v: string) => v.replace(/([^，。；：（]+)（患者原话：([^）]+)）/g, "$2（$1）");
+  const answer = (label: string) => spoken(points.find((p) => p.startsWith(`${label}：`))?.slice(label.length + 1).trim() ?? "");
+  const none = (v: string) => /^(没有?|没有别的|没别的|无|不清楚|说不清|说不太清|没发现规律|没发现)/.test(v);
+  // picked on the body map at the start, or answered later
+  const where = answer("部位") || sortedEntries(episode)[0]?.location || "";
+  const lines: string[] = [];
+  const age = profile.birthYear ? new Date().getFullYear() - profile.birthYear : null;
+  lines.push(
+    `我${age != null ? `${age}岁，` : ""}${onsetKnown ? `从${fmtDate(episode.startedAt)}起` : "最近"}${where && !episode.title.includes(where) ? `${where}` : ""}${episode.title}${answer("疼法") ? `，感觉是${answer("疼法")}` : ""}。`,
+  );
+  // other everyday words that were confirmed: "头晕眼花（头晕伴视物模糊）"
+  const confirmedWords = points.filter((p) => /^[^：]+（患者原话：/.test(p)).map(spoken);
+  if (confirmedWords.length) lines.push(`我说的${confirmedWords.join("、")}。`);
+  const worse = answer("什么时候更重");
+  if (worse && !none(worse)) lines.push(`${worse}的时候更明显。`);
+  const relief = answer("怎么会减轻");
+  if (relief) lines.push(none(relief) ? "没发现做什么能减轻。" : `${relief}会减轻一些。`);
+  const other = answer("其他不舒服");
+  if (other) lines.push(none(other) ? "没有注意到别的不舒服。" : `同时还有${other}。`);
+  const before = answer("以前有没有过");
+  if (before) lines.push(/第一次|没有/.test(before) ? "以前没有这样过。" : `${before.startsWith("以前") ? before : `以前${before}`}类似的情况。`);
+  const compared = answer("和以前比");
+  if (compared) lines.push(`和以前那次比：${compared}。`);
+  const taken = answer("用药");
+  if (taken) lines.push(/没吃|没用|没有|没处理|没管/.test(taken) ? "这次还没有用药。" : `这次用药：${taken}。`);
+  const impact = answer("对生活工作的影响");
+  if (impact) lines.push(/没什么|没有|不影响/.test(impact) ? "对生活工作没什么影响。" : `已经${impact.replace(/^已经/, "")}。`);
+  for (const label of ["最近血压", "最近血糖"]) if (answer(label)) lines.push(`${label}${answer(label)}。`);
+  if (profile.conditions.length) lines.push(`我有${profile.conditions.join("、")}。`);
+  if (profile.medications.length) lines.push(`长期在用${profile.medications.join("、")}。`);
+  if (profile.allergies.length) lines.push(`对${profile.allergies.join("、")}过敏。`);
+  const wish = answer("想请医生");
+  const own = ownQuestions(episode.entries.filter((e) => e.source === "user").map((e) => e.note).join("\n"));
+  if (wish && !/没有特别/.test(wish)) lines.push(`想请医生帮我看看${wish.replace(/^(帮我)?看看/, "")}。`);
+  else lines.push(own.length ? `想问医生：${own.join("")}` : "想请医生看看需要怎么处理。");
+  return lines.join("");
+}
+
 function summaryByRule(req: SummaryRequest): SummaryResponse {
   const { profile, episode, related } = req;
   const entries = sortedEntries(episode);
@@ -1304,6 +1376,8 @@ function summaryByRule(req: SummaryRequest): SummaryResponse {
     ...(req.vitals ?? []),
   ].filter(Boolean);
 
+  const narrative = narrativeByRule(req, points, onsetKnown);
+
   const questionsForDoctor = ["这次需要做哪些检查？", "吃的喝的有什么要注意的？", "什么情况下要再来，或者去急诊？"];
   if (related[0])
     questionsForDoctor.unshift(
@@ -1316,6 +1390,7 @@ function summaryByRule(req: SummaryRequest): SummaryResponse {
     mode: "fallback",
     summary: {
       glance: glance.slice(0, 5),
+      narrative,
       chiefComplaint,
       presentIllness,
       timeline: recordedTimeline(episode),

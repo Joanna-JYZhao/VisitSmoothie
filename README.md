@@ -10,8 +10,8 @@
 
 1. `npm install && npm run dev`，打开 http://localhost:3000 。
 2. 打开 `/demo/lin` 看虚构病人林叔的完整记录（不用密码）。
-3. 想跳过注册的必填项，点左下角（手机上在顶部）的「开发者」开关。
-4. 设计规范在 `src/app/globals.css`（颜色、字号、材质）和 `src/components/ui.tsx`（公共组件）。各界面截图在 `docs/美化截图-第二轮/`。
+3. 想跳过注册的必填项，在底栏「set」里打开「开发者」开关。
+4. 设计规范在 `src/app/globals.css`（颜色、字号、材质）和 `src/components/ui.tsx`（公共组件）。手机版各界面截图在 `docs/手机版截图/`。
 
 ## 页面
 
@@ -44,7 +44,7 @@
 
 ## 开发者开关
 
-每页左下角（手机上在页面顶部）「开发者：关 / 开」，点一下开、再点一下关，默认关，只记在这台浏览器里。开着时注册七项和密码都可以不填，登录可以不输密码，方便演示和测试时一路往下走。
+在底栏「set」里的「开发者」，点一下开、再点一下关，默认关，只记在这台浏览器里。开着时注册七项和密码都可以不填，登录可以不输密码，方便演示和测试时一路往下走。
 
 ## 快速开始
 
@@ -52,7 +52,7 @@
 
 ```bash
 npm install
-cp .env.example .env.local   # 填入 Anthropic 的 API Key（可以不填）
+cp .env.example .env.local   # 填入智谱或 Anthropic 的 API Key（可以不填）
 npm run dev
 ```
 
@@ -60,10 +60,15 @@ npm run dev
 
 | 变量 | 说明 | 默认 |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Anthropic 的 API Key，对话、整理和识别照片都用它。留空时用内置规则引擎回答，拍照不可用 | 空 |
-| `CLAUDE_MODEL` | 对话、整理和识别照片用的模型 | `claude-opus-5-5` |
-| `GLM_API_KEY` | 智谱开放平台的 API Key，只用于语音转文字。留空时语音不可用 | 空 |
+| `AI_PROVIDER` | 对话、整理和识别照片用哪家：`glm`（智谱）或 `claude`（Anthropic） | 有 `ANTHROPIC_API_KEY` 时 `claude`，否则 `glm` |
+| `GLM_API_KEY` | 智谱开放平台的 API Key。`glm` 时对话、整理、照片都用它；语音转文字总是用它。留空时语音不可用 | 空 |
+| `GLM_MODEL` | `glm` 时对话和整理用的模型 | `glm-5` |
+| `GLM_VISION_MODEL` | `glm` 时识别照片用的模型 | `glm-4.6v` |
 | `GLM_ASR_MODEL` | 语音转文字用的模型 | `glm-asr-2512` |
+| `ANTHROPIC_API_KEY` | Anthropic 的 API Key，`claude` 时用 | 空 |
+| `CLAUDE_MODEL` | `claude` 时对话、整理和识别照片用的模型 | `claude-opus-5-5` |
+
+两家都没有 Key 时用内置规则引擎回答，拍照不可用。
 | `GLM_BASE_URL` | OpenAI 兼容接口地址 | `https://open.bigmodel.cn/api/paas/v4` |
 
 Key 只在服务端的 `/api` 路由里使用，不会进入浏览器，也不在仓库里。没有 Key 或接口出错时自动改用内置规则。

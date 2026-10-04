@@ -18,7 +18,7 @@ export interface Colloquial {
 
 export const COLLOQUIAL: Colloquial[] = [
   { re: /拧着疼|拧着痛|绞着疼|绞着痛|揪着疼|揪着痛|拧劲儿?疼/, term: "绞痛", plain: "一阵一阵拧着的那种疼", quality: true },
-  { re: /一跳一跳|一蹦一蹦|突突地?跳|跳着疼|跳着痛|一抽一抽地?跳/, term: "搏动性疼痛", plain: "像心跳一样一下一下跳着疼", quality: true },
+  { re: /一跳一跳|一蹦一蹦|突突地?跳|跳着疼|跳着痛|一抽一抽地?跳|咚咚|嘣嘣|一鼓一鼓/, term: "搏动性疼痛", plain: "像心跳一样一下一下跳着疼", quality: true },
   { re: /火辣辣|火烧火燎|烧得慌|像火烧/, term: "烧灼感", plain: "像火烧一样辣辣的", quality: true },
   { re: /像针扎|针扎一样|针扎似的|扎着疼|扎着痛|像被扎/, term: "刺痛", plain: "像针扎一样一下一下的疼", quality: true },
   { re: /胀胀的|胀得慌|胀鼓鼓|鼓鼓的/, term: "胀痛", plain: "胀胀的、撑着的那种难受", quality: true },

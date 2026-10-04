@@ -35,8 +35,8 @@ export default function DemoLinkPage() {
 
   if (!persona) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-5 py-10">
-        <Card tone="raised" className="w-full max-w-md animate-pop px-6 py-12 text-center">
+      <div className="flex min-h-dvh items-center justify-center px-4 py-10">
+        <Card tone="raised" className="w-full animate-pop rounded-[20px] px-5 py-12 text-center">
           <IconTile tone="neutral" size="xl" className="mx-auto mb-5">
             <SearchX />
           </IconTile>
@@ -52,33 +52,42 @@ export default function DemoLinkPage() {
     );
   }
 
-  /* the demo is being opened: the app icon breathing above the shape of the home page */
+  /* the demo is being opened: the app icon inside a turning ring, above the shape of the home page */
   return (
-    <div className="flex min-h-screen items-center justify-center px-5 py-10">
-      <div className="w-full max-w-md animate-fade-up">
+    <div className="flex min-h-dvh flex-col justify-center px-4 py-10">
+      <div className="w-full animate-fade-up">
         <div className="flex flex-col items-center gap-5 text-center text-ink-2">
-          <span className="relative flex h-24 w-24 items-center justify-center">
-            <Spinner className="absolute inset-0 h-24 w-24 border-4" />
-            <span className="inline-block rounded-[18px] shadow-glow">
-              <LogoMark className="h-16 w-16 animate-breathe" />
-            </span>
+          <span className="relative flex h-28 w-28 items-center justify-center">
+            <Spinner className="absolute inset-0 h-28 w-28 border-[3px]" />
+            <LogoMark className="h-[4.5rem] w-[4.5rem]" />
           </span>
           <span className="t-lead font-medium text-ink">正在打开{PERSONAS[persona].name}的演示</span>
         </div>
-        <Card className="mt-10 space-y-5 p-6" aria-hidden="true">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 max-w-10 shrink-0 rounded-[12px]" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <Skeleton className="h-4 max-w-[40%]" />
-              <Skeleton className="h-4 max-w-[80%]" />
+        {/* the two halves of the home page, still empty */}
+        <div className="mt-10 space-y-3" aria-hidden="true">
+          <Card className="space-y-4 rounded-[1.1rem] p-4">
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="h-9 max-w-9 shrink-0 rounded-[11px]" />
+              <Skeleton className="h-5 max-w-[40%]" />
             </div>
-          </div>
-          <Skeleton className="h-12 w-full rounded-full" />
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-16 w-full rounded-card" />
-            <Skeleton className="h-16 w-full rounded-card" />
-          </div>
-        </Card>
+            {[0, 1].map((i) => (
+              <div key={i} className="flex items-center gap-3 border-t border-line pt-4">
+                <Skeleton className="h-7 max-w-7 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 max-w-[55%]" />
+                  <Skeleton className="h-5 max-w-[75%]" />
+                </div>
+              </div>
+            ))}
+          </Card>
+          <Card className="space-y-4 rounded-[1.1rem] p-4">
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="h-9 max-w-9 shrink-0 rounded-[11px]" />
+              <Skeleton className="h-5 max-w-[25%]" />
+            </div>
+            <Skeleton className="h-14 w-full rounded-2xl" />
+          </Card>
+        </div>
       </div>
     </div>
   );

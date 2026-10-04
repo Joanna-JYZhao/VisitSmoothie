@@ -54,7 +54,7 @@ export default function MePage() {
   const age = (profile.birthDate ? ageFromBirthDate(profile.birthDate) : null) ?? ageOf(profile.birthYear);
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-6 pb-2">
       <PageHeader
         title="我的档案"
         aside={
@@ -73,20 +73,16 @@ export default function MePage() {
 
       {/* Identity and medical facts form one plain, grouped list. */}
       <Card tone="raised" className="animate-pop overflow-hidden">
-        <div className="relative px-4 pt-5 pb-4 sm:px-5 sm:pt-6 sm:pb-5">
-          <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3.5 sm:gap-x-5">
-            <span
-              aria-hidden="true"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#7056bf] text-[1.4rem] leading-none font-semibold text-white sm:row-span-2"
-            >
-              {Array.from(profile.name.trim())[0] ?? ""}
-            </span>
-            <h2 className="name-title col-start-2 self-center text-ink sm:self-start sm:pt-0.5">{profile.name}</h2>
-            <LinkButton href="/me/edit" variant="secondary" size="sm" className="press col-start-3 self-center sm:self-start">
-              修改
-            </LinkButton>
-            {/* on a phone the facts take the full width under the tile; beside it there is room to sit under the name */}
-            <p className="t-lead col-span-3 mt-3 text-ink-2 sm:col-span-2 sm:col-start-2 sm:mt-1">
+        <div className="flex items-center gap-3.5 px-4 py-4">
+          <span
+            aria-hidden="true"
+            className="flex h-15 w-15 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[1.6rem] leading-none font-semibold text-white"
+          >
+            {Array.from(profile.name.trim())[0] ?? ""}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="name-title text-ink">{profile.name}</h2>
+            <p className="t-body mt-0.5 text-ink-2">
               {/* each part stays whole when the line wraps on a narrow phone */}
               {[profile.gender, `${age} 岁`, profile.education].filter(Boolean).map((part, i) => (
                 <Fragment key={i}>
@@ -96,6 +92,9 @@ export default function MePage() {
               ))}
             </p>
           </div>
+          <LinkButton href="/me/edit" variant="secondary" size="sm" className="press shrink-0 self-center">
+            修改
+          </LinkButton>
         </div>
         <dl className="divide-y divide-line border-t border-line">
           {facts
@@ -105,7 +104,7 @@ export default function MePage() {
               const allergy = list === profile.allergies;
               const warn = allergy && list.length > 0;
               return (
-                <div key={label} className={cn("flex items-start gap-3 px-4 py-3 sm:px-5", warn && "bg-danger-bg/50")}>
+                <div key={label} className={cn("flex items-start gap-3 px-4 py-3", warn && "bg-danger-bg/50")}>
                   {allergy && (
                     <IconTile tone={warn ? "danger" : "neutral"} size="sm" className="mt-0.5">
                       <ShieldAlert />
@@ -121,14 +120,14 @@ export default function MePage() {
               );
             })}
           {profile.notes && (
-            <div className="px-4 py-3 sm:px-5">
+            <div className="px-4 py-3">
               <dt className="text-base font-medium text-ink-2">还想让医生知道的</dt>
               <dd className="t-body mt-0.5 text-ink">{profile.notes}</dd>
             </div>
           )}
         </dl>
         {/* who to call: the first thing the emergency page shows, so it is kept in sight here */}
-        <div className="flex items-center gap-3 border-t border-line bg-surface-2/60 px-4 py-3.5 sm:px-5">
+        <div className="flex items-center gap-3 border-t border-line bg-surface-2/60 px-4 py-3.5">
           <IconTile tone={contact ? "good" : "neutral"} size="lg">
             <Phone />
           </IconTile>
@@ -156,7 +155,7 @@ export default function MePage() {
       </div>
 
       {state.nextVisit && (
-        <Card tone="brand" className="rise-2 flex items-start gap-3.5 p-4 sm:p-5">
+        <Card tone="brand" className="rise-2 flex items-start gap-3.5 p-4">
           <IconTile tone="solid" size="lg">
             <CalendarCheck />
           </IconTile>
@@ -220,7 +219,7 @@ function PastHistory() {
     toast.show(`已记进档案：${[...conditions, ...surgeries].join("、")}`, "good");
   };
   return (
-    <Card className="p-4 sm:p-5">
+    <Card className="p-4">
       <div className="flex items-start gap-3.5">
         <IconTile size="lg">
           <History />

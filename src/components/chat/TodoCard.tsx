@@ -71,7 +71,7 @@ function TodoRow({ todo, onChange }: { todo: Todo; onChange: (t: Todo) => void }
                 aria-checked={todo.frequency === f}
                 onClick={() => onChange({ ...todo, frequency: f })}
                 className={cn(
-                  "min-h-11 rounded-[14px] px-1 text-base font-medium whitespace-nowrap transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+                  "min-h-12 rounded-[14px] px-1 text-base font-medium whitespace-nowrap transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
                   todo.frequency === f ? "bg-surface text-ink shadow-pill" : "text-ink-2 hover:text-ink",
                 )}
               >
@@ -150,7 +150,7 @@ export function TodoCard({ item }: { item: Extract<ThreadItem, { kind: "todo" }>
   const set = item.state === "set";
   const mine = state.reminders.filter((r) => item.todos.some((t) => t.id === r.todoId));
   return (
-    <Card tone={set ? "plain" : "raised"} className={cn("p-6", set ? "animate-fade-up" : "animate-pop")}>
+    <Card tone={set ? "plain" : "raised"} className={cn("p-5", set ? "animate-fade-up" : "animate-pop")}>
       {/* the clock control without the browser's own icon: a plain pill with the time in it (a tap still opens the picker on a phone) */}
       <style>{`.todo-time::-webkit-calendar-picker-indicator{display:none}.todo-time::-webkit-date-and-time-value{text-align:center;margin:0}`}</style>
       <div className="flex items-center justify-between gap-3">

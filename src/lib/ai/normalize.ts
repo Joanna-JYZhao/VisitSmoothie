@@ -14,7 +14,7 @@ import type {
   SummaryRequest,
 } from "../types";
 import { clampSeverity, provisionalTitle, textOverlap, uniq } from "../utils";
-import { termAsked } from "../colloquial";
+import { findColloquial, termAsked } from "../colloquial";
 import {
   extractMeasurements,
   extractOnsetHours,
@@ -289,8 +289,8 @@ export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
   const disease = named.match(NAMES_A_DISEASE)?.[0];
   const title = disease && !firstUserText(req).includes(disease) ? "" : named;
 
-  // The assistant may ask at most seven questions in a row, four when the answers are only "嗯";
-  // after that the round is closed for it.
+  // There is no real limit on questions (MAX_QUESTIONS only stops a runaway round); the round closes
+  // when the patient says 就这些 / 不想说了.
   const asked = askedInRound(req.messages);
   const spent = asked >= MAX_QUESTIONS || evasive(req.messages);
   let done = o.done === true || !hasQuestion(reply) || spent;
@@ -325,8 +325,12 @@ export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
   // and how it hurts. The model tends to stop after two.
   const firstRound = req.kind !== "checkin" && !req.messages.some((m) => m.role === "assistant" && !hasQuestion(m.content));
   const step = firstRound && !spent && hint?.level !== "urgent" ? consultPlan(req).next : null;
+  // The model may put an everyday word the table does not know ("头咚咚的") into the doctor's word itself.
+  // Words the table knows are confirmed in the table's wording, by the rules.
+  const ownConfirm = !done && termAsked(reply) != null && findColloquial(said).length === 0 && step?.key !== "confirm";
+  if (ownConfirm) quick = ["是", "不是"];
   let widget: ChatResponse["widget"] = null;
-  if (step) {
+  if (step && !ownConfirm) {
     if (done && !hasQuestion(reply)) {
       if (step.required) {
         finalReply = `记下了。${step.question}`;
@@ -584,6 +588,7 @@ export function normalizeSummary(raw: unknown, req: SummaryRequest): DoctorSumma
     // The first screen is built from the records by rule. It is on screen at once, every line can be
     // traced to something recorded, and it does not change when the model's version arrives.
     glance: base.glance,
+    narrative: clean(o.narrative) || base.narrative,
     chiefComplaint: clean(o.chiefComplaint) || base.chiefComplaint,
     presentIllness: clean(o.presentIllness) || base.presentIllness,
     // The timeline is never the model's: it is the recorded entries themselves, so nothing in it can be made up.

@@ -185,7 +185,7 @@ async function main() {
   check("a negated breathlessness does not turn chest pain into the combined alarm", instantAlert("胸口有点痛，没有喘不上气")!.text.includes("如果"));
   check("an ordinary complaint raises nothing", instantAlert("喉咙痛，昨晚开始的") === null && instantAlert("没有胸痛") === null);
 
-  // the conversation: at most four questions, then done
+  // the conversation: questions go on until everything is known, or the patient says 就这些
   const profile: Profile = li.profile!;
   const req = (messages: ChatRequest["messages"], kind: ChatRequest["kind"] = "followup"): ChatRequest => ({
     kind,
@@ -201,10 +201,14 @@ async function main() {
   check("questions asked in a row are counted", askedInRound([{ role: "user", content: "a" }, ...q(3)]) === 3);
   check("a finished round resets the count", askedInRound([{ role: "assistant", content: "问？" }, { role: "user", content: "嗯" }, { role: "assistant", content: "好了，我都记下了。" }, { role: "user", content: "又疼了" }]) === 0);
   const fifth = fallbackChat(req([{ role: "user", content: "喉咙痛" }, ...q(4)]));
-  check("after four questions the rule engine wraps up", fifth.done === true && !/[?？]/.test(fifth.reply), fifth.reply);
+  check("four 嗯 in a row no longer close the round: the questions go on", fifth.done === false && /[?？]/.test(fifth.reply), fifth.reply);
+  const enough = fallbackChat(req([{ role: "user", content: "喉咙痛" }, ...q(3), { role: "assistant", content: "问题 4？" }, { role: "user", content: "就这些吧" }]));
+  check("就这些 wraps the round up", enough.done === true && !/[?？]/.test(enough.reply), enough.reply);
   const forced = normalizeChat({ reply: "还有别的吗？", done: false, suggestedReplies: ["没有"] }, req([{ role: "user", content: "喉咙痛" }, ...q(4)]));
-  check("a model that keeps asking is closed after four questions", forced.done === true);
-  const told3 = [{ role: "user" as const, content: "喉咙痛，昨晚开始的，比较难受，没吃药" }];
+  check("a model that keeps asking is not cut off after four questions", forced.done === false);
+  const stop = normalizeChat({ reply: "还有别的吗？", done: false, suggestedReplies: ["没有"] }, req([{ role: "user", content: "喉咙痛" }, ...q(3), { role: "assistant", content: "问题 4？" }, { role: "user", content: "不想说了" }]));
+  check("a model that keeps asking is closed once the patient says so", stop.done === true && !/[?？]/.test(stop.reply), stop);
+  const told3 = [{ role: "user" as const, content: "喉咙刺痛，昨晚开始的，比较难受，没吃药，没有别的不舒服，吞东西的时候更疼，喝温水会好一点，以前没这样过" }];
   const closed = normalizeChat({ reply: "好了，我都记下了。多喝水。", done: true, suggestedReplies: ["好的"] }, req(told3));
   check("a closing reply carries no quick answers", closed.done === true && closed.suggestedReplies.length === 0, closed);
   // the three things a doctor asks first are known before the first round closes
@@ -212,7 +216,7 @@ async function main() {
   check("the model may not close before asking when it began", early.done === false && early.reply === "记下了。是什么时候开始的？" && early.suggestedReplies.includes("昨天"), early);
   const early2 = normalizeChat({ reply: "好了，我都记下了。", done: true }, req([{ role: "user", content: "头痛，今天下午开始的，比较难受" }], "intake"));
   check("nor before asking what has been taken", early2.done === false && early2.reply.includes("吃过什么药"), early2);
-  const toldAll = normalizeChat({ reply: "好的，我都记下了。建议今天去看消化内科。", done: true }, req([{ role: "user", content: "拉肚子两天了，一天五六次，今天量体温38.6度，非常难受，吃了蒙脱石散没用" }], "intake"));
+  const toldAll = normalizeChat({ reply: "好的，我都记下了。建议今天去看消化内科。", done: true }, req([{ role: "user", content: "拉肚子两天了，一天五六次，今天量体温38.6度，非常难受，吃了蒙脱石散没用，是钝痛，吃完东西就拉，躺着会好一点，以前没这样过" }], "intake"));
   check("what was already said in the first sentence is not asked again", toldAll.done === true && !/[?？]/.test(toldAll.reply), toldAll.reply);
   const laterRound = normalizeChat({ reply: "记下了，多休息。", done: true }, req([{ role: "user", content: "头痛" }, { role: "assistant", content: "好了，我都记下了。" }, { role: "user", content: "今天又有点疼" }]));
   check("a later round may close at once", laterRound.done === true && laterRound.reply === "记下了，多休息。");

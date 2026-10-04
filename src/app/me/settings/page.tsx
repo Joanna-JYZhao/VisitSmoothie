@@ -41,7 +41,7 @@ function Block({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-3 px-5 py-4.5 sm:px-6">
+    <div className="flex items-start gap-3 px-4 py-4">
       <IconTile tone={iconTone} className="mt-0.5">
         {icon}
       </IconTile>
@@ -130,7 +130,7 @@ export default function SettingsPage() {
         : "bg-line-strong";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 pb-2">
       <PageHeader back={{ href: "/me", label: "我的档案" }} title="设置" />
 
       <section className="rise-1">

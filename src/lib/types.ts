@@ -71,7 +71,9 @@ export interface DoctorSummaryBody {
   glance: string[];
   chiefComplaint: string;
   presentIllness: string;
-  timeline: { time: string; event: string }[];
+  /** the description the patient hands over, in their own voice: 我46岁，左膝内侧从9月27日起… */
+  narrative?: string;
+  timeline:{ time: string; event: string }[];
   currentStatus: string;
   relevantHistory: string[];
   priorSimilar: string[];
@@ -525,15 +527,33 @@ export interface Triage {
  */
 export type ThreadItem =
   | { id: string; at: string; kind: "user"; text: string; photos?: number }
-  | { id: string; at: string; kind: "ai"; text: string; chips?: string[]; episodeId?: string }
+  /**
+   * `areas`: asked right after places were picked on the opening body map; the answer starts the complaint.
+   * `wrap`: one of the two questions asked once the others are done, before the description is written.
+   */
+  | { id: string; at: string; kind: "ai"; text: string; chips?: string[]; episodeId?: string; areas?: string; wrap?: "impact" | "wish" }
   | { id: string; at: string; kind: "alert"; hint: Hint }
-  | { id: string; at: string; kind: "description"; episodeId: string; state: "draft" | "saved" | "discarded" }
+  /**
+   * "replaced": a correction was made with 改一下, and the corrected description is a new card below.
+   * This one keeps showing what it said then, from `snapshot`.
+   */
+  | {
+      id: string;
+      at: string;
+      kind: "description";
+      episodeId: string;
+      state: "draft" | "saved" | "discarded" | "replaced";
+      snapshot?: Pick<DoctorSummaryBody, "chiefComplaint" | "presentIllness" | "narrative">;
+    }
   | { id: string; at: string; kind: "triage"; episodeId: string; triage: Triage }
   | { id: string; at: string; kind: "orders"; result: AfterResult; mode: AiMode; episodeId: string | null; state: "draft" | "saved" | "discarded" }
   | { id: string; at: string; kind: "answer"; text: string; sources: { label: string; href: string }[] }
   | { id: string; at: string; kind: "note"; text: string }
-  /** 疼痛定位: a body picture to tap, offered while asking where it hurts */
-  | { id: string; at: string; kind: "bodymap"; episodeId: string; state: "open" | "done"; picked?: string | null }
+  /**
+   * 疼痛定位: a body picture to tap, one place or several. Offered while asking where it hurts, and
+   * on opening pre without `episodeId`, before there is a complaint.
+   */
+  | { id: string; at: string; kind: "bodymap"; episodeId?: string; state: "open" | "done"; picked?: string | null }
   /** 医嘱 a: what to do, with which ones to remind about and how often */
   | { id: string; at: string; kind: "todo"; ordersItemId: string; episodeId: string | null; todos: Todo[]; state: "draft" | "set" }
   /** 医嘱 b: the parts that can be explained, to pick from */
@@ -554,6 +574,8 @@ export interface Todo {
   times?: string[];
   /** ISO time, for once (a follow-up visit) */
   at?: string | null;
+  /** what the assistant explained about it when the patient said it was unclear: what it is for, why so */
+  explain?: string;
 }
 
 /** A reminder that has been set. Fired by the scheduler while the app is open, as a message and a notification. */
@@ -570,6 +592,8 @@ export interface Reminder {
   createdAt: string;
   /** the last time it went off, so it does not go off twice for the same slot */
   lastFiredAt?: string | null;
+  /** carried over from the to-do: shown on the home list, and a line of it when the reminder goes off */
+  explain?: string;
 }
 
 type OmitEach<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;

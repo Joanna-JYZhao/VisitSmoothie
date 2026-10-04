@@ -37,11 +37,7 @@ const PHOTO_SIDE = 2400;
 /** Why the photos could not be used. Kept as a code so the sentence follows the language of the page. */
 type Problem = "unavailable" | "unreadable" | "failed" | "photo";
 
-type Stage =
-  | { kind: "start" }
-  | { kind: "report" }
-  | { kind: "reading"; count: number }
-  | { kind: "confirm"; result: CheckupResult; sample: boolean };
+type Stage = { kind: "start" } | { kind: "report" } | { kind: "reading"; count: number } | { kind: "confirm"; result: CheckupResult; sample: boolean };
 
 /** Which numbers are worth tracking for the long-term conditions someone has. */
 function metricsFor(conditions: string[], medications: string[]): MetricType[] {
@@ -62,6 +58,16 @@ function problemText(problem: Problem): string {
   }
   if (problem === "photo") return L("这张照片打不开，换一张试试。", "This photo could not be opened. Try another one.");
   return L("这次没认出来。可以再试一次，或者回去填表。", "That did not work this time. Try again, or go back and fill in the form.");
+}
+
+/** The photo steps stand in the same frame as the form: the header with the logo, one phone-wide column. */
+function StepFrame({ children, center }: { children: React.ReactNode; center?: boolean }) {
+  return (
+    <div className="onboarding-shell">
+      <SmoothieHeader />
+      <main className={center ? "onboarding-main justify-center pb-16" : "onboarding-main page-enter"}>{children}</main>
+    </div>
+  );
 }
 
 /** 男 / 女 are stored as they are; only what is shown follows the language. */
@@ -140,10 +146,13 @@ export default function OnboardingPage() {
   };
 
   const passwordFields = hasAccount ? null : (
-    <PasswordFields value={pw} onChange={(v) => {
-      setPw(v);
-      setError(null);
-    }} />
+    <PasswordFields
+      value={pw}
+      onChange={(v) => {
+        setPw(v);
+        setError(null);
+      }}
+    />
   );
 
   const change = (d: RegisterDraft) => {
@@ -213,9 +222,9 @@ export default function OnboardingPage() {
 
   if (stage.kind === "reading") {
     return (
-      <div className="mx-auto flex min-h-screen w-full max-w-[36rem] flex-col justify-center px-4 py-8">
-        <Card tone="raised" className="animate-pop overflow-hidden" role="status">
-          <div className="flex flex-col items-center gap-4 px-6 pt-12 pb-8 text-center">
+      <StepFrame center>
+        <Card tone="raised" className="animate-pop overflow-hidden rounded-[20px]" role="status">
+          <div className="flex flex-col items-center gap-4 px-5 pt-10 pb-8 text-center">
             <span className="relative flex h-20 w-20 items-center justify-center">
               <Spinner className="absolute inset-0 h-20 w-20 border-4" />
               <IconTile tone="solid" size="lg" className="animate-breathe">
@@ -233,14 +242,14 @@ export default function OnboardingPage() {
           {/* the shape of what is coming: the rows of the report, shimmering quietly */}
           <div className="divide-y divide-line border-t border-line" aria-hidden="true">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="space-y-2.5 px-6 py-5">
+              <div key={i} className="space-y-2.5 px-5 py-5">
                 <Skeleton className="h-4 max-w-24" />
                 <Skeleton className={i === 1 ? "h-5 max-w-[60%]" : "h-5 max-w-[80%]"} />
               </div>
             ))}
           </div>
         </Card>
-      </div>
+      </StepFrame>
     );
   }
 
@@ -266,14 +275,14 @@ export default function OnboardingPage() {
 
   if (stage.kind === "report") {
     return (
-      <div className="page-enter mx-auto w-full max-w-[36rem] px-4 pt-6 pb-12">
+      <StepFrame>
         <button
           type="button"
           onClick={() => {
             setProblem(null);
             setStage({ kind: "start" });
           }}
-          className="-ml-2 inline-flex min-h-12 items-center gap-0.5 rounded-xl px-2 text-base font-medium text-ink-2 transition hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+          className="onboarding-back border-0 bg-transparent"
         >
           <ChevronLeft className="h-5 w-5" />
           {L("回去填表", "Back to the form")}
@@ -312,7 +321,7 @@ export default function OnboardingPage() {
           }}
         />
 
-        <Card tone="raised" className="mt-3 p-6">
+        <Card tone="raised" className="rounded-[20px] p-5">
           <div className="flex items-start gap-4">
             <IconTile tone="solid" size="lg">
               <ScanText />
@@ -321,8 +330,14 @@ export default function OnboardingPage() {
               <h1 className="t-title text-ink">{L("用体检报告建档", "Use a check-up report")}</h1>
               <p className="t-body mt-2 text-ink-2">
                 {canRead
-                  ? L("拍一下最近一次的体检报告，我把档案填好，你看一眼就行。", "Photograph your latest check-up report. I fill in your record, and you just look it over.")
-                  : L("这台设备现在认不了照片。可以先用示例报告看看是什么样。", "Photos cannot be read right now. You can try the sample report to see how it works.")}
+                  ? L(
+                      "拍一下最近一次的体检报告，我把档案填好，你看一眼就行。",
+                      "Photograph your latest check-up report. I fill in your record, and you just look it over.",
+                    )
+                  : L(
+                      "这台设备现在认不了照片。可以先用示例报告看看是什么样。",
+                      "Photos cannot be read right now. You can try the sample report to see how it works.",
+                    )}
               </p>
             </div>
           </div>
@@ -364,7 +379,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => cameraRef.current?.click()}
-                className="lift press light mt-6 flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-card border border-brand-200/70 px-4 py-7 text-center shadow-card transition hover:border-brand-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                className="lift press mt-6 flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-brand-300 bg-brand-50 px-4 py-7 text-center transition hover:border-brand-400 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
                 <IconTile tone="solid" size="xl" className="animate-breathe">
                   <Camera />
@@ -376,7 +391,7 @@ export default function OnboardingPage() {
               </button>
             ))}
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3">
+          <div className="mt-3 -mx-2 flex flex-wrap items-center justify-between gap-x-3">
             {canRead ? (
               <TextButton onClick={() => albumRef.current?.click()}>
                 <Images className="mr-1.5 h-5 w-5" aria-hidden="true" />
@@ -393,7 +408,7 @@ export default function OnboardingPage() {
             </p>
           )}
         </Card>
-      </div>
+      </StepFrame>
     );
   }
 
@@ -529,11 +544,7 @@ function Confirm({
   const [missing, setMissing] = useState<RequiredField[]>([]);
   const [error, setError] = useState<string | null>(null);
   const list = (items: string[]) => items.join("、");
-  const who = [
-    r.name,
-    r.gender ? genderLabel(r.gender) : "",
-    r.birthYear != null ? `${r.birthYear} 年生（约 ${ageOf(r.birthYear)} 岁）` : "",
-  ].filter(Boolean);
+  const who = [r.name, r.gender ? genderLabel(r.gender) : "", r.birthYear != null ? `${r.birthYear} 年生（约 ${ageOf(r.birthYear)} 岁）` : ""].filter(Boolean);
   const body = [
     r.heightCm != null ? `身高 ${r.heightCm} cm` : "",
     r.weightKg != null ? `体重 ${r.weightKg} kg` : "",
@@ -566,122 +577,116 @@ function Confirm({
   };
 
   return (
-    <div className="page-enter mx-auto w-full max-w-[36rem] space-y-6 px-4 pt-8 pb-12">
-      <header className="animate-fade-up">
-        <IconTile tone="solid" size="lg" className="mb-4">
-          <ScanText />
-        </IconTile>
-        <h1 className="t-display text-ink">我从体检报告里认出了这些</h1>
-        <p className="t-lead mt-3 text-ink-2">看一眼对不对，再把下面带 * 的补上就能建档。</p>
-      </header>
-
-      {sample && (
-        <div className="flex items-start gap-3 rounded-card border border-info/15 bg-info-bg px-4 py-4">
-          <IconTile tone="info" size="sm">
-            <Info />
+    <StepFrame>
+      <div className="space-y-5 pb-6">
+        <header className="animate-fade-up px-1 pt-1">
+          <IconTile tone="solid" size="lg" className="mb-4">
+            <ScanText />
           </IconTile>
-          <p className="t-body min-w-0 flex-1 pt-1 text-ink">这是示例体检报告，人物是虚构的。</p>
-        </div>
-      )}
+          <h1 className="t-display text-ink">我从体检报告里认出了这些</h1>
+          <p className="t-lead mt-3 text-ink-2">看一眼对不对，再把下面带 * 的补上就能建档。</p>
+        </header>
 
-      {r.unclear.length > 0 && (
-        <div className="flex items-start gap-3 rounded-card border border-warn/20 bg-warn-bg px-4 py-4">
-          <IconTile tone="warn" size="sm">
-            <AlertCircle />
-          </IconTile>
-          <div className="min-w-0 flex-1 pt-1">
-            <p className="text-lg font-semibold text-ink">这几处我拿不准，请看一眼</p>
-            <ul className="t-body mt-1 space-y-1 text-ink">
-              {r.unclear.map((u, i) => (
-                <li key={i}>· {u}</li>
-              ))}
-            </ul>
+        {sample && (
+          <div className="flex items-start gap-3 rounded-card border border-info/15 bg-info-bg px-4 py-4">
+            <IconTile tone="info" size="sm">
+              <Info />
+            </IconTile>
+            <p className="t-body min-w-0 flex-1 pt-1 text-ink">这是示例体检报告，人物是虚构的。</p>
           </div>
-        </div>
-      )}
-
-      {/* the report as it was read: a typeset sheet, one labelled row per thing found */}
-      <Card tone="raised" className="divide-y divide-line">
-        {who.length > 0 && (
-          <Row label="报告上的你">
-            <span className="t-heading block text-ink">{who.join("，")}</span>
-            {body.length > 0 && <span className="mt-1 block">{body.join("，")}</span>}
-          </Row>
         )}
-        <Row label="长期吃的药">
-          {r.medications.length ? (
-            <ul className="space-y-0.5">
-              {r.medications.map((m, i) => (
-                <li key={i}>{m}</li>
-              ))}
-            </ul>
-          ) : (
-            "报告上没有写"
+
+        {r.unclear.length > 0 && (
+          <div className="flex items-start gap-3 rounded-card border border-warn/20 bg-warn-bg px-4 py-4">
+            <IconTile tone="warn" size="sm">
+              <AlertCircle />
+            </IconTile>
+            <div className="min-w-0 flex-1 pt-1">
+              <p className="text-lg font-semibold text-ink">这几处我拿不准，请看一眼</p>
+              <ul className="t-body mt-1 space-y-1 text-ink">
+                {r.unclear.map((u, i) => (
+                  <li key={i}>· {u}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* the report as it was read: a typeset sheet, one labelled row per thing found */}
+        <Card tone="raised" className="divide-y divide-line overflow-hidden rounded-[20px]">
+          {who.length > 0 && (
+            <Row label="报告上的你">
+              <span className="t-heading block text-ink">{who.join("，")}</span>
+              {body.length > 0 && <span className="mt-1 block">{body.join("，")}</span>}
+            </Row>
           )}
-        </Row>
-        {r.surgeries.length > 0 && <Row label="做过的手术">{list(r.surgeries)}</Row>}
-        {r.readings.length > 0 && (
-          <Row label={`这次体检的数${when ? `（${when}）` : ""}`}>
-            {list(r.readings.map(readingText))}
-            {!r.date && (
-              <span className="mt-1 block text-base text-ink-2">报告上没认出体检日期，这几个数只在这里给你看，不会记进档案。</span>
+          <Row label="长期吃的药">
+            {r.medications.length ? (
+              <ul className="space-y-0.5">
+                {r.medications.map((m, i) => (
+                  <li key={i}>{m}</li>
+                ))}
+              </ul>
+            ) : (
+              "报告上没有写"
             )}
           </Row>
-        )}
-        {r.abnormal.length > 0 && (
-          <Row label="报告上要留意的">
-            <ul className="space-y-0.5">
-              {r.abnormal.map((a, i) => (
-                <li key={i}>{a}</li>
-              ))}
-            </ul>
-          </Row>
-        )}
-        {r.advice && (
-          <Row label="体检建议">
-            <span className="whitespace-pre-line">{r.advice}</span>
-          </Row>
-        )}
-      </Card>
-
-      <Card className="smoothie-scope p-6">
-        <p className="t-heading mb-5 text-ink">你的资料（报告上有的已经填好，可以改）</p>
-        <RegisterFields draft={draft} onChange={change} missing={missing} birthYearHint={r.birthYear} />
-      </Card>
-      {extra && (
-        <Card className="smoothie-scope p-6">
-          {extra}
+          {r.surgeries.length > 0 && <Row label="做过的手术">{list(r.surgeries)}</Row>}
+          {r.readings.length > 0 && (
+            <Row label={`这次体检的数${when ? `（${when}）` : ""}`}>
+              {list(r.readings.map(readingText))}
+              {!r.date && <span className="mt-1 block text-base text-ink-2">报告上没认出体检日期，这几个数只在这里给你看，不会记进档案。</span>}
+            </Row>
+          )}
+          {r.abnormal.length > 0 && (
+            <Row label="报告上要留意的">
+              <ul className="space-y-0.5">
+                {r.abnormal.map((a, i) => (
+                  <li key={i}>{a}</li>
+                ))}
+              </ul>
+            </Row>
+          )}
+          {r.advice && (
+            <Row label="体检建议">
+              <span className="whitespace-pre-line">{r.advice}</span>
+            </Row>
+          )}
         </Card>
-      )}
 
-      {error && (
-        <div role="alert" className="flex animate-fade-up items-start gap-3 rounded-card border border-danger/20 bg-danger-bg px-4 py-4">
-          <IconTile tone="danger" size="sm">
-            <AlertCircle />
-          </IconTile>
-          <p className="t-body min-w-0 flex-1 pt-1 font-medium text-danger">{error}</p>
+        <Card className="smoothie-scope rounded-[20px] p-5">
+          <p className="t-heading mb-5 text-ink">你的资料（报告上有的已经填好，可以改）</p>
+          <RegisterFields draft={draft} onChange={change} missing={missing} birthYearHint={r.birthYear} />
+        </Card>
+        {extra && <Card className="smoothie-scope rounded-[20px] p-5">{extra}</Card>}
+
+        {error && (
+          <div role="alert" className="flex animate-fade-up items-start gap-3 rounded-card border border-danger/20 bg-danger-bg px-4 py-4">
+            <IconTile tone="danger" size="sm">
+              <AlertCircle />
+            </IconTile>
+            <p className="t-body min-w-0 flex-1 pt-1 font-medium text-danger">{error}</p>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <Button size="lg" className="w-full" onClick={confirm}>
+            对，建档
+          </Button>
+          <Button variant="secondary" size="lg" className="w-full" onClick={onRetake}>
+            <Camera className="h-5 w-5" aria-hidden="true" />
+            重新拍
+          </Button>
         </div>
-      )}
-
-      <div className="space-y-3">
-        <Button size="lg" className="w-full" onClick={confirm}>
-          对，建档
-        </Button>
-        <Button variant="secondary" size="lg" className="w-full" onClick={onRetake}>
-          <Camera className="h-5 w-5" aria-hidden="true" />
-          重新拍
-        </Button>
+        <p className="t-body text-center text-balance text-ink-2">基础病只照抄报告上「既往史」里写的，不会因为某个数偏高就替你写上一种病。</p>
       </div>
-      <p className="t-body text-center text-balance text-ink-2">
-        基础病只照抄报告上「既往史」里写的，不会因为某个数偏高就替你写上一种病。
-      </p>
-    </div>
+    </StepFrame>
   );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="px-6 py-5">
+    <div className="px-5 py-4">
       <p className="text-base font-medium text-ink-2">{label}</p>
       <div className="t-body mt-1 text-ink">{children}</div>
     </div>
@@ -690,13 +695,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 /* ---------- the password, as in the teammate's version: 15 to 128 characters, typed twice ---------- */
 
-function PasswordFields({
-  value,
-  onChange,
-}: {
-  value: { password: string; confirm: string };
-  onChange: (v: { password: string; confirm: string }) => void;
-}) {
+function PasswordFields({ value, onChange }: { value: { password: string; confirm: string }; onChange: (v: { password: string; confirm: string }) => void }) {
   return (
     <section className="registration-section history-section" aria-labelledby="password-heading">
       <div className="form-section-title">

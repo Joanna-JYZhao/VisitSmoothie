@@ -3,19 +3,19 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronLeft, FileText, LogOut, Siren, UserRound } from "lucide-react";
-import { reloadAccount, useStore } from "@/lib/store";
-import { logoutHere } from "@/lib/accounts";
+import { Siren } from "lucide-react";
+import { useStore } from "@/lib/store";
 import { L } from "@/lib/lang";
 import { cn } from "@/lib/utils";
 import { BrandLogo, LogoMark } from "./Logo";
+import { TabBar } from "./TabBar";
 import { focusRing } from "./ui";
 
 function Splash() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="phone-col flex items-center justify-center">
       <div className="flex animate-fade-up flex-col items-center gap-4 text-ink-2">
-        <LogoMark className="h-12 w-12" />
+        <LogoMark className="h-[4.5rem] w-[4.5rem]" />
         <span className="t-lead font-medium">{L("医伴", "Yiban")}</span>
         <span className="spinner-ring h-6 w-6" aria-hidden="true" />
       </div>
@@ -23,22 +23,40 @@ function Splash() {
   );
 }
 
-/** Emergency remains available on every signed-in screen. */
-function SosLink() {
+/** Emergency: one small red pill at the top right of every signed-in screen, one tap away. */
+function SosPill() {
   return (
-    <Link href="/sos" data-guide="sos" className={cn("nav-row text-danger", focusRing)}>
-      <span className="nav-icon bg-danger"><Siren className="h-4 w-4" aria-hidden="true" /></span>
+    <Link
+      href="/sos"
+      data-guide="sos"
+      className={cn(
+        "press inline-flex min-h-12 shrink-0 items-center gap-1.5 rounded-full bg-danger px-4 text-base font-semibold text-white shadow-[0_2px_8px_rgba(193,44,53,0.25)] transition hover:brightness-95",
+        focusRing,
+      )}
+    >
+      <Siren className="h-5 w-5" aria-hidden="true" />
       应急
     </Link>
   );
 }
 
+/*
+ * The phone shell: one phone-wide column (centred on a wide screen, see .phone-col), a slim
+ * header with the brand and the emergency pill, the page, and the tab bar fixed at the bottom.
+ * Screens before signing in (welcome, login, onboarding, demo) and the emergency page are bare:
+ * the column, nothing else.
+ */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { state, ready } = useStore();
   const pathname = usePathname();
   const router = useRouter();
   // The emergency page stands on its own: no bar around it, and it opens even without a profile.
-  const bare = pathname.startsWith("/onboarding") || pathname.startsWith("/welcome") || pathname.startsWith("/login") || pathname.startsWith("/demo") || pathname.startsWith("/sos");
+  const bare =
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/welcome") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/demo") ||
+    pathname.startsWith("/sos");
 
   useEffect(() => {
     if (ready && !state.profile && !bare) router.replace("/welcome");
@@ -50,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  // Inside the phone drawn on a computer (see PhoneShell): tell the window around us where we are,
+  // Inside a frame (a phone drawn on a computer): tell the window around us where we are,
   // so its address bar follows and a reload comes back to this page.
   useEffect(() => {
     if (window.parent === window) return;
@@ -59,56 +77,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   if (!ready) return <Splash />;
-  if (bare) return <>{children}</>;
+  if (bare) return <div className="phone-col">{children}</div>;
   if (!state.profile) return <Splash />;
 
-  const home = pathname === "/";
-
-  // A quiet list rail on desktop; the same destinations fit a compact toolbar on phones.
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col md:flex-row">
-      <aside className="app-rail no-print flex shrink-0 flex-wrap items-center gap-x-1 border-b border-line px-3 py-1.5 md:sticky md:top-0 md:h-screen md:w-56 md:flex-col md:items-stretch md:gap-1 md:border-r md:border-b-0 md:px-4 md:py-6 md:pb-20">
-        <Link href="/" className={cn("app-brand mb-6 hidden rounded-lg md:flex", focusRing)} aria-label="VisitSmoothie">
-          <BrandLogo />
+    <div className="phone-col flex flex-col">
+      <header
+        className="no-print glass sticky top-0 z-30 flex min-h-[3.75rem] items-center justify-between gap-3 px-4 pb-1.5 shadow-header"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.375rem)" }}
+      >
+        <Link href="/" className={cn("app-brand inline-flex rounded-lg", focusRing)} aria-label="VisitSmoothie">
+          <BrandLogo className="!w-[9rem]" />
         </Link>
-        <Link href="/me" data-guide="profile" aria-current={pathname.startsWith("/me") ? "page" : undefined} className={cn("nav-row", focusRing)}>
-          <span className="nav-icon bg-[#7056bf]"><UserRound className="h-4 w-4" aria-hidden="true" /></span>
-          profile
-        </Link>
-        <Link href="/report" data-guide="report" aria-current={pathname.startsWith("/report") ? "page" : undefined} className={cn("nav-row", focusRing)}>
-          <span className="nav-icon bg-brand-600"><FileText className="h-4 w-4" aria-hidden="true" /></span>
-          report
-        </Link>
-        <div className="ml-auto flex items-center gap-1 md:mt-auto md:ml-0 md:flex-col md:items-stretch md:gap-1">
-          <SosLink />
-          <button
-            type="button"
-            onClick={() => {
-              logoutHere();
-              reloadAccount();
-              router.replace("/welcome");
-            }}
-            className={cn("nav-row text-ink-2", focusRing)}
-          >
-            <LogOut className="hidden h-5 w-5 md:block" aria-hidden="true" />
-            退出登录
-          </button>
-        </div>
-      </aside>
-      <div className="min-w-0 flex-1 px-4 pt-3 pb-12 sm:px-7 md:px-9 md:pt-6 lg:px-12">
-        <header className={cn("no-print mb-5 flex min-h-11 items-center justify-between gap-3 md:mb-6", home && "md:hidden")}>
-          <Link href="/" className={cn("app-brand inline-flex rounded-lg md:hidden", focusRing)} aria-label="VisitSmoothie">
-            <BrandLogo />
-          </Link>
-          {!home && (
-            <Link href="/" className={cn("inline-flex min-h-11 items-center rounded-lg text-base font-medium text-brand-600", focusRing)}>
-              <ChevronLeft className="h-5 w-5" />
-              回首页
-            </Link>
-          )}
-        </header>
-        <main key={pathname} className="page-enter">{children}</main>
-      </div>
+        <SosPill />
+      </header>
+      <main key={pathname} className="page-enter flex min-w-0 flex-1 flex-col px-4 pt-3" style={{ paddingBottom: "calc(var(--tab-bar) + 2.25rem)" }}>
+        {children}
+      </main>
+      <TabBar />
     </div>
   );
 }
