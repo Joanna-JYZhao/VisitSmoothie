@@ -1,0 +1,925 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "deliver",
+  "receiptId": "74e6db75-f7d1-445e-90cd-5bf598adde17",
+  "stage": "render",
+  "type": "workflow",
+  "input": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/candidate.json",
+  "output": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-longitudinal-care-20261003-073203/workflow.html",
+  "error": "Workflow layout validation failed:\n- [composition/proper-crossing] showcase workflow edges[3] id \"context-select\" \"context\" -> \"select\" crosses edges[6] id \"knowledge-select\" \"knowledge\" -> \"select\" at [886.2, 350] (segments 1 and 2) — adjust route/via, bias, or channel coordinates so the edges use separate lane corridors.\n- [composition/proper-crossing] showcase workflow edges[11] id \"parse-timeline\" \"parse\" -> \"timeline\" crosses edges[17] id \"select-ask\" \"select\" -> \"ask\" at [609.8, 468] (segments 1 and 2) — adjust route/via, bias, or channel coordinates so the edges use separate lane corridors.\n- [composition/ambiguous-corridor] showcase workflow edges[3] id \"context-select\" \"context\" -> \"select\" shares a 59px corridor with edges[16] id \"safety-urgent\" \"safety\" -> \"urgent\" at [886.2, 208] -> [886.2, 267] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 201px corridor with edges[9] id \"packet-review\" \"packet\" -> \"review\" at [634.2, 547] -> [634.2, 748] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 29px corridor with edges[10] id \"parse-safety\" \"parse\" -> \"safety\" at [634.2, 267] -> [634.2, 296] (segments 2 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 402.4px corridor with edges[12] id \"paths-review\" \"paths\" -> \"review\" at [634.2, 748] -> [1036.6, 748] (segments 1 and 2; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 61px corridor with edges[14] id \"review-clinician\" \"review\" -> \"clinician\" at [634.2, 687] -> [634.2, 748] (segments 2 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 189px corridor with edges[15] id \"safety-select\" \"safety\" -> \"select\" at [634.2, 279] -> [634.2, 468] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 61px corridor with edges[17] id \"select-ask\" \"select\" -> \"ask\" at [634.2, 407] -> [634.2, 468] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 189px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [634.2, 419] -> [634.2, 608] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 17px corridor with edges[21] id \"trend-packet\" \"trend\" -> \"packet\" at [634.2, 559] -> [634.2, 576] (segments 2 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[9] id \"packet-review\" \"packet\" -> \"review\" shares a 8.4px corridor with edges[12] id \"paths-review\" \"paths\" -> \"review\" at [625.8, 748] -> [634.2, 748] (segments 2 and 2; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[9] id \"packet-review\" \"packet\" -> \"review\" shares a 61px corridor with edges[14] id \"review-clinician\" \"review\" -> \"clinician\" at [634.2, 687] -> [634.2, 748] (segments 1 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[9] id \"packet-review\" \"packet\" -> \"review\" shares a 61px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [634.2, 547] -> [634.2, 608] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[9] id \"packet-review\" \"packet\" -> \"review\" shares a 17px corridor with edges[21] id \"trend-packet\" \"trend\" -> \"packet\" at [634.2, 559] -> [634.2, 576] (segments 1 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[10] id \"parse-safety\" \"parse\" -> \"safety\" shares a 17px corridor with edges[11] id \"parse-timeline\" \"parse\" -> \"timeline\" at [609.8, 279] -> [609.8, 296] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[10] id \"parse-safety\" \"parse\" -> \"safety\" shares a 17px corridor with edges[15] id \"safety-select\" \"safety\" -> \"select\" at [634.2, 279] -> [634.2, 296] (segments 3 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[11] id \"parse-timeline\" \"parse\" -> \"timeline\" shares a 248px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [361.8, 608] -> [609.8, 608] (segments 2 and 2; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[11] id \"parse-timeline\" \"parse\" -> \"timeline\" shares a 29px corridor with edges[21] id \"trend-packet\" \"trend\" -> \"packet\" at [609.8, 547] -> [609.8, 576] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[12] id \"paths-review\" \"paths\" -> \"review\" shares a 8.4px corridor with edges[14] id \"review-clinician\" \"review\" -> \"clinician\" at [625.8, 748] -> [634.2, 748] (segments 2 and 2; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[15] id \"safety-select\" \"safety\" -> \"select\" shares a 61px corridor with edges[17] id \"select-ask\" \"select\" -> \"ask\" at [634.2, 407] -> [634.2, 468] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[15] id \"safety-select\" \"safety\" -> \"select\" shares a 49px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [634.2, 419] -> [634.2, 468] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[17] id \"select-ask\" \"select\" -> \"ask\" shares a 49px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [634.2, 419] -> [634.2, 468] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.\n- [composition/ambiguous-corridor] showcase workflow edges[18] id \"select-timeline\" \"select\" -> \"timeline\" shares a 17px corridor with edges[21] id \"trend-packet\" \"trend\" -> \"packet\" at [634.2, 559] -> [634.2, 576] (segments 1 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+  "diagnostics": [
+    {
+      "code": "composition/proper-crossing",
+      "severity": "error",
+      "message": "[composition/proper-crossing] showcase workflow edges[3] id \"context-select\" \"context\" -> \"select\" crosses edges[6] id \"knowledge-select\" \"knowledge\" -> \"select\" at [886.2, 350] (segments 1 and 2) — adjust route/via, bias, or channel coordinates so the edges use separate lane corridors.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 3,
+        "id": "context-select",
+        "from": "context",
+        "to": "select"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 6,
+          "id": "knowledge-select",
+          "from": "knowledge",
+          "to": "select"
+        },
+        "point": [
+          886.2,
+          350
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 2
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so the edges use separate lane corridors"
+      ]
+    },
+    {
+      "code": "composition/proper-crossing",
+      "severity": "error",
+      "message": "[composition/proper-crossing] showcase workflow edges[11] id \"parse-timeline\" \"parse\" -> \"timeline\" crosses edges[17] id \"select-ask\" \"select\" -> \"ask\" at [609.8, 468] (segments 1 and 2) — adjust route/via, bias, or channel coordinates so the edges use separate lane corridors.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 11,
+        "id": "parse-timeline",
+        "from": "parse",
+        "to": "timeline"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 17,
+          "id": "select-ask",
+          "from": "select",
+          "to": "ask"
+        },
+        "point": [
+          609.8,
+          468.0000000000001
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 2
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so the edges use separate lane corridors"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[3] id \"context-select\" \"context\" -> \"select\" shares a 59px corridor with edges[16] id \"safety-urgent\" \"safety\" -> \"urgent\" at [886.2, 208] -> [886.2, 267] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 3,
+        "id": "context-select",
+        "from": "context",
+        "to": "select"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 16,
+          "id": "safety-urgent",
+          "from": "safety",
+          "to": "urgent"
+        },
+        "overlapLengthPx": 59,
+        "minimumPx": 8,
+        "from": [
+          886.2,
+          208
+        ],
+        "to": [
+          886.2,
+          267
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 201px corridor with edges[9] id \"packet-review\" \"packet\" -> \"review\" at [634.2, 547] -> [634.2, 748] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 7,
+        "id": "newreport-context",
+        "from": "newreport",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 9,
+          "id": "packet-review",
+          "from": "packet",
+          "to": "review"
+        },
+        "overlapLengthPx": 201,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          547
+        ],
+        "to": [
+          634.2,
+          748
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 29px corridor with edges[10] id \"parse-safety\" \"parse\" -> \"safety\" at [634.2, 267] -> [634.2, 296] (segments 2 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 7,
+        "id": "newreport-context",
+        "from": "newreport",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 10,
+          "id": "parse-safety",
+          "from": "parse",
+          "to": "safety"
+        },
+        "overlapLengthPx": 29,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          267
+        ],
+        "to": [
+          634.2,
+          296
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 3
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 402.4px corridor with edges[12] id \"paths-review\" \"paths\" -> \"review\" at [634.2, 748] -> [1036.6, 748] (segments 1 and 2; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 7,
+        "id": "newreport-context",
+        "from": "newreport",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 12,
+          "id": "paths-review",
+          "from": "paths",
+          "to": "review"
+        },
+        "overlapLengthPx": 402.4,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          748
+        ],
+        "to": [
+          1036.6,
+          748
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 2
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 61px corridor with edges[14] id \"review-clinician\" \"review\" -> \"clinician\" at [634.2, 687] -> [634.2, 748] (segments 2 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 7,
+        "id": "newreport-context",
+        "from": "newreport",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 14,
+          "id": "review-clinician",
+          "from": "review",
+          "to": "clinician"
+        },
+        "overlapLengthPx": 61,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          687
+        ],
+        "to": [
+          634.2,
+          748
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 3
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 189px corridor with edges[15] id \"safety-select\" \"safety\" -> \"select\" at [634.2, 279] -> [634.2, 468] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 7,
+        "id": "newreport-context",
+        "from": "newreport",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 15,
+          "id": "safety-select",
+          "from": "safety",
+          "to": "select"
+        },
+        "overlapLengthPx": 189,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          279
+        ],
+        "to": [
+          634.2,
+          468
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 61px corridor with edges[17] id \"select-ask\" \"select\" -> \"ask\" at [634.2, 407] -> [634.2, 468] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 7,
+        "id": "newreport-context",
+        "from": "newreport",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 17,
+          "id": "select-ask",
+          "from": "select",
+          "to": "ask"
+        },
+        "overlapLengthPx": 61,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          407
+        ],
+        "to": [
+          634.2,
+          468
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 189px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [634.2, 419] -> [634.2, 608] (segments 2 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 7,
+        "id": "newreport-context",
+        "from": "newreport",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 18,
+          "id": "select-timeline",
+          "from": "select",
+          "to": "timeline"
+        },
+        "overlapLengthPx": 189,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          419
+        ],
+        "to": [
+          634.2,
+          608
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[7] id \"newreport-context\" \"newreport\" -> \"context\" shares a 17px corridor with edges[21] id \"trend-packet\" \"trend\" -> \"packet\" at [634.2, 559] -> [634.2, 576] (segments 2 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 7,
+        "id": "newreport-context",
+        "from": "newreport",
+        "to": "context"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 21,
+          "id": "trend-packet",
+          "from": "trend",
+          "to": "packet"
+        },
+        "overlapLengthPx": 17,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          559
+        ],
+        "to": [
+          634.2,
+          576
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 3
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[9] id \"packet-review\" \"packet\" -> \"review\" shares a 8.4px corridor with edges[12] id \"paths-review\" \"paths\" -> \"review\" at [625.8, 748] -> [634.2, 748] (segments 2 and 2; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 9,
+        "id": "packet-review",
+        "from": "packet",
+        "to": "review"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 12,
+          "id": "paths-review",
+          "from": "paths",
+          "to": "review"
+        },
+        "overlapLengthPx": 8.4,
+        "minimumPx": 8,
+        "from": [
+          625.8,
+          748
+        ],
+        "to": [
+          634.2,
+          748
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 2
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[9] id \"packet-review\" \"packet\" -> \"review\" shares a 61px corridor with edges[14] id \"review-clinician\" \"review\" -> \"clinician\" at [634.2, 687] -> [634.2, 748] (segments 1 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 9,
+        "id": "packet-review",
+        "from": "packet",
+        "to": "review"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 14,
+          "id": "review-clinician",
+          "from": "review",
+          "to": "clinician"
+        },
+        "overlapLengthPx": 61,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          687
+        ],
+        "to": [
+          634.2,
+          748
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 3
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[9] id \"packet-review\" \"packet\" -> \"review\" shares a 61px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [634.2, 547] -> [634.2, 608] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 9,
+        "id": "packet-review",
+        "from": "packet",
+        "to": "review"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 18,
+          "id": "select-timeline",
+          "from": "select",
+          "to": "timeline"
+        },
+        "overlapLengthPx": 61,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          547
+        ],
+        "to": [
+          634.2,
+          608
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[9] id \"packet-review\" \"packet\" -> \"review\" shares a 17px corridor with edges[21] id \"trend-packet\" \"trend\" -> \"packet\" at [634.2, 559] -> [634.2, 576] (segments 1 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 9,
+        "id": "packet-review",
+        "from": "packet",
+        "to": "review"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 21,
+          "id": "trend-packet",
+          "from": "trend",
+          "to": "packet"
+        },
+        "overlapLengthPx": 17,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          559
+        ],
+        "to": [
+          634.2,
+          576
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 3
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[10] id \"parse-safety\" \"parse\" -> \"safety\" shares a 17px corridor with edges[11] id \"parse-timeline\" \"parse\" -> \"timeline\" at [609.8, 279] -> [609.8, 296] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 10,
+        "id": "parse-safety",
+        "from": "parse",
+        "to": "safety"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 11,
+          "id": "parse-timeline",
+          "from": "parse",
+          "to": "timeline"
+        },
+        "overlapLengthPx": 17,
+        "minimumPx": 8,
+        "from": [
+          609.8,
+          279
+        ],
+        "to": [
+          609.8,
+          296
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[10] id \"parse-safety\" \"parse\" -> \"safety\" shares a 17px corridor with edges[15] id \"safety-select\" \"safety\" -> \"select\" at [634.2, 279] -> [634.2, 296] (segments 3 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 10,
+        "id": "parse-safety",
+        "from": "parse",
+        "to": "safety"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 15,
+          "id": "safety-select",
+          "from": "safety",
+          "to": "select"
+        },
+        "overlapLengthPx": 17,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          279
+        ],
+        "to": [
+          634.2,
+          296
+        ],
+        "segmentIndex": 3,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[11] id \"parse-timeline\" \"parse\" -> \"timeline\" shares a 248px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [361.8, 608] -> [609.8, 608] (segments 2 and 2; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 11,
+        "id": "parse-timeline",
+        "from": "parse",
+        "to": "timeline"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 18,
+          "id": "select-timeline",
+          "from": "select",
+          "to": "timeline"
+        },
+        "overlapLengthPx": 248,
+        "minimumPx": 8,
+        "from": [
+          361.8,
+          608
+        ],
+        "to": [
+          609.8,
+          608
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 2
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[11] id \"parse-timeline\" \"parse\" -> \"timeline\" shares a 29px corridor with edges[21] id \"trend-packet\" \"trend\" -> \"packet\" at [609.8, 547] -> [609.8, 576] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 11,
+        "id": "parse-timeline",
+        "from": "parse",
+        "to": "timeline"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 21,
+          "id": "trend-packet",
+          "from": "trend",
+          "to": "packet"
+        },
+        "overlapLengthPx": 29,
+        "minimumPx": 8,
+        "from": [
+          609.8,
+          547
+        ],
+        "to": [
+          609.8,
+          576
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[12] id \"paths-review\" \"paths\" -> \"review\" shares a 8.4px corridor with edges[14] id \"review-clinician\" \"review\" -> \"clinician\" at [625.8, 748] -> [634.2, 748] (segments 2 and 2; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 12,
+        "id": "paths-review",
+        "from": "paths",
+        "to": "review"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 14,
+          "id": "review-clinician",
+          "from": "review",
+          "to": "clinician"
+        },
+        "overlapLengthPx": 8.4,
+        "minimumPx": 8,
+        "from": [
+          625.8,
+          748
+        ],
+        "to": [
+          634.2,
+          748
+        ],
+        "segmentIndex": 2,
+        "otherSegmentIndex": 2
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[15] id \"safety-select\" \"safety\" -> \"select\" shares a 61px corridor with edges[17] id \"select-ask\" \"select\" -> \"ask\" at [634.2, 407] -> [634.2, 468] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 15,
+        "id": "safety-select",
+        "from": "safety",
+        "to": "select"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 17,
+          "id": "select-ask",
+          "from": "select",
+          "to": "ask"
+        },
+        "overlapLengthPx": 61,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          407
+        ],
+        "to": [
+          634.2,
+          468
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[15] id \"safety-select\" \"safety\" -> \"select\" shares a 49px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [634.2, 419] -> [634.2, 468] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 15,
+        "id": "safety-select",
+        "from": "safety",
+        "to": "select"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 18,
+          "id": "select-timeline",
+          "from": "select",
+          "to": "timeline"
+        },
+        "overlapLengthPx": 49,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          419
+        ],
+        "to": [
+          634.2,
+          468
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[17] id \"select-ask\" \"select\" -> \"ask\" shares a 49px corridor with edges[18] id \"select-timeline\" \"select\" -> \"timeline\" at [634.2, 419] -> [634.2, 468] (segments 1 and 1; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 17,
+        "id": "select-ask",
+        "from": "select",
+        "to": "ask"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 18,
+          "id": "select-timeline",
+          "from": "select",
+          "to": "timeline"
+        },
+        "overlapLengthPx": 49,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          419
+        ],
+        "to": [
+          634.2,
+          468
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 1
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    },
+    {
+      "code": "composition/ambiguous-corridor",
+      "severity": "error",
+      "message": "[composition/ambiguous-corridor] showcase workflow edges[18] id \"select-timeline\" \"select\" -> \"timeline\" shares a 17px corridor with edges[21] id \"trend-packet\" \"trend\" -> \"packet\" at [634.2, 559] -> [634.2, 576] (segments 1 and 3; minimum 8px) — adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge.",
+      "subject": {
+        "diagramType": "workflow",
+        "collection": "edges",
+        "index": 18,
+        "id": "select-timeline",
+        "from": "select",
+        "to": "timeline"
+      },
+      "evidence": {
+        "otherRelationship": {
+          "diagramType": "workflow",
+          "collection": "edges",
+          "index": 21,
+          "id": "trend-packet",
+          "from": "trend",
+          "to": "packet"
+        },
+        "overlapLengthPx": 17,
+        "minimumPx": 8,
+        "from": [
+          634.2,
+          559
+        ],
+        "to": [
+          634.2,
+          576
+        ],
+        "segmentIndex": 1,
+        "otherSegmentIndex": 3
+      },
+      "supportedFixes": [
+        "adjust route/via, bias, or channel coordinates so unrelated edges do not visually merge"
+      ]
+    }
+  ],
+  "provenance": "absent",
+  "update": {
+    "status": "unavailable",
+    "installedVersion": null,
+    "availableVersion": null,
+    "releaseNotes": null,
+    "checkedAt": null,
+    "source": null,
+    "noticeRequired": false,
+    "noticeText": null,
+    "reason": "cache-unavailable"
+  }
+}

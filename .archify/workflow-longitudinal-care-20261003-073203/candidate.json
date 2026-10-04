@@ -1,0 +1,450 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "诊后持续观察与就诊决策支持 · 设计提案",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": ".archify/workflow-longitudinal-care-20261003-073203/workflow.html"
+  },
+  "lanes": [
+    {
+      "id": "intake",
+      "label": "就诊后：建立背景"
+    },
+    {
+      "id": "daily",
+      "label": "日常：记录与检查"
+    },
+    {
+      "id": "questions",
+      "label": "受控 Agent：有依据地追问"
+    },
+    {
+      "id": "memory",
+      "label": "形成可以阅读的证据"
+    },
+    {
+      "id": "care",
+      "label": "医生决策与再次随访"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "report",
+      "lane": "intake",
+      "col": 0,
+      "type": "external",
+      "label": "诊后报告",
+      "sublabel": "诊断状态、医嘱、已做检查",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "verify",
+      "lane": "intake",
+      "col": 1,
+      "type": "security",
+      "label": "对照原文核对",
+      "sublabel": "保留来源；疑似不作确诊",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "context",
+      "lane": "intake",
+      "col": 2,
+      "type": "database",
+      "label": "个人背景版本",
+      "sublabel": "诊断、用药、基线与历史",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "input",
+      "lane": "daily",
+      "col": 0,
+      "type": "frontend",
+      "label": "随时记一笔",
+      "sublabel": "新记录或约定回访",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "parse",
+      "lane": "daily",
+      "col": 1,
+      "type": "backend",
+      "label": "解析症状事件",
+      "sublabel": "时间、程度、肯定／否定",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "safety",
+      "lane": "daily",
+      "col": 2,
+      "type": "security",
+      "label": "当前风险检查",
+      "sublabel": "先识别否定与历史语境",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "urgent",
+      "lane": "daily",
+      "col": 3,
+      "type": "security",
+      "label": "及时求助提示",
+      "sublabel": "中断普通问答",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "answer",
+      "lane": "questions",
+      "col": 0,
+      "type": "frontend",
+      "label": "患者补充",
+      "sublabel": "未知可跳过，不强迫猜测",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "ask",
+      "lane": "questions",
+      "col": 1,
+      "type": "frontend",
+      "label": "每次只问一个",
+      "sublabel": "常规每轮最多三个问题",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "select",
+      "lane": "questions",
+      "col": 2,
+      "type": "backend",
+      "label": "按信息缺口选题",
+      "sublabel": "相关性、变化、重复与负担",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "knowledge",
+      "lane": "questions",
+      "col": 3,
+      "type": "database",
+      "label": "经审定的知识库",
+      "sublabel": "关联症状、路径、规则版本",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "timeline",
+      "lane": "memory",
+      "col": 0,
+      "type": "database",
+      "label": "可追溯时间线",
+      "sublabel": "原文＋时间＋可信程度",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "trend",
+      "lane": "memory",
+      "col": 1,
+      "type": "backend",
+      "label": "描述性趋势",
+      "sublabel": "同口径比较，缺失不当零",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "packet",
+      "lane": "memory",
+      "col": 2,
+      "type": "backend",
+      "label": "医生速读材料",
+      "sublabel": "本次变化、背景、待核实项",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "paths",
+      "lane": "memory",
+      "col": 3,
+      "type": "backend",
+      "label": "检查讨论线索",
+      "sublabel": "满足路径条件才列候选",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "diary",
+      "lane": "care",
+      "col": 0,
+      "type": "frontend",
+      "label": "辅助：患者日志",
+      "sublabel": "查看每天状态和趋势",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "review",
+      "lane": "care",
+      "col": 1,
+      "type": "security",
+      "label": "患者核对与授权",
+      "sublabel": "保存可分享的来源快照",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "clinician",
+      "lane": "care",
+      "col": 2,
+      "type": "external",
+      "label": "核心：医生决定检查",
+      "sublabel": "独立复核候选与适用条件",
+      "width": 220,
+      "height": 82
+    },
+    {
+      "id": "newreport",
+      "lane": "care",
+      "col": 3,
+      "type": "database",
+      "label": "结果回写背景",
+      "sublabel": "新诊断与报告进入下一轮",
+      "width": 220,
+      "height": 82
+    }
+  ],
+  "edges": [
+    {
+      "id": "report-verify",
+      "from": "report",
+      "to": "verify",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "verify-context",
+      "from": "verify",
+      "to": "context",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "input-parse",
+      "from": "input",
+      "to": "parse",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "parse-safety",
+      "from": "parse",
+      "to": "safety",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "safety-urgent",
+      "from": "safety",
+      "to": "urgent",
+      "label": "风险信号",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "context-select",
+      "from": "context",
+      "to": "select",
+      "label": "背景",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "safety-select",
+      "from": "safety",
+      "to": "select",
+      "label": "常规",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "knowledge-select",
+      "from": "knowledge",
+      "to": "select",
+      "label": "依据",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "select-ask",
+      "from": "select",
+      "to": "ask",
+      "label": "存在缺口",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "ask-answer",
+      "from": "ask",
+      "to": "answer",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "answer-input",
+      "from": "answer",
+      "to": "input",
+      "label": "再次解析",
+      "variant": "dashed",
+      "role": "return",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "route": "auto"
+    },
+    {
+      "id": "select-timeline",
+      "from": "select",
+      "to": "timeline",
+      "label": "本轮结束",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "parse-timeline",
+      "from": "parse",
+      "to": "timeline",
+      "label": "先保存",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "timeline-trend",
+      "from": "timeline",
+      "to": "trend",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "timeline-diary",
+      "from": "timeline",
+      "to": "diary",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "trend-packet",
+      "from": "trend",
+      "to": "packet",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "packet-paths",
+      "from": "packet",
+      "to": "paths",
+      "label": "诊疗路径",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "knowledge-paths",
+      "from": "knowledge",
+      "to": "paths",
+      "label": "路径规则",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "packet-review",
+      "from": "packet",
+      "to": "review",
+      "label": "核对",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "paths-review",
+      "from": "paths",
+      "to": "review",
+      "label": "条件与依据",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "review-clinician",
+      "from": "review",
+      "to": "clinician",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "clinician-newreport",
+      "from": "clinician",
+      "to": "newreport",
+      "label": "",
+      "variant": "default",
+      "role": "main"
+    },
+    {
+      "id": "newreport-context",
+      "from": "newreport",
+      "to": "context",
+      "label": "新报告",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "主目标：减少陌生医生的信息准备成本",
+      "items": [
+        "一页速读：主诉、关键变化、用药过敏、既往检查、待核实问题。",
+        "检查候选仅由审定路径匹配；信息不足时只列待核实项，医生作最终决定。"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "追问算法：受控检索＋优先级排序",
+      "items": [
+        "先筛选适用诊断、来源版本与未回答问题；保留一个开放症状入口。",
+        "按审定优先级、信息缺口、变化、相关性排序，再扣除重复与回答负担。",
+        "每次一问；常规最多三问；可选没有、不确定、暂不回答。风险提示独立处理。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "趋势算法：描述记录变化",
+      "items": [
+        "按症状和时间对齐；标记用药与就诊事件；近7天与前7天中位数比较。",
+        "每窗至少4个有效日才描述方向；此为待验证的工程默认，不是医学阈值。",
+        "缺失、否定、未询问分开；展示覆盖率；时间相邻不等于因果。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "关联追问示例与边界",
+      "items": [
+        "若报告为冠心病／心绞痛相关背景，审定题库可包含牙或下颌不适、发生情境等。",
+        "牙痛不等于心脏病；不能将所有心脏诊断套入相同问题。依据 AHA 胸痛指南及 NHS 患者教育。",
+        "本图是新方案设计，未接入现有网站，算法和临床规则仍需评测。"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1500" viewBox="0 0 1500 1500" role="img" aria-label="诊后持续观察与医生决策支持设计图">
+<rect x="0" y="0" width="1500" height="1500" rx="0" fill="#F6F3EB" stroke="none"/>
+<circle cx="66" cy="55" r="10" fill="#237467"/>
+<circle cx="88" cy="55" r="7" fill="#A7583F"/>
+<text x="110" y="61" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">CARE CONTEXT  /  01</text>
+<rect x="1185" y="34" width="259" height="38" rx="19" fill="#E4EEE6" stroke="none"/>
+<text x="1314" y="60" text-anchor="middle" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">设计提案 · 尚未接入网站</text>
+<text x="56" y="125" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="42" fill="#203E39">让医生看见两次就诊之间发生了什么</text>
+<text x="56" y="168" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="23" fill="#68766E">患者只需记录和回答；系统整理背景、补齐遗漏，帮助医生更快决定下一步检查。</text>
+<rect x="56" y="207" width="900" height="90" rx="20" fill="#E4EEE6" stroke="none"/>
+<text x="82" y="242" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="27" fill="#237467">核心 01   医生检查决策支持</text>
+<text x="82" y="276" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#203E39">用可核实的个人背景与近期变化，支持医生判断。</text>
+<rect x="984" y="207" width="460" height="90" rx="20" fill="#FFFDF8" stroke="none"/>
+<text x="1008" y="242" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="26" fill="#203E39">辅助 02   日志与趋势</text>
+<text x="1008" y="276" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#68766E">从同一份记录自动生成。</text>
+<rect x="56" y="348" width="420" height="179" rx="20" fill="#FFFDF8" stroke="#CBD6CD"/>
+<text x="80" y="382" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">①  就诊后</text>
+<text x="80" y="424" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="27" fill="#203E39">医生真实结论</text>
+<text x="80" y="463" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#68766E">报告、医嘱、已做检查及结果</text>
+<text x="80" y="494" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#68766E">保留确诊 / 疑似 / 排除状态</text>
+<rect x="540" y="348" width="420" height="179" rx="20" fill="#FFFDF8" stroke="#CBD6CD"/>
+<text x="564" y="382" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">患者对照原文核对</text>
+<text x="564" y="424" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="27" fill="#203E39">个人背景 · 持续更新</text>
+<text x="564" y="463" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#68766E">病史、用药、过敏、日常基线</text>
+<text x="564" y="494" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#68766E">每项信息保留来源、日期与版本</text>
+<rect x="1024" y="348" width="420" height="179" rx="20" fill="#FFFDF8" stroke="#CBD6CD"/>
+<text x="1048" y="382" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">②  平时任何时刻</text>
+<text x="1048" y="424" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="27" fill="#203E39">随手记录今天的状况</text>
+<text x="1048" y="463" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#68766E">用自己的话写一句，也可以多记</text>
+<text x="1048" y="494" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#68766E">新记录、报告更新可触发补问</text>
+<polyline points="476,436 537,436" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="537,436 527.0,431.0 527.0,441.0" fill="#237467"/>
+<polyline points="750,527 750,567" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="750,567 755.0,557.0 745.0,557.0" fill="#237467"/>
+<polyline points="1234,527 1234,567" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1234,567 1239.0,557.0 1229.0,557.0" fill="#237467"/>
+<rect x="56" y="570" width="1388" height="392" rx="25" fill="#FFFDF8" stroke="#CBD6CD"/>
+<text x="82" y="615" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="30" fill="#203E39">③  受控总控 Agent</text>
+<text x="1420" y="615" text-anchor="end" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="20" fill="#68766E">模型选下一步 · 代码限制动作 · 失败可恢复</text>
+<rect x="80" y="650" width="311" height="174" rx="15" fill="#F6F3EB" stroke="none"/>
+<text x="98" y="680" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">A</text>
+<text x="98" y="714" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="24" fill="#203E39">保存原文并解析</text>
+<text x="98" y="750" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">症状、时间、程度与诱因</text>
+<text x="98" y="777" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">先分清“有 / 没有 / 未知”</text>
+<text x="98" y="804" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">区分本人、当前与过去</text>
+<rect x="423" y="650" width="311" height="174" rx="15" fill="#F6F3EB" stroke="none"/>
+<text x="441" y="680" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">B</text>
+<text x="441" y="714" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="24" fill="#203E39">检查当前风险</text>
+<text x="441" y="750" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">用经审定规则识别风险</text>
+<text x="441" y="777" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">有歧义先做简短核实</text>
+<text x="441" y="804" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">有紧急线索 → 及时求助</text>
+<rect x="766" y="650" width="311" height="174" rx="15" fill="#E4EEE6" stroke="none"/>
+<text x="784" y="680" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">C</text>
+<text x="784" y="714" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="24" fill="#203E39">找最有价值的缺口</text>
+<text x="784" y="750" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">结合具体诊断与新变化</text>
+<text x="784" y="777" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">检索经临床审定的知识</text>
+<text x="784" y="804" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">始终保留开放式补充</text>
+<rect x="1109" y="650" width="311" height="174" rx="15" fill="#F6F3EB" stroke="none"/>
+<text x="1127" y="680" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#237467">D</text>
+<text x="1127" y="714" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="24" fill="#203E39">问一句，或结束</text>
+<text x="1127" y="750" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">有必要 → 每次只问一题</text>
+<text x="1127" y="777" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">回答后重新解析与检查</text>
+<text x="1127" y="804" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">信息足够 / 用户结束 → 保存</text>
+<polyline points="391,732 420,732" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="420,732 410.0,727.0 410.0,737.0" fill="#237467"/>
+<polyline points="734,732 763,732" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="763,732 753.0,727.0 753.0,737.0" fill="#237467"/>
+<polyline points="1077,732 1106,732" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1106,732 1096.0,727.0 1096.0,737.0" fill="#237467"/>
+<text x="750" y="847" text-anchor="middle" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="15" fill="#68766E">常规路径 →</text>
+<polyline points="1264,824 1264,868 235,868 235,824" fill="none" stroke="#68766E" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5 6"/>
+<polygon points="235,824 230.0,834.0 240.0,834.0" fill="#68766E"/>
+<rect x="484" y="852" width="535" height="32" rx="12" fill="#FFFDF8" stroke="none"/>
+<text x="750" y="875" text-anchor="middle" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="18" fill="#68766E">回答循环：常规每轮最多 3 题；允许不确定或跳过</text>
+<text x="83" y="924" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="20" fill="#A7583F">风险命中时中断普通问答；诊断未知时先澄清，不自行推断疾病。</text>
+<polyline points="750,963 750,1004" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="750,1004 755.0,994.0 745.0,994.0" fill="#237467"/>
+<rect x="56" y="1007" width="1388" height="89" rx="20" fill="#203E39" stroke="none"/>
+<text x="84" y="1044" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="29" fill="#FFFDF8">④  持续更新的证据时间线</text>
+<text x="84" y="1078" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="21" fill="#D7E8DC">原话与结构化事实一起保存；症状、用药、报告按时间关联。</text>
+<text x="1419" y="1044" text-anchor="end" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="17" fill="#D7E8DC">可追溯</text>
+<text x="1419" y="1078" text-anchor="end" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="19" fill="#D7E8DC">来源 · 时间 · 状态 · 规则版本</text>
+<polyline points="750,1096 750,1126 488,1126 488,1153" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="488,1153 493.0,1143.0 483.0,1143.0" fill="#237467"/>
+<polyline points="750,1126 1200,1126 1200,1153" fill="none" stroke="#237467" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="1200,1153 1205.0,1143.0 1195.0,1143.0" fill="#237467"/>
+<rect x="56" y="1157" width="865" height="207" rx="22" fill="#E4EEE6" stroke="none"/>
+<text x="83" y="1201" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="30" fill="#237467">给医生：一页就诊材料</text>
+<text x="83" y="1243" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="23" fill="#203E39">近期变化、关键阳性 / 阴性表现、相关病史与用药</text>
+<text x="83" y="1281" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="23" fill="#203E39">已有检查与日期；经审定路径匹配出的检查讨论项</text>
+<text x="83" y="1319" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="23" fill="#203E39">说明依据和缺失信息 → 患者核对分享 → 医生决定检查</text>
+<rect x="956" y="1157" width="488" height="207" rx="22" fill="#FFFDF8" stroke="#CBD6CD"/>
+<text x="982" y="1201" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="29" fill="#203E39">给患者：日志与趋势</text>
+<text x="982" y="1243" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="22" fill="#68766E">按天回看发生了什么</text>
+<text x="982" y="1281" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="22" fill="#68766E">同一症状怎样变化；哪些天未记录</text>
+<text x="982" y="1319" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="22" fill="#68766E">就诊、用药只作时间标记</text>
+<rect x="56" y="1400" width="1388" height="54" rx="15" fill="#F5E5D9" stroke="none"/>
+<text x="750" y="1436" text-anchor="middle" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="23" fill="#A7583F">↻  医生确定检查与后续方案 → 新报告 / 检查结果回到 ①，更新个人背景</text>
+<text x="56" y="1481" text-anchor="start" font-family="Arial Unicode MS, PingFang SC, sans-serif" font-size="16" fill="#68766E">临床内容与规则需审定后接入。医生保留诊断、检查与治疗决策。</text>
+</svg>

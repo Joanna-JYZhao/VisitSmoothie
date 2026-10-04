@@ -42,3 +42,15 @@ next-env.d.ts
 
 # 患者数据（SQLite，加密落盘，永不提交）
 .data/
+
+# Additional prototypes and artifacts
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+node_modules/
+.DS_Store
+*.log
+__pycache__/
