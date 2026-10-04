@@ -27,7 +27,7 @@ const steps = (): GuideStep[] => {
   return [
     { title: L("欢迎使用 问诊奶昔", "Welcome to VisitSmoothie"), body: L("你的私人就诊管家，帮你把看病变简单。", "Your personal visit helper, making doctor's visits simpler."), button: L("开始探索", "Show me around") },
     { target: "pre", title: L("诊前准备", "Before the visit"), body: L("描述你的不适，一键生成给医生看的「就诊摘要」。", "Describe how you feel, and get a visit summary for the doctor in one tap."), button: next },
-    { target: "post", title: L("诊后解析", "After the visit"), body: L("拍处方或传录音，自动翻译成清晰的「就诊计划」。", "Photograph the prescription or upload a recording, and get a clear visit plan."), button: next },
+    { target: "post", title: L("诊后解析", "After the visit"), body: L("拍处方或传录音，自动翻译成清晰的「医嘱行动」。", "Photograph the prescription or upload a recording, and get clear action items from the doctor's orders."), button: next },
     { target: "todo", title: L("待办与答疑", "To do and questions"), body: L("用药复查自动生成提醒。有疑问随时在底部提问。", "Medicine and check-up reminders are made for you. Ask questions at the bottom any time."), button: next },
     { target: "profile", title: L("个人中心", "Your account"), body: L("管理你的账号信息与个性化就诊偏好。", "Manage your account and your visit preferences."), button: next },
     { target: "report", title: L("健康档案", "Health records"), body: L("所有的历史摘要和护理计划都在此安全归档。", "All past summaries and care plans are kept safely here."), button: next },
