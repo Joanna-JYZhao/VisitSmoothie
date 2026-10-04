@@ -56,7 +56,12 @@ export class Accounts {
     const user = this.db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires_at>?').get(digest(token), this.now());
     return user || null;
   }
-  payload(user) { return { account: { id: user.id, name: user.name }, profile: JSON.parse(user.profile), revision: user.revision }; }
+  payload(user) {
+    const profile = JSON.parse(user.profile);
+    // Older accounts retain their login identity and gain an editable display name.
+    profile.nickname ??= user.name;
+    return { account: { id: user.id, name: user.name }, profile, revision: user.revision };
+  }
   logout(token) { if (typeof token === 'string') this.db.prepare('DELETE FROM sessions WHERE token_hash=?').run(digest(token)); }
   async register(profile, secret, ip) {
     const identity = username(profile.name);

@@ -100,7 +100,7 @@ test('a failed save preserves non-password input and restores the enabled state'
   assert.equal(h.evaluate('state.error'), '该姓名已注册。');
 });
 test('the UI safely escapes profile values and contains only the requested profile and account controls', () => {
-  const profile = { ...blankProfile(), name: '"><script>bad</script>', conditions: '</textarea><script>bad</script>' };
+  const profile = { ...blankProfile(), name: '"><script>bad</script>', nickname: '"><script>nickname</script>', conditions: '</textarea><script>bad</script>' };
   const html = view({ profile, account: null, page: 'register', busy: false, checking: false, error: '' });
   assert.doesNotMatch(html, /<script>/u);
   assert.doesNotMatch(html, /Health Journal|AI|摘要|症状记录|偏好设置|name="age"/u);
@@ -111,4 +111,6 @@ test('the UI safely escapes profile values and contains only the requested profi
   assert.match(editing, /退出登录/u);
   assert.match(editing, /readonly/u);
   assert.doesNotMatch(editing, /type="password"/u);
+  assert.doesNotMatch(editing, /<script>/u);
+  assert.match(editing, /class="account-name">&quot;&gt;&lt;script&gt;nickname&lt;\/script&gt;/u);
 });

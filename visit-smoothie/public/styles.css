@@ -100,6 +100,7 @@ svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width:
 .registration-card .field textarea { min-height: 78px; line-height: 1.7; resize: vertical; }
 .identity-fields output { display: block; font-size: 11px; line-height: 1.5; color: #57717b; min-height: 17px; }
 .identity-fields { align-items: start; }
+.account-username { grid-column: 1 / -1; }
 .history-section { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--onboarding-line); }
 .history-fields { display: grid; gap: 18px; }
 .registration-submit { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 28px; padding-top: 25px; border-top: 1px solid var(--onboarding-line); }

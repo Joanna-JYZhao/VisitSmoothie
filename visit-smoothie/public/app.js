@@ -27,6 +27,8 @@ function remember(form) {
 function syncValidation() {
   const name = root.querySelector('#p-name') || root.querySelector('#login-name');
   if (name) name.setCustomValidity(name.value.trim() ? '' : '请填写姓名。');
+  const nickname = root.querySelector('#p-nickname');
+  if (nickname) nickname.setCustomValidity(nickname.value.trim() ? '' : '请填写昵称。');
   const dob = root.querySelector('#p-dob'), output = root.querySelector('#profile-age');
   if (dob && output) { const age = calculateAge(dob.value); output.textContent = age === null ? '选择出生年月日，自动计算年龄。' : `${age} 岁 · 根据出生日期自动计算`; }
   const secret = root.querySelector('#password'), confirm = root.querySelector('#confirm-password');

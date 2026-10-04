@@ -5,8 +5,8 @@ The user narrowed the task: remove the entire prior journal application and keep
 ## Product scope
 
 - Standalone app in `visit-smoothie/`: welcome, first registration, login, and editable personal profile only.
-- Name is both display name and unique login username. Normalize NFKC and whitespace, compare names case-insensitively. Reject duplicate names; do not silently add suffixes. Login name is read-only after registration in this version.
-- Register with full birth date (automatic age), male/female, five education choices, and optional multiline conditions/family hereditary history/allergies. Left guide explicitly says 可跳过. Add password and confirmation to establish an account.
+- Name is the unique login username. Normalize NFKC and whitespace, compare names case-insensitively. Reject duplicate names; do not silently add suffixes. Login name is read-only after registration in this version. A separate required, editable nickname (1–60 characters after trimming) is used for display; nicknames need not be unique. Existing profiles without a nickname display their login name until edited.
+- Register with nickname, full birth date (automatic age), male/female, five education choices, and optional multiline conditions/family hereditary history/allergies. Left guide explicitly says 可跳过. Keep login name, password and confirmation together in a separate account section.
 - Login uses name/password. After login show only that account's personal profile; optional history can be added later. Logout invalidates the session and clears all transient profile/form data.
 - No symptom recording, visits, summaries, AI, demo, export, preferences, password-recovery service, or account-management dashboard.
 
@@ -21,6 +21,8 @@ Retain blue-and-white reference design, readable labeled controls, desktop/mobil
 The former tracked application code is removed, with Git history providing recovery. Its ignored local database remains on disk, excluded from Git and inaccessible to the new application. There is no automatic transfer into a new account.
 
 ## Verification
+
+The latest UI reference is `origin/yiban-patient` at `57e0939`: its `src/app/welcome/smoothie.css` and login page retain the blue ink (#167493), white paper (#fcfdfd), mist (#edf5f7), ink (#173f4f), Songti/Georgia headings, system body text and rounded cards. Preserve this existing design in the current feature branch. The current branch was fetched and fast-forward checked against origin before edits.
 
 Test two independent accounts, unauthorized reads/writes, stale-account headers, duplicate names, password hashing, wrong-password and rate-limit behavior, expired/revoked sessions, server/database restart, required fields and date bounds, immutable name, concurrent profile edits, request origin checks, and removed endpoints. Exercise real browser register/login/logout/relogin and profile supplementation with fictional test data; inspect desktop and mobile screenshots.
 

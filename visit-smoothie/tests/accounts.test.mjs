@@ -11,7 +11,7 @@ import { profile as validateProfile, username } from '../server/validation.mjs';
 import { calculateAge, todayLocal } from '../public/profile-model.js';
 
 const PASSWORD = 'synthetic-only-passphrase-2026';
-const details = (name = '测试甲') => ({ name, dob: '2008-10-03', sex: 'female', education: 'senior', conditions: '', familyHistory: '', allergies: '' });
+const details = (name = '测试甲') => ({ name, nickname: '小溪', dob: '2008-10-03', sex: 'female', education: 'senior', conditions: '', familyHistory: '', allergies: '' });
 async function setup(t) {
   const dir = await mkdtemp(path.join(tmpdir(), 'smoothie-accounts-test-'));
   const dbPath = path.join(dir, 'accounts.sqlite');
@@ -47,9 +47,11 @@ test('age uses calendar birthdays, leap days and valid full dates only', () => {
   for (const dob of ['', '2026-02-30', '2007-02-29', '2200-01-01', '2008-10', ['2008-10-03'], null, 20261003]) assert.equal(calculateAge(dob, new Date(2026, 9, 3)), null);
   assert.equal(todayLocal(new Date('2026-10-03T03:00:00Z'), 'America/Los_Angeles'), '2026-10-02');
 });
-test('registration profile accepts exactly seven fields and requires the four identity fields', () => {
+test('registration requires the four profile fields and a separate login name', () => {
   const options = { timeZone: 'America/Los_Angeles', now: new Date('2026-10-03T03:00:00Z') };
-  for (const name of ['name', 'dob', 'sex', 'education']) assert.throws(() => validateProfile({ ...details(), [name]: '' }, options));
+  for (const name of ['name', 'nickname', 'dob', 'sex', 'education']) assert.throws(() => validateProfile({ ...details(), [name]: '' }, options));
+  for (const nickname of [undefined, null, 123, '   ', 'x'.repeat(61)]) assert.throws(() => validateProfile({ ...details(), nickname }, options));
+  assert.equal(validateProfile({ ...details(), nickname: ' 小溪 ' }, options).nickname, '小溪');
   for (const patch of [{ dob: '2026-10-03' }, { dob: '2008-02-30' }, { dob: ['2008-10-03'] }, { sex: 'other' }, { education: 'unknown' }, { age: 18 }, { conditions: null }]) assert.throws(() => validateProfile({ ...details(), ...patch }, options));
   assert.deepEqual(validateProfile(details(), options), details());
   assert.deepEqual(username(' Ｌｉ   Ming '), { name: 'Li Ming', key: 'li ming' });
@@ -123,6 +125,40 @@ test('profile history edits persist across restart and stale revisions cannot ov
   await h.restart();
   assert.deepEqual((await h.request('GET', '/api/profile', undefined, a)).data.profile, changed);
   assert.equal((await h.request('PUT', '/api/profile', { profile: { ...changed, name: '新姓名' }, revision: 1 }, a)).data.code, 'NAME_IMMUTABLE');
+});
+test('display nicknames can be shared and edited without changing account or login identity', async t => {
+  const h = await setup(t);
+  const a = await h.register('Nickname A');
+  const b = await h.register('Nickname B');
+  assert.equal(a.profile.nickname, b.profile.nickname);
+  const saved = await h.request('PUT', '/api/profile', { profile: { ...a.profile, nickname: '新昵称' }, revision: 0 }, a);
+  assert.equal(saved.status, 200);
+  assert.deepEqual(saved.data.account, a.account);
+  assert.equal(saved.data.profile.nickname, '新昵称');
+  assert.equal((await h.request('GET', '/api/profile', undefined, b)).data.profile.nickname, '小溪');
+  await h.request('POST', '/api/logout', {}, a);
+  await h.restart();
+  const login = await h.request('POST', '/api/login', { name: a.account.name, password: PASSWORD });
+  assert.equal(login.status, 200);
+  assert.deepEqual(login.data.account, a.account);
+  assert.equal(login.data.profile.nickname, '新昵称');
+  assert.equal((await h.request('POST', '/api/login', { name: '新昵称', password: PASSWORD })).status, 401);
+});
+test('older profiles without a nickname remain readable and can save a new display nickname', async t => {
+  const h = await setup(t);
+  const a = await h.register('Legacy Account');
+  const { nickname, ...legacy } = a.profile;
+  const db = new DatabaseSync(h.dbPath);
+  try { db.prepare('UPDATE users SET profile=? WHERE id=?').run(JSON.stringify(legacy), a.account.id); }
+  finally { db.close(); }
+  await h.restart();
+  const restored = await h.request('GET', '/api/session', undefined, a);
+  assert.equal(restored.data.profile.nickname, a.account.name);
+  assert.deepEqual(restored.data.account, a.account);
+  const saved = await h.request('PUT', '/api/profile', { profile: { ...restored.data.profile, nickname: '晚风' }, revision: restored.data.revision }, a);
+  assert.equal(saved.status, 200);
+  assert.equal(saved.data.profile.nickname, '晚风');
+  assert.deepEqual(saved.data.account, a.account);
 });
 test('duplicate normalized names, short passwords and invalid registration never create another user', async t => {
   const { register, request, dbPath } = await setup(t);

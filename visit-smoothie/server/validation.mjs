@@ -25,12 +25,13 @@ export function timezone(value) {
   return value;
 }
 export function profile(input, { timeZone = 'UTC', now = new Date() } = {}) {
-  fields(input, ['name', 'dob', 'sex', 'education', 'conditions', 'familyHistory', 'allergies']);
+  fields(input, ['name', 'nickname', 'dob', 'sex', 'education', 'conditions', 'familyHistory', 'allergies']);
   const name = username(input.name).name;
+  const nickname = text(input.nickname, 60, true);
   const dob = input.dob;
   // Use the supplied device timezone only for its calendar date, never for age storage.
   const today = todayLocal(now, timeZone);
   if (calculateAge(dob, new Date(`${today}T12:00:00`)) === null) throw new HttpError(400, '请选择完整、有效且不晚于今天的出生日期。', 'INVALID_BIRTHDAY');
   if (!SEX_OPTIONS.some(([key]) => key === input.sex) || !EDUCATION_OPTIONS.some(([key]) => key === input.education)) throw new HttpError(400, '请选择性别和学历。');
-  return { name, dob, sex: input.sex, education: input.education, ...Object.fromEntries(['conditions', 'familyHistory', 'allergies'].map(key => [key, text(input[key] === undefined ? '' : input[key], 4000)])) };
+  return { name, nickname, dob, sex: input.sex, education: input.education, ...Object.fromEntries(['conditions', 'familyHistory', 'allergies'].map(key => [key, text(input[key] === undefined ? '' : input[key], 4000)])) };
 }
