@@ -78,7 +78,8 @@ export function createServer({ dbPath = path.join(ROOT, '.data', 'accounts.sqlit
         // An invalidated browser request must never receive a late session cookie.
         if (res.destroyed) { accounts.logout(result.token); return; }
         cookie(res, result.token, secureCookies);
-        const { token: ignored, ...payload } = result;
+        const payload = { ...result };
+        delete payload.token;
         return json(res, route.endsWith('register') ? 201 : 200, payload);
       }
       if (!user) throw new HttpError(401, '请先登录。', 'AUTH_REQUIRED');

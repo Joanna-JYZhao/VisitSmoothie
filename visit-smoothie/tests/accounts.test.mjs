@@ -147,7 +147,8 @@ test('display nicknames can be shared and edited without changing account or log
 test('older profiles without a nickname remain readable and can save a new display nickname', async t => {
   const h = await setup(t);
   const a = await h.register('Legacy Account');
-  const { nickname, ...legacy } = a.profile;
+  const legacy = { ...a.profile };
+  delete legacy.nickname;
   const db = new DatabaseSync(h.dbPath);
   try { db.prepare('UPDATE users SET profile=? WHERE id=?').run(JSON.stringify(legacy), a.account.id); }
   finally { db.close(); }

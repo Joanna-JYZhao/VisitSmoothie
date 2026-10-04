@@ -43,39 +43,34 @@ const MASK = "rgba(18, 59, 49, 0.55)"; // brand-ink 55%，和青瓷主题一致
 
 export function GuideTour({ onFinish }: { onFinish: () => void }) {
   const [step, setStep] = useState(0);
-  const [rect, setRect] = useState<Rect | null>(null);
+  const [rect, setRect] = useState<(Rect & { target: string }) | null>(null);
   const current = STEPS[step];
   const last = step === STEPS.length - 1;
   const total = STEPS.length - 2; // 高亮步骤数（不含首尾两张全局卡片）
 
   const measure = useCallback(() => {
-    if (!current.target) {
-      setRect(null);
-      return;
-    }
+    if (!current.target) return;
     const el = document.querySelector(`[data-guide="${current.target}"]`);
     if (!el) {
       setRect(null);
       return;
     }
     const r = el.getBoundingClientRect();
-    setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+    setRect({ target: current.target, top: r.top, left: r.left, width: r.width, height: r.height });
   }, [current.target]);
 
   // 每换一步：把目标滚到屏幕中间再量位置；窗口变化时跟着量
   useLayoutEffect(() => {
-    if (!current.target) {
-      setRect(null);
-      return;
-    }
+    if (!current.target) return;
     const el = document.querySelector(`[data-guide="${current.target}"]`);
     el?.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
-    measure();
+    const frame = window.requestAnimationFrame(measure);
     const t = window.setTimeout(measure, 150);
     const again = () => measure();
     window.addEventListener("resize", again);
     window.addEventListener("scroll", again, true);
     return () => {
+      window.cancelAnimationFrame(frame);
       window.clearTimeout(t);
       window.removeEventListener("resize", again);
       window.removeEventListener("scroll", again, true);
@@ -91,7 +86,8 @@ export function GuideTour({ onFinish }: { onFinish: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onFinish]);
 
-  const hl = rect
+  // Global steps have no highlight; their geometry is derived from the current target.
+  const hl = current.target && rect?.target === current.target
     ? { top: rect.top - PAD, left: rect.left - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }
     : null;
 

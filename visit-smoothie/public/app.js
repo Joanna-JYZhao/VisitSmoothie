@@ -136,7 +136,10 @@ root.addEventListener('submit', event => {
   const values = Object.fromEntries(new FormData(form));
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   if (form.id === 'login-form') return perform(async () => { adopt(await request('/login', 'POST', { name: values.name, password: values.password })); toast('登录成功。'); });
-  const { password, confirmPassword, ...profile } = values;
+  const password = values.password;
+  const profile = { ...values };
+  delete profile.password;
+  delete profile.confirmPassword;
   if (form.id === 'register-form') return perform(async () => { adopt(await request('/register', 'POST', { profile, password, timeZone })); toast('账号已建立，资料已保存。'); });
   if (form.id === 'profile-form') return perform(async () => {
     Object.assign(state, await request('/profile', 'PUT', { profile, revision: state.revision, timeZone }));
