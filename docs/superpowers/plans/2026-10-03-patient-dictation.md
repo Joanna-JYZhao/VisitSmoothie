@@ -21,9 +21,9 @@ Files: `patient-dictation/index.mjs`, `patient-dictation/index.d.mts`, `patient-
 
 Produces: `createDictationClient(config)`, `DictationError`; client methods `transcribe(input)` and `transcribeFile(path, options)`, both returning `{ text, model }`.
 
-- [ ] Create tests for a real local multipart upload, exact text passthrough, configurable model/base URL and language-field mapping; validate that they fail before the module exists.
-- [ ] Implement the transport, bounded file reader, validation and typed errors from the design contract.
-- [ ] Verify bad inputs do not reach the provider; verify auth/rate-limit/provider errors, malformed responses, timeout, cancellation and concurrent calls.
+- [x] Create tests for a real local multipart upload, exact text passthrough, configurable model/base URL and language-field mapping; validate that they fail before the module exists.
+- [x] Implement the transport, bounded file reader, validation and typed errors from the design contract.
+- [x] Verify bad inputs do not reach the provider; verify auth/rate-limit/provider errors, malformed responses, timeout, cancellation and concurrent calls.
 
 ## Task 2: CLI and integration handoff
 
@@ -31,13 +31,13 @@ Files: `patient-dictation/cli.mjs`, `patient-dictation/README.md`, `patient-dict
 
 Consumes: the client from Task 1. Produces: CLI text/JSON output and documented server-side dictation-to-analysis integration.
 
-- [ ] Add CLI help, file argument, language, transcription prompt and JSON options; accept credentials only through server-side environment configuration.
-- [ ] Verify CLI success against the local HTTP stub and sanitized failures with a nonzero exit code.
-- [ ] Document Blob/File/bytes/file input, TypeScript types, configurable compatible providers, cancellation and error codes; distinguish uploaded completed recordings from live streaming.
+- [x] Add CLI help, file argument, language, transcription prompt and JSON options; accept credentials only through server-side environment configuration.
+- [x] Verify CLI success against the local HTTP stub and sanitized failures with a nonzero exit code.
+- [x] Document Blob/File/bytes/file input, TypeScript types, configurable compatible providers, cancellation and error codes; distinguish uploaded completed recordings from live streaming.
 
 ## Task 3: Verification and review
 
-- [ ] Run `npm test` in `patient-dictation` and the existing application test suite once.
-- [ ] Verify package exports and `npm pack --dry-run`, check the diff for unintended application edits and secrets.
-- [ ] Request an independent read-only code review; fix substantive findings and rerun affected checks.
-- [ ] Record exact verification results in `patient-dictation/VERIFICATION.md`, commit the feature, and hand off the branch and public usage example.
+- [x] Run `npm test` in `patient-dictation` and the existing application test suite once.
+- [x] Verify package exports and `npm pack --dry-run`, check the diff for unintended application edits and secrets.
+- [x] Request an independent read-only code review; fix substantive findings and rerun affected checks.
+- [x] Record exact verification results in `patient-dictation/VERIFICATION.md`, commit the feature, and hand off the branch and public usage example.
