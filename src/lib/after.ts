@@ -1,4 +1,4 @@
-import type { AfterMedication, AfterResult, AiMode, Episode, LearnedItem, Measurement, VisitRecord } from "./types";
+import type { AfterMedication, AfterResult, AiMode, Episode, LearnedItem, Measurement, NextVisitPlan, PlanItem, VisitRecord } from "./types";
 import { getState, storeActions } from "./store";
 import { holidayBetween } from "./metrics";
 import { NO_DIAGNOSIS, autoTags, fmtISODate, nowISO } from "./utils";
@@ -77,7 +77,15 @@ export interface SavedAfter {
  * what the doctor said are one record; otherwise it is a visit record of its own. `learned`: what the
  * patient asked about the orders and had explained, kept with the visit.
  */
-export function saveAfter(result: AfterResult, episodeId: string | null, mode: AiMode, said = "", learned: LearnedItem[] = []): SavedAfter {
+export function saveAfter(
+  result: AfterResult,
+  episodeId: string | null,
+  mode: AiMode,
+  said = "",
+  learned: LearnedItem[] = [],
+  /** the Clinical Plan with its lines, the next visit, and the earlier record this visit follows up (复诊) */
+  extra: { planItems?: PlanItem[]; next?: NextVisitPlan | null; followUpOf?: string | null } = {},
+): SavedAfter {
   const today = fmtISODate(new Date());
   const date = result.date ?? today;
   // readings from an earlier visit are filed at noon of that day; today's at this moment
@@ -107,10 +115,14 @@ export function saveAfter(result: AfterResult, episodeId: string | null, mode: A
     mode,
     recordedAt: nowISO(),
     ...(learned.length ? { learned } : {}),
+    ...(extra.planItems?.length ? { planItems: extra.planItems } : {}),
+    ...(extra.next ? { next: extra.next } : {}),
   };
 
   if (episodeId) {
     storeActions.setVisit(episodeId, visit, autoTags(diagnosis));
+    // 复诊 picked in post: the pre record of this visit follows up the earlier one (unless it already says which)
+    if (extra.followUpOf && !getState().episodes.find((e) => e.id === episodeId)?.followUpOf) storeActions.setFollowUpOf(episodeId, extra.followUpOf);
     const measurementIds = readings.map((r) => storeActions.addMeasurement(r).id);
     return { followUpId: null, measurementIds, linked: [] };
   }
@@ -130,6 +142,9 @@ export function saveAfter(result: AfterResult, episodeId: string | null, mode: A
       advice: [result.advice, result.followUpNote].filter(Boolean).join(L("；", "; ")) || undefined,
       summary: result.summary || undefined,
       ...(learned.length ? { learned } : {}),
+      ...(extra.planItems?.length ? { planItems: extra.planItems } : {}),
+      ...(extra.next ? { next: extra.next } : {}),
+      ...(extra.followUpOf ? { followUpOf: extra.followUpOf } : {}),
     },
     readings,
   );

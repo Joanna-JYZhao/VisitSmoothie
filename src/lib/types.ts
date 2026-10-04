@@ -103,6 +103,32 @@ export interface VisitRecord {
   recordedAt: string;
   /** what the patient asked the assistant about this visit's orders, and learned (post, Clinical Plan) */
   learned?: LearnedItem[];
+  /** the Clinical Plan as it was saved: one item per thing to do, each with its own status */
+  planItems?: PlanItem[];
+  /** the next visit: when, what for, what to do or bring before it */
+  next?: NextVisitPlan | null;
+}
+
+/**
+ * One line of a saved Clinical Plan. Its status is worked out when shown: ongoing from `startedAt`,
+ * ended at `endsAt` (a course the orders give, "吃两周", or the follow-up date), or when the patient
+ * ended it by hand (`endedAt`).
+ */
+export interface PlanItem {
+  id: string;
+  kind: Todo["kind"];
+  text: string;
+  startedAt: string;
+  endsAt?: string | null;
+  endedAt?: string | null;
+}
+
+/** The next visit as the orders give it. */
+export interface NextVisitPlan {
+  at: string | null;
+  note: string;
+  /** what to do or bring before it ("准备病历和药盒", "空腹抽血") */
+  prepare: string[];
 }
 
 /** One line of the orders the patient asked about after the visit, and what was explained (follow-ups included). */
@@ -114,6 +140,8 @@ export interface LearnedItem {
 
 export interface Episode {
   id: string;
+  /** 复诊: the earlier record this one follows up (an episode's or a visit record's id) */
+  followUpOf?: string | null;
   title: string;
   tags: string[];
   status: EpisodeStatus;
@@ -168,6 +196,10 @@ export interface FollowUp {
   recordedAt: string;
   /** what the patient asked the assistant about this visit's orders, and learned */
   learned?: LearnedItem[];
+  planItems?: PlanItem[];
+  next?: NextVisitPlan | null;
+  /** 复诊: the earlier record this visit follows up (an episode's or a visit record's id) */
+  followUpOf?: string | null;
 }
 
 /** One health check-up (体检): what the report flagged, kept as the starting point of the record. */
@@ -294,6 +326,8 @@ export interface AppState {
    * Kept until it is saved or the patient starts a new one, whatever page they go to in between.
    */
   postDraft?: PostDraft | null;
+  /** pre: the earlier record the conversation follows up (复诊), picked above the input */
+  preFollowUpOf?: string | null;
 }
 
 /** The Clinical Plan of a visit being looked over in post. */
@@ -310,6 +344,8 @@ export interface PostDraft {
   /** what was explained about each line (a to-do's id, or "diagnosis" / "findings"), follow-ups included */
   turns: Record<string, { q: string; a: string }[]>;
   at: string;
+  /** 复诊: the earlier record this visit follows up */
+  followUpOf?: string | null;
 }
 
 /* ---------- AI contracts (shared by client, API routes and fallback) ---------- */
@@ -348,6 +384,8 @@ export interface ChatRequest {
   localTime?: string;
   /** Other complaints being tracked right now, as text, so a new one can be connected to them. */
   others?: string;
+  /** 复诊: the earlier record this follows up, as text (diagnosis, plan and how it went, what was asked) */
+  previous?: string;
 }
 
 export interface ChatMeasurement {
@@ -393,6 +431,8 @@ export interface SummaryRequest {
   vitals?: string[];
   /** what the latest check-up flagged, one line each, prepared by the client */
   background?: string[];
+  /** 复诊: the earlier record this follows up, as text */
+  previous?: string;
 }
 
 export interface SummaryResponse {
@@ -408,6 +448,8 @@ export interface AfterRequest {
   text?: string;
   /** data URLs of photos: 病历、处方、药盒、化验单 */
   images?: string[];
+  /** 复诊: the earlier record this visit follows up, as text */
+  previous?: string;
 }
 
 export interface AfterMedication {

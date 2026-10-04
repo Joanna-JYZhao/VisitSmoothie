@@ -130,3 +130,13 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 - 测试：`reminders.test.ts` 加按意思分条的检查，`consult.test.ts` 加病史放正文还是括号的检查。
 
 验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1557 项全部通过；`npm run build` 通过；用智谱实测医生说话卡壳时的分条和膝痛描述的病史放法。
+
+## 2026-10-04 改动：post 存进 Record 的治疗计划和状态、复诊关联之前的记录、语言只在登录和设置里选（Yueran，推 main）
+
+- 存进 Record 的 post 只放三样：Clinical Plan 每一条和它的状态（正在进行·第 N 天 / 已结束 N 天，按疗程和复诊日期自动算，也可以手动「结束」）、下次复诊和要做要带的东西、问过的问题（按针对的那一项整理）。新文件 `src/lib/records.ts`（`planFrom`、`planStatus`、`nextVisitFrom`、`previousContext` 等）、`src/components/VisitPlanView.tsx`；类型 `PlanItem`、`NextVisitPlan`，`VisitRecord` / `FollowUp` 多 `planItems`、`next`。
+- 只用 post 的记录在 Record 里点进去是新页面 `/report/visit/[id]`，只有上面这些；pre + post 关联的记录详情页只留三块：给医生看的单子（和 PDF 一样，`src/components/EpisodeSheet.tsx`，医生页也改用它）、pre 的对话过程、post 的那三样。
+- 复诊：pre 输入框上方、post 录音/上传上方各一个「复诊 / 关联之前的记录」按钮（`src/components/RecordLinkPicker.tsx`），post 里同时选这次的 pre（原来保存时的下拉框合并进来了）。复诊新建一条记录并标注 `followUpOf`；上一次的诊断、计划和状态、下次复诊、问过的内容作为 `previous` 传给 chat / summary / after / explain，pre 提醒该说什么，post 的解释不重复上次讲过的。
+- 语言：顶栏的「中 / EN」去掉；登录、注册页选的语言登录后就是整个应用的语言（`reloadAccount`），之后只在「设置」里改。
+- 测试：`post-link.test.ts` 加疗程识别、状态、下次复诊、复诊关联保存、手动结束、给 AI 的上一次记录。
+
+验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1570 项全部通过；`npm run build` 通过；各页面在本地都能打开。

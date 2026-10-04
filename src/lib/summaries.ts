@@ -8,6 +8,7 @@ import { fallbackAnnual, fallbackSummary } from "./ai/fallback";
 import { relatedEpisodesOf } from "./episodeAI";
 import { getLang, inChinese } from "./lang";
 import { checkupBackground } from "./checkup";
+import { previousContext } from "./records";
 import { METRICS, buildAnnualFacts, formatValue, latestOf } from "./metrics";
 import { fmtDate, nowISO, toRelatedContext } from "./utils";
 
@@ -79,6 +80,7 @@ export async function refreshSummary(episodeId: string): Promise<void> {
         vitals: vitalsLines(state),
         background: checkupBackground(state),
       })),
+      previous: previousContext(state, episode.followUpOf),
     });
     // stamp it with the moment the request was built, so anything recorded meanwhile makes it stale again
     const generatedAt = new Date(Math.max(time(startedFrom), Date.now() - 1)).toISOString();

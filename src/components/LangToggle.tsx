@@ -12,7 +12,7 @@ const TRIAL = "English is a trial version. What you recorded yourself stays as y
  * settings. English is newer than Chinese here, and says so once when it is turned on.
  *
  * `segmented`: both languages side by side in one small pill, the one in use filled in, each half
- * its own 48px target. Used in the top bar and on the set page, where it sits beside other things
+ * its own 48px target. Used on the way in (welcome, login) and on the set page, where it sits beside other things
  * and should say at a glance which language is on.
  */
 export function LangToggle({ className, segmented = false }: { className?: string; segmented?: boolean }) {

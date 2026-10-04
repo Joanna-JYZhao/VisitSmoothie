@@ -8,7 +8,6 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { BrandLogo, LogoMark } from "./Logo";
 import { TabBar } from "./TabBar";
-import { LangToggle } from "./LangToggle";
 import { focusRing } from "./ui";
 import { L } from "@/lib/lang";
 
@@ -98,8 +97,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Link href="/" className={cn("app-brand inline-flex rounded-lg", focusRing)} aria-label={L("问诊奶昔", "VisitSmoothie")}>
           <BrandLogo className="!w-[8rem]" />
         </Link>
+        {/* the language is not switched from here, in the middle of pre or post: it is in 设置 */}
         <div className="flex shrink-0 items-center gap-2">
-          <LangToggle segmented />
           <SosPill />
         </div>
       </header>

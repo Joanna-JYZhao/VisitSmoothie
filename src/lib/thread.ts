@@ -403,6 +403,8 @@ function freezeDescription(episodeId: string): void {
 
 export function saveDescription(itemId: string): void {
   storeActions.patchThread(itemId, (x) => (x.kind === "description" ? { ...x, state: "saved" } : x));
+  // the follow-up picked for this round went with its record; the next complaint starts unlinked
+  storeActions.setPreFollowUpOf(null);
   say(L("存进就诊记录了。去看医生的时候，点卡片上的「给医生看」。", "Saved to your records. At the doctor's, tap “Show the doctor” on the card."));
 }
 
@@ -537,6 +539,7 @@ export function startOverPre(): void {
   const { thread, episodes } = getState();
   for (const id of unfinishedEpisodes(thread, episodes)) storeActions.deleteEpisode(id);
   revising = null;
+  storeActions.setPreFollowUpOf(null);
   storeActions.clearThread();
   greet();
 }

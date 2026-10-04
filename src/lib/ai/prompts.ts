@@ -315,6 +315,8 @@ export function buildChatMessages(req: ChatRequest, opts: { avoid?: string } = {
     req.metricsContext ?? "",
     req.others ? `【同时在跟踪的其他不舒服】\n${req.others}\n（这次说的如果可能和它们是一回事，用一句话点出来；不要重复问那边已经问过的。）` : "",
     `【当前时间】${req.localTime ?? fmtDate(new Date(), { year: true, weekday: true, time: true })}`,
+    previousBlock(req.previous),
+    req.previous ? "【复诊提示】这是复诊。问诊时结合上一次的记录，一次一个地提醒对方说说：上次的治疗计划做得怎么样（药按时吃了没有、锻炼做了没有）、用了以后哪里好了哪里没好、有没有新的不舒服、上次医生交代复诊要做的检查和要带的东西准备好了没有。上次已经问清楚、这次没变的不用再问。" : "",
     req.kind === "intake" ? "【提示】这是对话的第一轮，请给出 title。" : "",
     roundNote(req.messages),
     // the plan is worked out by rules that read Chinese: in English the model keeps track itself
@@ -353,6 +355,8 @@ export function buildSummaryMessages(req: SummaryRequest): GlmMessage[] {
     req.background?.length ? `【最近一次体检】\n${req.background.join("\n")}\n（体检标出的项目照抄进 relevantHistory，不要解释，不要和这次的不舒服扯上关系。）` : "",
     episodeContext(req.episode, { forDoctor: true }),
     relatedContext(req.related),
+    previousBlock(req.previous),
+    req.previous ? "（这是复诊：narrative 里用一两句说清上次看了什么、按计划做得怎么样、这次和上次比哪里变了；上次的情况只写记录里有的。）" : "",
     `【对话记录】\n${transcript || "无"}`,
     `【当前时间】${fmtDate(new Date(), { year: true, time: true })}`,
   ]
@@ -446,8 +450,21 @@ export function afterContext(req: AfterRequest): string {
   return [
     profileContext(req.profile),
     req.episode ? episodeContext(req.episode) : "【这次不舒服的记录】\n没有正在跟踪的症状，这是一次复诊或复查。",
+    previousBlock(req.previous),
     `【今天的日期】${fmtDate(new Date(), { year: true })}`,
-  ].join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/**
+ * 复诊: the earlier record this one follows up. Handed to the assistant so it builds on it: in pre it
+ * reminds the patient what to tell the doctor this time, in post it reads and explains the new orders
+ * against the old ones, without saying again what was explained last time.
+ */
+export function previousBlock(previous: string | undefined): string {
+  if (!previous?.trim()) return "";
+  return `【上一次就诊的记录（这次是复诊）】\n${previous.trim().slice(0, 2500)}\n（这次是上面这次的复诊：结合它来理解这次的情况；上次已经讲过的不要再重复，讲这次新的、变了的。）`;
 }
 
 export function buildAfterTextMessages(req: AfterRequest): GlmMessage[] {

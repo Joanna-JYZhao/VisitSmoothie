@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Check, CircleAlert, ClipboardList, HelpCircle, Lightbulb, Link2, MessageCircleQuestion, Stethoscope } from "lucide-react";
-import type { AfterResult, Episode, LearnedItem, PostDraft, Todo } from "@/lib/types";
+import { CalendarDays, Check, CircleAlert, ClipboardList, HelpCircle, Lightbulb, MessageCircleQuestion, Stethoscope } from "lucide-react";
+import type { AfterResult, LearnedItem, PostDraft, Todo } from "@/lib/types";
 import { getState, storeActions, useStore } from "@/lib/store";
 import { buildTodos, explainQuestion, followUpNote, scheduleText } from "@/lib/reminders";
+import { previousContext } from "@/lib/records";
 import { cn, fmtDate } from "@/lib/utils";
 import { L, getLang } from "@/lib/lang";
-import { Button, Card, IconTile, Input, Select, Spinner } from "@/components/ui";
+import { Button, Card, IconTile, Input, Spinner } from "@/components/ui";
 
 /*
  * Clinical Plan: what was read from the photos and the recording, one line per thing to do. Each
@@ -33,14 +34,14 @@ interface Turn {
 const NOT_EXPLAINED = ["这一条这次没解释成，可以再问一次，或者问医生、药师。", "This one couldn't be explained just now. Ask again, or ask your doctor or pharmacist."] as const;
 
 /** `history`: what was already asked about the same line, so a follow-up is answered about it. */
-async function explain(result: AfterResult, part: string, history: Turn[] = []): Promise<string> {
+async function explain(result: AfterResult, part: string, history: Turn[] = [], previous?: string): Promise<string> {
   const profile = getState().profile;
   if (!profile) return "";
   try {
     const res = await fetch("/api/explain", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile, result, part, history, lang: getLang() }),
+      body: JSON.stringify({ profile, result, part, history, previous, lang: getLang() }),
     });
     if (!res.ok) return "";
     return ((await res.json()) as { answer?: string }).answer ?? "";
@@ -151,26 +152,20 @@ export function newPostDraft(result: AfterResult, mode: PostDraft["mode"], text:
   return { result, mode, text, episodeId, todos, picked: todos.map((t) => t.id), turns: {}, at: new Date().toISOString() };
 }
 
-/** The pre records this visit can be linked to, newest first. */
-function linkable(episodes: Episode[]): Episode[] {
-  return [...episodes].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 12);
-}
-
 /**
  * The Clinical Plan as it is kept in the store (draft), so that leaving the page and coming back
  * finds it as it was left. `onSave` gets the lines ticked, with what was explained, and the pre
  * record picked to link the visit to (null for none).
  */
-export function ClinicalPlan({ draft, onSave, saving }: { draft: PostDraft; onSave: (todos: Todo[], episodeId: string | null) => void; saving?: boolean }) {
+export function ClinicalPlan({ draft, onSave, saving }: { draft: PostDraft; onSave: (todos: Todo[]) => void; saving?: boolean }) {
   const { state } = useStore();
   const { result, todos, picked, turns } = draft;
+  // 复诊: the earlier record, so an explanation builds on what was said last time instead of repeating it
+  const previous = previousContext(state, draft.followUpOf ?? state.episodes.find((e) => e.id === draft.episodeId)?.followUpOf);
   const [phase, setPhase] = useState<"choose" | "unclear" | "explaining">("choose");
   const [unclear, setUnclear] = useState<string[]>([]);
   const [asking, setAsking] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const records = linkable(state.episodes);
-  // a link kept in the draft to a record that was since deleted counts as none
-  const linked = records.some((e) => e.id === draft.episodeId) ? draft.episodeId : null;
   const setTurns = (fn: (all: Record<string, Turn[]>) => Record<string, Turn[]>) => storeActions.patchPostDraft((d) => ({ ...d, turns: fn(d.turns) }));
 
   /** A follow-up about one line, asked right under its explanation. */
@@ -178,7 +173,7 @@ export function ClinicalPlan({ draft, onSave, saving }: { draft: PostDraft; onSa
     const history = turns[id] ?? [];
     setAsking(id);
     try {
-      const a = (await explain(result, q, history)) || L(NOT_EXPLAINED[0], NOT_EXPLAINED[1]);
+      const a = (await explain(result, q, history, previous)) || L(NOT_EXPLAINED[0], NOT_EXPLAINED[1]);
       setTurns((all) => ({ ...all, [id]: [...(all[id] ?? []), { q, a }] }));
     } finally {
       setAsking(null);
@@ -205,7 +200,7 @@ export function ClinicalPlan({ draft, onSave, saving }: { draft: PostDraft; onSa
                 return t ? explainQuestion(t, result) : "";
               })();
       if (!part) continue;
-      const answer = (await explain(result, part)) || L(NOT_EXPLAINED[0], NOT_EXPLAINED[1]);
+      const answer = (await explain(result, part, [], previous)) || L(NOT_EXPLAINED[0], NOT_EXPLAINED[1]);
       // explained again from the start: what was asked under it before is replaced
       setTurns((all) => ({ ...all, [id]: [{ q: part, a: answer }] }));
       setProgress((n) => n + 1);
@@ -325,34 +320,12 @@ export function ClinicalPlan({ draft, onSave, saving }: { draft: PostDraft; onSa
       {/* the two ways on: save to the to-do list, or have the unclear lines explained first */}
       {phase === "choose" && (
         <div className="grid gap-3">
-          {/* 关联 pre: which earlier "before the doctor" record this visit is about, or none */}
-          <Card className="p-5">
-            <label htmlFor="post-link" className="flex items-center gap-2 text-lg font-semibold text-ink">
-              <Link2 aria-hidden="true" className="h-5 w-5 text-brand-700" />
-              {L("关联看病前的记录", "Link to a “before the doctor” record")}
-            </label>
-            <p className="t-body mt-1 text-ink-2">{L("这次看病是为了哪一次的不舒服？关联后会存在同一条记录下。", "Which complaint was this visit about? Linked, it is kept with that record.")}</p>
-            <Select
-              id="post-link"
-              className="mt-3 w-full"
-              value={linked ?? ""}
-              onChange={(e) => storeActions.patchPostDraft((d) => ({ ...d, episodeId: e.target.value || null }))}
-            >
-              <option value="">{L("不关联", "Don't link")}</option>
-              {records.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.title} · {fmtDate(e.startedAt)}
-                  {e.status === "active" ? "" : L("（已好了）", " (got better)")}
-                </option>
-              ))}
-            </Select>
-          </Card>
           <Button
             size="lg"
             className="press w-full"
             disabled={saving || asking != null}
             // what was explained, follow-ups included, goes with each line onto the to-do list
-            onClick={() => onSave(todos.filter((t) => picked.includes(t.id)).map((t) => ({ ...t, explain: turnsText(turns[t.id]) })), linked)}
+            onClick={() => onSave(todos.filter((t) => picked.includes(t.id)).map((t) => ({ ...t, explain: turnsText(turns[t.id]) })))}
           >
             {saving ? L("正在保存…", "Saving…") : picked.length ? L(`加入待办并保存（${picked.length} 条）`, `Save and add to to-do (${picked.length})`) : L("只保存，不加待办", "Save only, no to-do")}
           </Button>

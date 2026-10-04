@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     (x): x is string => typeof x === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(x) && x.length <= MAX_IMAGE_CHARS,
   );
   if (!text && !images.length) return NextResponse.json({ error: "缺少 text 或 images" }, { status: 400 });
-  const request: AfterRequest = { profile: body.profile, episode: body.episode ?? null, text: text || undefined };
+  const request: AfterRequest = { profile: body.profile, episode: body.episode ?? null, text: text || undefined, previous: typeof body.previous === "string" ? body.previous.slice(0, 3000) : undefined };
 
   if (images.length) {
     if (!glmConfigured()) {

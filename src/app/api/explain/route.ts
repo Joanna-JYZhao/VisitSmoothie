@@ -11,7 +11,7 @@ const list = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => ty
 
 /** 医嘱 b: explains one part of the doctor's orders in plain words. */
 export async function POST(req: Request) {
-  let body: { profile?: Profile; result?: AfterResult; part?: string; history?: unknown; lang?: unknown };
+  let body: { profile?: Profile; result?: AfterResult; part?: string; history?: unknown; previous?: unknown; lang?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
   if (!glmConfigured()) return NextResponse.json({ mode: "fallback", answer: fallbackExplain(result, part) });
   try {
-    const raw = await glmJSON<{ answer?: unknown }>(buildExplainMessages(profile, result, part, history), { maxTokens: 700, temperature: 0.3, timeoutMs: 45_000 });
+    const raw = await glmJSON<{ answer?: unknown }>(buildExplainMessages(profile, result, part, history, typeof body.previous === "string" ? body.previous.slice(0, 3000) : undefined), { maxTokens: 700, temperature: 0.3, timeoutMs: 45_000 });
     const answer = guardExplain(typeof raw?.answer === "string" ? raw.answer : "", profile, result, part);
     return NextResponse.json({ mode: "glm", answer: answer || fallbackExplain(result, part) });
   } catch (err) {

@@ -1,6 +1,6 @@
 import type { AfterResult, AskRecord, Profile } from "../types";
 import type { GlmMessage } from "./glm";
-import { profileContext } from "./prompts";
+import { previousBlock, profileContext } from "./prompts";
 import { ASK_BEFORE_STOPPING, guardAnswer } from "./askAI";
 import type { AfterMedication } from "../types";
 import { getLang } from "../lang";
@@ -105,7 +105,7 @@ export interface ExplainTurn {
  * `history`: what was already asked and answered about this same line. The new `part` is then a
  * follow-up ("漏吃了一次怎么办"), answered about that line and without repeating what was said.
  */
-export function buildExplainMessages(profile: Profile, r: AfterResult, part: string, history: ExplainTurn[] = []): GlmMessage[] {
+export function buildExplainMessages(profile: Profile, r: AfterResult, part: string, history: ExplainTurn[] = [], previous?: string): GlmMessage[] {
   const earlier = history.flatMap((t, i) => [
     { role: "user" as const, content: i === 0 ? `请解释：${t.q}` : t.q },
     { role: "assistant" as const, content: JSON.stringify({ answer: t.a }) },
@@ -114,7 +114,11 @@ export function buildExplainMessages(profile: Profile, r: AfterResult, part: str
     ? `接着问上面这一条：${part}\n（只回答这个问题，前面讲过的不要重复；还是只讲这一条。）`
     : `请解释：${part}`;
   return [
-    { role: "system", content: `${EXPLAIN_SYSTEM}\n\n---\n\n${profileContext(profile)}\n\n【这次的医嘱】\n${ordersText(r)}\n\n${explainStyle(profile)}` },
+    {
+      role: "system",
+      // 复诊: the earlier visit is part of the context, so the explanation says what is new or changed instead of repeating it
+      content: `${EXPLAIN_SYSTEM}\n\n---\n\n${profileContext(profile)}\n\n【这次的医嘱】\n${ordersText(r)}${previous ? `\n\n${previousBlock(previous)}\n（讲的时候结合上一次：药或做法跟上次一样的就说“和上次一样，继续”，变了的说清楚变在哪；上次已经讲过的不再展开。）` : ""}\n\n${explainStyle(profile)}`,
+    },
     ...earlier,
     { role: "user", content: `${ask}\n\n（请只输出一个 JSON 对象，包含 answer 字段）` },
   ];

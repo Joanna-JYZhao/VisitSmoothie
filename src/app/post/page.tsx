@@ -8,7 +8,9 @@ import { getState, storeActions, useStore } from "@/lib/store";
 import { createBusy } from "@/lib/busy";
 import { StartOver } from "@/components/StartOver";
 import { PhotoError, organizeVisit } from "@/lib/ai/client";
-import { saveAfter } from "@/lib/after";
+import { followUpDate, saveAfter } from "@/lib/after";
+import { nextVisitFrom, planFrom, previousContext } from "@/lib/records";
+import { RecordLinkPicker, type RecordLink } from "@/components/RecordLinkPicker";
 import { setReminders } from "@/lib/reminders";
 import { clipText, type LongTranscript } from "@/lib/audio";
 import { compressImage } from "@/lib/image";
@@ -24,9 +26,9 @@ const MAX_PHOTOS = 6;
 /** Prescriptions have small print: photos are sent larger than elsewhere. */
 const PHOTO_SIDE = 2000;
 
-/** The complaint being tracked most recently, which this visit is most likely about. */
-const latestActive = (episodes: Episode[]) =>
-  [...episodes].filter((e) => e.status === "active").sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] ?? null;
+/** The pre record most likely written before this visit: the newest complaint still followed, not yet seen by a doctor. */
+const latestPre = (episodes: Episode[]) =>
+  [...episodes].filter((e) => e.status === "active" && !e.visit).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] ?? null;
 
 /**
  * Reading the photos and the recording takes up to a minute, and the patient may go to another page
@@ -60,6 +62,12 @@ export default function PostPage() {
   const plan = state.postDraft ?? null;
   const [saving, setSaving] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  // which records this visit goes with, picked above the recording and the upload: the pre record of
+  // this visit (one record with it), and the earlier record it follows up (复诊)
+  const [link, setLink] = useState<RecordLink>(() => {
+    const pre = latestPre(getState().episodes);
+    return { pre: pre?.id ?? null, followUpOf: pre?.followUpOf ?? null };
+  });
   const router = useRouter();
   const toast = useToast();
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -80,7 +88,9 @@ export default function PostPage() {
   const organize = async () => {
     const s = getState();
     if (!s.profile) return;
-    const about = latestActive(s.episodes);
+    const about = s.episodes.find((e) => e.id === link.pre) ?? null;
+    // 复诊: the earlier record, read by the assistant as the context of this visit
+    const followUpOf = link.followUpOf ?? about?.followUpOf ?? null;
     const text = transcript?.text ? clipText(transcript.text, 4000) : "";
     if (organizing.has(ORGANIZE)) return;
     organizing.start(ORGANIZE);
@@ -93,9 +103,10 @@ export default function PostPage() {
           : null,
         text: text || undefined,
         images: photos.length ? photos : undefined,
+        previous: previousContext(s, followUpOf),
       });
       // nothing is filed yet: the patient looks it over in the Clinical Plan and saves from there
-      storeActions.setPostDraft(newPostDraft(res.result, res.mode, text, about?.id ?? null));
+      storeActions.setPostDraft({ ...newPostDraft(res.result, res.mode, text, about?.id ?? null), followUpOf });
       setPhotos([]);
       setTranscript(null);
       window.scrollTo({ top: 0 });
@@ -115,12 +126,19 @@ export default function PostPage() {
 
   if (plan) {
     // 加入待办并保存: the visit goes on record (with the pre record picked), the lines ticked go on the to-do list (with what was explained), and back home
-    const save = (todos: Todo[], episodeId: string | null) => {
+    const save = (todos: Todo[]) => {
       setSaving(true);
       // linked to a pre record: the visit goes into that record, so pre and post are one record;
-      // what was asked about the orders and explained is kept with it
+      // what was asked about the orders and explained is kept with it, with the plan and the next visit
+      const episodeId = plan.episodeId && getState().episodes.some((e) => e.id === plan.episodeId) ? plan.episodeId : null;
       const learned = learnedOf(plan);
-      saveAfter(plan.result, episodeId, plan.mode, plan.text, learned);
+      const followUpAt = followUpDate(plan.result);
+      const visitDay = plan.result.date ? `${plan.result.date}T09:00:00` : new Date().toISOString();
+      saveAfter(plan.result, episodeId, plan.mode, plan.text, learned, {
+        planItems: planFrom(plan.todos, new Date(visitDay).toISOString(), followUpAt),
+        next: nextVisitFrom(plan.result, plan.todos, followUpAt),
+        followUpOf: plan.followUpOf ?? null,
+      });
       const set = setReminders(todos, episodeId, Date.now(), { all: true });
       storeActions.setPostDraft(null);
       const linked = episodeId ? getState().episodes.find((e) => e.id === episodeId)?.title : null;
@@ -148,6 +166,12 @@ export default function PostPage() {
         >
           {L("这次看医生的结果", "Results of this visit")}
         </PageTitle>
+        {/* which records this visit goes with: still open to change until it is saved */}
+        <RecordLinkPicker
+          mode="post"
+          value={{ pre: plan.episodeId, followUpOf: plan.followUpOf ?? null }}
+          onChange={(v) => storeActions.patchPostDraft((d) => ({ ...d, episodeId: v.pre ?? null, followUpOf: v.followUpOf ?? null }))}
+        />
         <ClinicalPlan draft={plan} onSave={save} saving={saving} />
         <StartOver
           confirming={confirmNew}
@@ -229,6 +253,8 @@ export default function PostPage() {
       />
 
       <div className="space-y-6">
+        {/* which records this visit goes with, picked first so the assistant reads them while it sorts the orders out */}
+        <RecordLinkPicker mode="post" value={link} onChange={setLink} />
         {/* the two doors, one above the other: record, or photograph */}
         <div className="space-y-5">
           <div className="rise-1">

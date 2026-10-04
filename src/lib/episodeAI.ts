@@ -27,6 +27,7 @@ import {
   uid,
 } from "./utils";
 import { metricsContextText } from "./metrics";
+import { previousContext } from "./records";
 import { L, inChinese } from "./lang";
 
 /*
@@ -160,6 +161,8 @@ export async function requestReply(id: string, kind?: ChatKind, opts: { silent?:
         localTime: fmtDate(new Date(), { year: true, weekday: true, time: true }),
         others: otherActive(episode, state.episodes) || undefined,
       })),
+      // 复诊: the earlier record, so the questions build on it and remind the patient what to say
+      previous: previousContext(state, episode.followUpOf),
     });
 
     const now = nowISO();

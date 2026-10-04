@@ -15,8 +15,10 @@ import {
   saveOrders,
   sendTurn,
   startOverPre,
+  unfinishedEpisodes,
   useThreadBusy,
 } from "@/lib/thread";
+import { RecordLinkPicker } from "@/components/RecordLinkPicker";
 import { StartOver } from "@/components/StartOver";
 import { draftChoiceOf, draftChoices, draftPrompt, isDraftPrompt, unsavedCards } from "@/lib/drafts";
 import { Thread } from "@/components/chat/Thread";
@@ -147,6 +149,9 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   // 开新的 is there as soon as anything has been said: an unfinished round is dropped with it,
   // a finished one just leaves the page (what was saved stays saved)
   const unfinished = inProgress(state.thread, state.episodes);
+  // the complaint of the round under way, if there is one
+  const currentId = unfinished ? unfinishedEpisodes(state.thread, state.episodes).at(-1) : undefined;
+  const current = currentId ? state.episodes.find((e) => e.id === currentId) : undefined;
   const going = !busy && (unfinished || !opening);
 
   /*
@@ -209,6 +214,17 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
             </div>
           )
         )}
+        {/* 复诊: link the earlier record, right above where one types; the assistant reads it while it asks */}
+        <RecordLinkPicker
+          mode="pre"
+          value={{ followUpOf: current?.followUpOf ?? state.preFollowUpOf ?? null }}
+          exclude={current ? [current.id] : []}
+          onChange={(v) => {
+            storeActions.setPreFollowUpOf(v.followUpOf ?? null);
+            // a round already under way takes it at once
+            if (current) storeActions.setFollowUpOf(current.id, v.followUpOf ?? null);
+          }}
+        />
         <Composer onSend={say} onPhotos={(files) => void photos(files)} disabled={busy} />
       </div>
     </div>

@@ -3,17 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ChartLine, ChevronDown, FileSearch, History, Lightbulb, ListOrdered, Stethoscope } from "lucide-react";
+import { FileSearch, FileText, MessageCircle, Stethoscope } from "lucide-react";
 import type { Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { useRelatedEpisodes } from "@/lib/episodeAI";
-import { cn, episodeLine, fmtDate, roughDuration, severitySeries } from "@/lib/utils";
+import { cn, fmtDate, roughDuration } from "@/lib/utils";
 import { L } from "@/lib/lang";
-import { HintBanner } from "@/components/HintBanner";
-import { SeverityChart } from "@/components/SeverityChart";
-import { Timeline } from "@/components/Timeline";
+import { EpisodeSheet } from "@/components/EpisodeSheet";
+import { RecordLinks, VisitPlanView } from "@/components/VisitPlanView";
 import { useToast } from "@/components/Toast";
-import { Badge, Button, Card, IconTile, LinkButton, Modal, Notice, PageHeader, RowLink, SectionTitle, focusRing } from "@/components/ui";
+import { Badge, Button, Card, IconTile, LinkButton, Modal, Notice, PageHeader, SectionTitle, focusRing } from "@/components/ui";
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -46,12 +44,14 @@ function CardTitle({ icon, tone = "brand", children }: { icon: React.ReactNode; 
   );
 }
 
-/** Everything kept about one symptom: nothing is thrown away, it just lives here instead of on the home screen. */
+/**
+ * A pre record (with the visit filed into it when post was linked): what pre wrote up for the doctor,
+ * the conversation, and what post put on the record. Nothing else.
+ */
 function Detail({ episode: e }: { episode: Episode }) {
   const { setStatus, deleteEpisode, restoreEpisode } = useStore();
   const router = useRouter();
   const toast = useToast();
-  const related = useRelatedEpisodes(e);
   const [confirming, setConfirming] = useState(false);
   const active = e.status === "active";
   const v = e.visit;
@@ -89,118 +89,27 @@ function Detail({ episode: e }: { episode: Episode }) {
         }
       />
 
-      {e.lastHint && active && <HintBanner hint={e.lastHint} />}
+      <RecordLinks id={e.id} />
 
-      <div className="grid animate-rise grid-cols-2 gap-2.5 rise-1">
-        <LinkButton href={`/doctor/${e.id}`} size="lg" className="press">
-          {L("给医生看", "Show the doctor")}
-        </LinkButton>
-        <LinkButton href={`/episodes/${e.id}`} variant="outline" size="lg" className="press">
-          {L("看对话", "See the chat")}
-        </LinkButton>
-      </div>
+      {/* 1. what pre wrote up for the doctor: the same as the PDF */}
+      <section className="space-y-3">
+        <CardTitle icon={<FileText />}>{L("给医生看", "For the doctor")}</CardTitle>
+        <EpisodeSheet episode={e} embedded />
+      </section>
 
-      {v && (
-        // what the doctor said is the record that matters most here: the raised card
-        <Card tone="raised" className="animate-rise px-4 pt-4 pb-1 rise-2">
-          <CardTitle icon={<Stethoscope />}>{L("看医生的结果", "What the doctor said")}</CardTitle>
-          <dl className="divide-y divide-line text-lg leading-relaxed [&>div]:py-4 [&>div:first-child]:pt-1">
-            <div>
-              <dt className="text-base font-medium text-ink-2 tabular">
-                {fmtDate(`${v.date}T12:00:00`, { year: true })}
-                {[v.hospital, v.department].filter(Boolean).length ? ` · ${[v.hospital, v.department].filter(Boolean).join(" ")}` : ""}
-              </dt>
-              <dd className="t-heading mt-1 text-ink">{v.diagnosis}</dd>
-            </div>
-            {v.findings && v.findings.length > 0 && (
-              <div>
-                <dt className="text-base font-medium text-ink-2">{L("检查结果", "Test results")}</dt>
-                <dd className="mt-1 text-ink">{v.findings.join("；")}</dd>
-              </div>
-            )}
-            <div>
-              <dt className="text-base font-medium text-ink-2">{L("开的药和处理", "Medicines and treatment")}</dt>
-              <dd className="mt-1 text-ink">{v.treatment}</dd>
-            </div>
-            {v.advice && (
-              <div>
-                <dt className="text-base font-medium text-ink-2">{L("医生的叮嘱", "The doctor's advice")}</dt>
-                <dd className="mt-1 text-ink">{v.advice}</dd>
-              </div>
-            )}
-            {v.followUp && (
-              <div>
-                <dt className="text-base font-medium text-ink-2">{L("复查", "Follow-up visit")}</dt>
-                <dd className="mt-1 text-ink">
-                  {v.followUp}
-                  {v.followUpAt ? L(`（${fmtDate(v.followUpAt)}提醒你）`, ` (reminder on ${fmtDate(v.followUpAt)})`) : ""}
-                </dd>
-              </div>
-            )}
-            {v.archiveSummary && (
-              <div>
-                <dt className="text-base font-medium text-ink-2">{L("存档摘要", "Saved summary")}</dt>
-                <dd className="mt-1 text-ink">{v.archiveSummary}</dd>
-              </div>
-            )}
-          </dl>
-        </Card>
-      )}
-
-      {v?.learned && v.learned.length > 0 && (
-        // what was asked about the orders after the visit and explained: part of the same record
-        <Card className="animate-rise px-4 pt-4 pb-2 rise-2">
-          <CardTitle icon={<Lightbulb />}>{L("看完医生后了解到的", "What I learned after the visit")}</CardTitle>
-          <ul className="divide-y divide-line">
-            {v.learned.map((x, i) => (
-              <li key={i}>
-                <details className="group py-3">
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-lg font-medium text-ink [&::-webkit-details-marker]:hidden">
-                    <span className="min-w-0">{x.about}</span>
-                    <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-200 group-open:rotate-180" />
-                  </summary>
-                  <p className="t-body mt-2 rounded-2xl bg-brand-50/70 px-4 py-3 whitespace-pre-line text-ink">{x.text}</p>
-                </details>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {severitySeries(e).length >= 2 && (
-        <Card className="animate-rise p-4 rise-3">
-          <CardTitle icon={<ChartLine />}>{L("难受程度的变化", "How bad it has been")}</CardTitle>
-          <SeverityChart entries={e.entries} />
-        </Card>
-      )}
-
-      <Card className="animate-rise p-4 rise-4">
-        <CardTitle icon={<ListOrdered />}>{L("全部记录", "All records")}</CardTitle>
-        <div className="pt-1">
-          <Timeline episode={e} />
-        </div>
+      {/* 2. how pre got there: the conversation */}
+      <Card className="no-print animate-rise px-4 pt-4 pb-2">
+        <CardTitle icon={<MessageCircle />}>{L("对话过程", "The conversation")}</CardTitle>
+        <Transcript episode={e} />
       </Card>
 
-      {related.length > 0 && (
-        <Card className="animate-rise overflow-hidden rise-4">
-          <div className="px-4 pt-4">
-            <CardTitle icon={<History />} tone="neutral">
-              {L("以前类似的情况", "Similar times before")}
-            </CardTitle>
-          </div>
-          <div className="divide-y divide-line border-t border-line">
-            {related.map((r) => (
-              <RowLink
-                key={r.id}
-                href={`/episodes/${r.id}/detail`}
-                title={r.title}
-                detail={`${fmtDate(r.startedAt, { year: true })} · ${episodeLine(r)}`}
-              />
-            ))}
-          </div>
-        </Card>
+      {/* 3. what post put on the record: the plan and where it stands, the next visit, what was asked */}
+      {v && (
+        <section className="space-y-3">
+          <CardTitle icon={<Stethoscope />}>{L("看医生之后", "After the doctor")}</CardTitle>
+          <VisitPlanView id={e.id} />
+        </section>
       )}
-
       {/* what can still be done with this record: one white group of rows, the delete on its own below */}
       <Card className="divide-y divide-line overflow-hidden">
         {active ? (
@@ -250,5 +159,29 @@ function Detail({ episode: e }: { episode: Episode }) {
         {L("这次的全部记录、对话和看医生的结果都会删掉。", "All records, the chat and the doctor's results for this will be deleted.")}
       </Modal>
     </div>
+  );
+}
+
+/** The conversation in pre, as it went: the patient on the right, the assistant on the left. */
+function Transcript({ episode: e }: { episode: Episode }) {
+  if (!e.messages.length) return <p className="t-body py-3 text-ink-2">{L("没有对话。", "No conversation.")}</p>;
+  return (
+    <ol className="space-y-2.5 py-2">
+      {e.messages.map((m) => {
+        const mine = m.role === "user";
+        return (
+          <li key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+            <p
+              className={cn(
+                "max-w-[85%] rounded-2xl px-4 py-2.5 text-base leading-relaxed whitespace-pre-wrap",
+                mine ? "rounded-br-md bg-brand-600 text-white" : "rounded-bl-md bg-surface-2 text-ink",
+              )}
+            >
+              {m.content.replace(/^【定时记录】/, "")}
+            </p>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

@@ -17,6 +17,7 @@ import type {
   Lang,
   Measurement,
   NewThreadItem,
+  PlanItem,
   PostDraft,
   Profile,
   Reminder,
@@ -97,6 +98,12 @@ export interface StoreApi {
   setPostDraft: (draft: PostDraft | null) => void;
   /** Changes the Clinical Plan being looked over, if there still is one. */
   patchPostDraft: (fn: (d: PostDraft) => PostDraft) => void;
+  /** Ends one line of a saved plan by hand (or, with `ended` false, takes the ending back). */
+  endPlanItem: (recordId: string, itemId: string, ended?: boolean) => void;
+  /** pre: the earlier record the conversation follows up (复诊), or null for none. */
+  setPreFollowUpOf: (id: string | null) => void;
+  /** Marks a record as the follow-up (复诊) of an earlier one, or not. */
+  setFollowUpOf: (recordId: string, of: string | null) => void;
   addReminders:(list: Omit<Reminder, "id" | "createdAt">[]) => Reminder[];
   updateReminder: (id: string, fn: (r: Reminder) => Reminder) => void;
   removeReminder: (id: string) => void;
@@ -352,7 +359,12 @@ export function reloadAccount() {
   serverVersion = 0;
   forgetWelcome();
   listeners.forEach((l) => l());
-  void hydrateFromServer();
+  // the language chosen on the way in (welcome, login) is the language of the app from here on;
+  // it is changed afterwards only in 设置
+  const lang = deviceLang();
+  void hydrateFromServer().then(() => {
+    if (currentAccountId() && read().settings.lang !== lang) storeActions.setLanguage(lang);
+  });
 }
 
 const serverSnapshot = () => EMPTY;
@@ -398,6 +410,8 @@ const actions: Omit<StoreApi, "state" | "ready"> = {
     const related = findSimilarEpisodes(read().episodes, { title, tags }).map((e) => e.id);
     const ep: Episode = {
       id: uid(),
+      // 复诊 picked above the input in pre: this record follows up that earlier one
+      ...(read().preFollowUpOf ? { followUpOf: read().preFollowUpOf } : {}),
       title,
       tags,
       status: "active",
@@ -539,6 +553,23 @@ const actions: Omit<StoreApi, "state" | "ready"> = {
   clearThread: () => update((prev) => ({ ...prev, thread: [] })),
   setPostDraft: (draft) => update((prev) => ({ ...prev, postDraft: draft })),
   patchPostDraft: (fn) => update((prev) => (prev.postDraft ? { ...prev, postDraft: fn(prev.postDraft) } : prev)),
+  endPlanItem: (recordId, itemId, ended = true) =>
+    update((prev) => {
+      const at = ended ? nowISO() : null;
+      const patch = (items?: PlanItem[]) => items?.map((p) => (p.id === itemId ? { ...p, endedAt: at } : p));
+      return {
+        ...prev,
+        episodes: prev.episodes.map((e) => (e.id === recordId && e.visit ? { ...e, visit: { ...e.visit, planItems: patch(e.visit.planItems) } } : e)),
+        followUps: prev.followUps.map((f) => (f.id === recordId ? { ...f, planItems: patch(f.planItems) } : f)),
+      };
+    }),
+  setPreFollowUpOf: (id) => update((prev) => ({ ...prev, preFollowUpOf: id })),
+  setFollowUpOf: (recordId, of) =>
+    update((prev) => ({
+      ...prev,
+      episodes: prev.episodes.map((e) => (e.id === recordId ? { ...e, followUpOf: of } : e)),
+      followUps: prev.followUps.map((f) => (f.id === recordId ? { ...f, followUpOf: of } : f)),
+    })),
   addReminders: (list) => {
     const made: Reminder[] = list.map((r) => ({ id: uid(), createdAt: nowISO(), ...r }));
     update((prev) => ({ ...prev, reminders: [...prev.reminders, ...made] }));
