@@ -54,45 +54,73 @@ import {
 const CHEST = /胸痛|胸闷|胸口.{0,4}(痛|疼|闷|压|紧)|心口.{0,3}(痛|疼)|心前区/;
 const BREATH = /呼吸困难|喘不上气|喘不过气|上不来气|透不过气|憋得慌|窒息|嘴唇发紫/;
 
-const URGENT: { re: RegExp; text: string }[] = [
+/** Each Chinese danger sign with what to say about it in English (when the interface is English). */
+const URGENT: { re: RegExp; text: string; en: string }[] = [
   {
     re: CHEST,
     text: "胸口痛、胸口闷不能拖。如果还喘不上气、出冷汗，或者痛到左胳膊、下巴，请立即拨打 120 或去急诊。",
+    en: "Chest pain or tightness can't wait. If you are also short of breath, sweating, or the pain spreads to your left arm or jaw, call 120 or go to the emergency department now.",
   },
   {
     re: BREATH,
     text: "喘不上气是危险信号，请立即就医或拨打 120。",
+    en: "Trouble breathing is a danger sign. Get medical help now or call 120.",
   },
   {
     re: /昏迷|晕倒|晕过去|昏过去|意识不清|意识模糊|神志不清|叫不醒|抽搐/,
     text: "神志不清或抽搐是急症，请立即拨打 120。",
+    en: "Fainting, confusion or a seizure is an emergency. Call 120 now.",
   },
   {
     re: /呕血|吐血|咳血|便血|黑便|柏油|血尿|大出血|大便.{0,8}(黑|血)|拉.{0,2}血|吐.{0,4}血/,
     text: "吐血、便血或大便发黑是危险信号，请立即去急诊。",
+    en: "Vomiting blood, blood in the stool or black stool is a danger sign. Go to the emergency department now.",
   },
   {
     re: /剧烈|撕裂|刀割|无法忍受|受不了|痛得打滚|疼得打滚/,
     text: "痛得受不了的时候不要硬扛，建议尽快去急诊。",
+    en: "Don't put up with pain this bad. Go to the emergency department soon.",
   },
   {
     re: /(39|40|41)(\.\d)?\s*(度|℃|°)|高热不退|高烧不退|烧到 ?(39|40|41)/,
     text: "烧到 39 度以上请尽快就医，路上注意多喝水。",
+    en: "A temperature of 39 °C or more needs a doctor soon. Drink plenty on the way.",
   },
   {
     re: /口齿不清|说话不清|嘴歪|口角歪|半边.{0,4}(麻|无力|不能动)|一侧.{0,4}(麻|无力)|看东西重影/,
     text: "一侧手脚发麻无力、说话不清或看东西重影是危险信号，请立即拨打 120。",
+    en: "Weakness or numbness on one side, slurred speech or double vision is a danger sign. Call 120 now.",
   },
   {
     re: /喉咙.{0,4}(肿|发紧)|嘴唇.{0,3}肿|过敏.{0,8}(喘|呼吸)|全身.{0,4}(皮疹|起疹|风团)/,
     text: "嘴唇或喉咙肿、全身起疹子是危险信号。如果喉咙发紧或者喘不上气，请立即就医或拨打 120。",
+    en: "A swollen throat or lips, or a rash all over, is a danger sign. If your throat feels tight or you can't breathe, call 120 now.",
   },
-  { re: /怀孕.*(出血|腹痛|肚子痛)|孕.*(出血|腹痛)/, text: "怀孕期间肚子痛或出血，请立即去产科急诊。" },
+  { re: /怀孕.*(出血|腹痛|肚子痛)|孕.*(出血|腹痛)/, text: "怀孕期间肚子痛或出血，请立即去产科急诊。", en: "Pain or bleeding in pregnancy: go to the obstetric emergency department now." },
 ];
 
-/** A danger signal in a sentence, in Chinese or in English (the app may be in either). */
+/**
+ * A danger signal in a sentence, in Chinese or in English (the app may be in either), whatever
+ * the interface language. Said in the interface language: a Chinese sentence typed while the
+ * interface is English still raises the alarm, in English.
+ */
 export function detectUrgent(text: string): Hint | null {
+  if (getLang() === "en") return urgentEn(text) ?? urgentZhInEnglish(text);
   return inChinese(() => urgentIn(text)) ?? urgentEn(text);
+}
+
+/** The Chinese danger signs, with the warning in English. */
+export function urgentZhInEnglish(text: string): Hint | null {
+  const chest = text.match(CHEST);
+  const breath = text.match(BREATH);
+  if (chest && breath && mentions(text, chest[0]) && mentions(text, breath[0])) {
+    return { level: "urgent", text: "Chest discomfort together with trouble breathing is a danger sign. Call 120 or go to the emergency department now. Don't drive yourself." };
+  }
+  for (const u of URGENT) {
+    const m = text.match(u.re);
+    if (m && mentions(text, m[0])) return { level: "urgent", text: u.en };
+  }
+  return null;
 }
 
 function urgentIn(text: string): Hint | null {
@@ -120,7 +148,7 @@ export function instantAlert(text: string): Hint | null {
     const reading = extractMeasurements(text)
       .map((m) => evaluateMeasurement(m))
       .find((h): h is Hint => h != null && h.level === "urgent");
-    return reading ?? urgentEn(text) ?? inChinese(() => urgentIn(text));
+    return reading ?? urgentEn(text) ?? urgentZhInEnglish(text);
   }
   return inChinese(() => alertIn(text));
 }
@@ -1065,7 +1093,16 @@ const CHANGE_WORDS = /痛|疼|晕|吐|泻|烧|咳|痒|胀|麻|缓解|加重|反�
 
 export function fallbackChat(req: ChatRequest): ChatResponse {
   // the Chinese rules cannot read English answers: in English a plain list of questions is asked instead
-  if (getLang() === "en") return fallbackChatEn(req);
+  if (getLang() === "en") {
+    const res = fallbackChatEn(req);
+    if (res.hint?.level === "urgent") return res;
+    // the English rules only read English: a danger sign typed in Chinese is still caught
+    const said = [...req.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    const urgent = urgentZhInEnglish(said);
+    return urgent
+      ? { ...res, reply: "Got it. This needs attention right now. Please read the red note below.", suggestedReplies: ["I'm getting help now", "It has eased"], hint: urgent, done: false }
+      : res;
+  }
   return inChinese(() => chatByRule(req));
 }
 

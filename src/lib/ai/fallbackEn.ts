@@ -20,17 +20,20 @@ function says(text: string, re: RegExp): boolean {
   return false;
 }
 
-const CHEST = /chest (pain|tight|pressure|hurt|ache)|pain in (my|the) chest|tight chest/i;
-const BREATH = /can'?t breathe|cannot breathe|short(ness)? of breath|hard to breathe|trouble breathing|struggling to breathe|out of breath|gasping/i;
+const CHEST = /chest (pain|tight|pressure|hurt|ache|discomfort)|(pain|pressure|tightness|squeezing) in (my|the) chest|(tight|crushing|heavy) chest|my chest (hurts|is tight|feels tight|feels heavy)|heart (pain|hurts)/i;
+const BREATH = /can'?t breathe|cannot breathe|can'?t catch (my|his|her) breath|short(ness)? of breath|hard to breathe|trouble breathing|struggling to breathe|out of breath|gasping|suffocat|choking|lips (are |have |look )?(turned |turning |gone |going )?(blue|purple)/i;
 
 const URGENT_EN: { re: RegExp; text: string }[] = [
+  // chest pain on its own can't wait either (the same as the Chinese rules)
+  { re: CHEST, text: "Chest pain or tightness can't wait. If you are also short of breath, sweating, or the pain spreads to your left arm or jaw, call 120 or go to the emergency department now." },
   { re: BREATH, text: "Trouble breathing is a danger sign. Get medical help now or call 120." },
-  { re: /faint(ed|ing)?|passed out|unconscious|won'?t wake|confus(ed|ion)|seizure|fit(s)? |convuls/i, text: "Fainting, confusion or a seizure is an emergency. Call 120 now." },
-  { re: /vomit(ing|ed)? blood|throw(ing)? up blood|cough(ing|ed)? (up )?blood|blood in (my|the) (stool|poo|urine|pee)|black (stool|poo)|tarry stool|heavy bleeding/i, text: "Vomiting blood, blood in the stool or black stool is a danger sign. Go to the emergency department now." },
-  { re: /unbearable|worst (pain|headache) (of my life|ever)|can'?t stand the pain|excruciating|tearing pain/i, text: "Don't put up with pain this bad. Go to the emergency department soon." },
-  { re: /(39|40|41)(\.\d)?\s*(°|degrees|℃|c\b)|high fever (that )?(won'?t|doesn'?t) (go down|break)/i, text: "A temperature of 39 °C or more needs a doctor soon. Drink plenty on the way." },
-  { re: /slurred speech|can'?t (speak|talk) (properly|clearly)|face (is )?droop|one side of (my|the) (body|face)|numb on one side|weak on one side|double vision/i, text: "Weakness or numbness on one side, slurred speech or double vision is a danger sign. Call 120 now." },
-  { re: /(throat|lips?|tongue) (is |are )?(swell|swollen|tight)|hives all over|rash all over/i, text: "A swollen throat or lips, or a rash all over, is a danger sign. If your throat feels tight or you can't breathe, call 120 now." },
+  { re: /faint(ed|ing)?|passed out|blacked out|collapsed|unconscious|won'?t wake|confus(ed|ion)|seizure|fit(s)? |convuls/i, text: "Fainting, confusion or a seizure is an emergency. Call 120 now." },
+  // black or tar-like stool in any word order: "my stool was black like tar", "black, tarry poo", "poop is black"
+  { re: /vomit(ing|ed)? (up )?blood|throw(ing|n)? up blood|threw up blood|blood in (my|the) (vomit|sick|stool|stools|poo|poop|urine|pee)|cough(ing|ed)? (up )?blood|(stool|stools|poo|poop|bowel movements?)\b[^.!?]{0,25}\b(black|tarry|like tar|bloody)|\bblack\b[^.!?]{0,15}\b(stool|stools|poo|poop)|tarry|tar-like|like tar|melena|bloody (stool|stools|poo|poop|vomit|diarrh)|(pooping|passing|peeing) blood|heavy bleeding|bleeding (a lot|heavily|badly|won'?t stop)|massive bleeding/i, text: "Vomiting blood, blood in the stool or black stool is a danger sign. Go to the emergency department now." },
+  { re: /unbearable|worst (pain|headache) (of my life|ever)|can'?t (stand|bear|take) the pain|excruciating|tearing pain|like a knife|rolling (around )?in pain/i, text: "Don't put up with pain this bad. Go to the emergency department soon." },
+  { re: /(39|40|41)(\.\d)?\s*(°|degrees|℃|c\b)|(10[2-6])(\.\d)?\s*(°\s*f\b|degrees f\b|fahrenheit|f\b)|high fever (that )?(won'?t|doesn'?t) (go down|break)/i, text: "A temperature of 39 °C or more needs a doctor soon. Drink plenty on the way." },
+  { re: /slurred speech|can'?t (speak|talk) (properly|clearly)|face (is )?droop|mouth (is )?(drooping|crooked|twisted)|one side of (my|the) (body|face)|numb on one side|weak on one side|can'?t (lift|move) (my )?(left|right|one) (arm|leg)|double vision/i, text: "Weakness or numbness on one side, slurred speech or double vision is a danger sign. Call 120 now." },
+  { re: /(throat|lips?|tongue) (is |are |feels |is getting )?(swell|swollen|tight)|swelling (of|in) (my |the )?(lips?|tongue|throat)|hives all over|rash all over|allergic reaction[^.!?]{0,30}(breath|throat)/i, text: "A swollen throat or lips, or a rash all over, is a danger sign. If your throat feels tight or you can't breathe, call 120 now." },
   { re: /pregnan[a-z]* .{0,30}(bleed|pain)|(bleed|pain).{0,30}pregnan/i, text: "Pain or bleeding in pregnancy: go to the obstetric emergency department now." },
 ];
 

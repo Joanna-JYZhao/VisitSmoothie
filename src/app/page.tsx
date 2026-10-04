@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AlertCircle, AlertTriangle, ChevronRight, ListChecks, MessageCircle, MessageCircleQuestion } from "lucide-react";
+import { AlertCircle, AlertTriangle, BookOpen, ChevronRight, ListChecks, MessageCircle, MessageCircleQuestion } from "lucide-react";
 import { useNow, useStore } from "@/lib/store";
 import { checkInQuestion, currentHint, isCheckInDue } from "@/lib/checkin";
 import { TodoList } from "@/components/home/TodoList";
@@ -88,6 +88,25 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-1 flex-col gap-3">
+      {/* demo button for public demo */}
+      {state.demo !== "lin" && (
+        <Link
+          href="/demo/lin"
+          className={cn(
+            "animate-fade-up flex min-h-12 items-center gap-3 rounded-[1.1rem] bg-brand-50 px-4 py-3",
+            "border border-brand-100 shadow-[0_0_0_0.5px_var(--color-line)]",
+            "lift press hover:bg-brand-100 transition",
+            focusRing
+          )}
+        >
+          <IconTile tone="solid" size="sm" className="shrink-0">
+            <BookOpen />
+          </IconTile>
+          <span className="t-heading flex-1 text-ink">{L("看看林叔的记录", "See Uncle Lin's records")}</span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" aria-hidden="true" />
+        </Link>
+      )}
+
       {/* top half: what to do today, and when */}
       <section
         data-guide="todo"

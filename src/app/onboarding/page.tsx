@@ -710,7 +710,7 @@ function PasswordFields({ value, onChange }: { value: { password: string; confir
     <section className="registration-section history-section" aria-labelledby="password-heading">
       <div className="form-section-title">
         <h3 id="password-heading">{L("设置登录密码", "Set a password")}</h3>
-        <span>{L("必填", "Required")}</span>
+        <span>{L("可选", "Optional")}</span>
       </div>
       <div className="field-grid">
         <div className="field">

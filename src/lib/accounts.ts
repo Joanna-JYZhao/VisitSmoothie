@@ -46,9 +46,9 @@ export function nameKey(name: string): string {
 
 /** The sentence shown when the password cannot be used, or null when it can. */
 export function passwordProblem(password: string, confirm: string): string | null {
-  // 开发者开关开着：密码可以不设
-  if (isDev()) return null;
   const n = [...password].length;
+  // Empty password with empty confirm is fine (will use devPassword approach)
+  if (!n && !confirm.length) return null;
   if (!n) return L("还差：密码。", "Still missing: password.");
   if (n < PASSWORD_MIN) return L(`密码至少 ${PASSWORD_MIN} 个字，可以用一句好记的话。`, `The password needs at least ${PASSWORD_MIN} characters. A sentence you can remember works well.`);
   if (n > PASSWORD_MAX) return L(`密码最多 ${PASSWORD_MAX} 个字。`, `The password can have at most ${PASSWORD_MAX} characters.`);
@@ -211,9 +211,22 @@ async function authFetch(path: string, body: unknown): Promise<{ ok: boolean; st
  */
 export async function registerHere(name: string, password: string, confirm: string, takeLegacy: boolean): Promise<string | null> {
   const bad = passwordProblem(password, confirm);
-  if (bad && !isDev()) return bad;
-  const actual = isDev() && !password ? devPassword(name, true)! : password;
-  const res = await authFetch("/api/auth/register", { name, password: actual });
+  if (bad) return bad;
+
+  // Use placeholder name if empty
+  const actualName = name.trim() ? name : L(`体验用户${(() => {
+    const now = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${p(now.getMonth() + 1)}${p(now.getDate())}${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
+  })()}`, `Guest ${(() => {
+    const now = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${p(now.getMonth() + 1)}${p(now.getDate())}${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
+  })()}`);
+
+  // Use devPassword for empty password
+  const actual = !password ? devPassword(actualName, true)! : password;
+  const res = await authFetch("/api/auth/register", { name: actualName, password: actual });
   if (!res.ok || !res.data.account) {
     authError = res.data.error ?? L("注册失败，请再试一次。", "Sign-up failed. Please try again.");
     return authError;

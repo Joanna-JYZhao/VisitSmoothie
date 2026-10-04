@@ -3,7 +3,6 @@
  * Run the tests with: npx tsx scripts/tests/profile.test.ts
  */
 import type { Gender, Profile } from "../../lib/types";
-import { isDev } from "@/lib/dev";
 import { L } from "@/lib/lang";
 
 export const EDUCATION_OPTIONS = ["小学", "初中", "高中/中专", "大专", "本科及以上"] as const;
@@ -160,13 +159,12 @@ export function missingFields(d: RegisterDraft): RequiredField[] {
 
 /** The sentence shown when the form cannot be saved yet, or null when it can. */
 export function validateRegister(d: RegisterDraft, today: Date = new Date()): string | null {
-  // 开发者开关开着：必填都不必填
-  if (isDev()) return null;
-  const missing = missingFields(d);
-  if (missing.length)
-    return L(`还差：${missing.map((f) => FIELD_NAME[f]).join("、")}。填上就能保存。`, `Still missing: ${missing.map((f) => FIELD_NAME[f]).join(", ")}. Fill these in to save.`);
-  const age = ageFromBirthDate(d.birthDate, today);
-  if (age == null || age > 120) return L("出生日期好像不对，请再选一下。", "The date of birth doesn't look right. Please pick it again.");
+  // All fields are optional now - can register with empty form
+  // Only validate birth date if one is provided
+  if (d.birthDate.trim()) {
+    const age = ageFromBirthDate(d.birthDate, today);
+    if (age == null || age > 120) return L("出生日期好像不对，请再选一下。", "The date of birth doesn't look right. Please pick it again.");
+  }
   return null;
 }
 

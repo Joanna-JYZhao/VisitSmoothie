@@ -34,7 +34,7 @@ check("空行和重复去掉，列表符号去掉", JSON.stringify(splitList("1.
 // required items
 const empty = emptyRegister();
 check("空表缺四项", JSON.stringify(missingFields(empty)) === JSON.stringify(["name", "birthDate", "gender", "education"]));
-check("缺项提示说出名字", validateRegister({ ...empty, name: "老王", gender: "男" }, today) === "还差：出生日期、学历。填上就能保存。", validateRegister({ ...empty, name: "老王", gender: "男" }, today));
+check("空表可以保存（所有项都可选）", validateRegister({ ...empty, name: "老王", gender: "男" }, today) === null);
 const filled = { ...empty, name: " 老王 ", birthDate: "1968-05-12", gender: "男" as const, education: "初中" };
 check("必填项都有就能保存（选填全空）", validateRegister(filled, today) === null);
 check("出生日期不对", validateRegister({ ...filled, birthDate: "2030-01-01" }, today) !== null);

@@ -4,9 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Mic, Square } from "lucide-react";
 import { canRecord, startRecording, transcribeRecording, type ActiveRecording } from "@/lib/audio";
 import { L } from "@/lib/lang";
+import { canBrowserListen, checkServerSpeech, markServerSpeechBroken, serverSpeechKnown, startListening, type ListenError, type Listening } from "@/lib/speech";
 import { cn } from "@/lib/utils";
-import { useAiAvailable } from "./AiStatus";
 import { useToast } from "./Toast";
+
+/** What to say when the browser's own listening failed. */
+export function listenProblemText(code: string): string {
+  if (code === "not-allowed" || code === "service-not-allowed")
+    return L(
+      "没有拿到麦克风或语音识别的权限。请在浏览器里允许（iPhone 还要在设置里打开「Siri 与听写」），或者直接打字。",
+      "I can't use the microphone or speech recognition. Allow it in your browser (on iPhone, also turn on Siri & Dictation in Settings), or type instead.",
+    );
+  return L("这台设备暂时用不了语音输入，请打字。", "Voice input isn't working on this device right now. Please type instead.");
+}
 
 type Phase = "idle" | "recording" | "working";
 
@@ -35,10 +45,16 @@ export function MicButton({
   disabled?: boolean;
 }) {
   const toast = useToast();
-  const available = useAiAvailable();
   const [phase, setPhase] = useState<Phase>("idle");
   const [seconds, setSeconds] = useState(0);
   const recording = useRef<ActiveRecording | null>(null);
+  // the browser listening by itself, when the speech service can't be used
+  const listening = useRef<Listening | null>(null);
+
+  // the answer is needed at the tap: Safari only lets listening start straight from a tap
+  useEffect(() => {
+    void checkServerSpeech();
+  }, []);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAt = useRef(0);
 
@@ -49,24 +65,79 @@ export function MicButton({
 
   const finish = useCallback(async () => {
     const rec = recording.current;
-    if (!rec) return;
+    const lis = listening.current;
+    if (!rec && !lis) return;
     recording.current = null;
+    listening.current = null;
     clearTimer();
     setPhase("working");
     try {
-      const text = await transcribeRecording(await rec.stop());
+      if (lis) {
+        const text = await lis.stop();
+        if (text) onText(text);
+        else toast.show(L("没听清，再说一遍试试", "I didn't catch that. Please say it again."));
+        return;
+      }
+      const text = await transcribeRecording(await rec!.stop());
       if (text) onText(text);
       else toast.show(L("没听清，再说一遍试试", "I didn't catch that. Please say it again."));
     } catch (err) {
       console.warn("[医伴] 语音识别失败", err);
-      toast.show(L("这次没听出来，可以再试一次，或者直接打字", "I couldn't make that out. Try again, or type it."), "danger");
+      if (lis) toast.show(listenProblemText((err as ListenError).code ?? ""), "danger");
+      else {
+        // the speech service failed: from now on the browser listens by itself
+        markServerSpeechBroken();
+        toast.show(
+          canBrowserListen()
+            ? L("刚才没转成文字。请再点一次话筒，重新说一遍。", "That didn't go through. Tap the microphone and say it once more.")
+            : L("语音没转成文字，请直接打字。", "Your speech couldn't be turned into text. Please type instead."),
+          "danger",
+        );
+      }
     } finally {
       setPhase("idle");
       setSeconds(0);
     }
   }, [onText, toast]);
 
+  const startTimer = () => {
+    startedAt.current = Date.now();
+    setSeconds(0);
+    setPhase("recording");
+    timer.current = setInterval(() => {
+      const s = Math.floor((Date.now() - startedAt.current) / 1000);
+      setSeconds(s);
+      if (s >= maxSeconds) void finish();
+    }, 250);
+  };
+
   const begin = async () => {
+    // the speech service works (or may work, while still being checked and the browser can't listen): record
+    const server = serverSpeechKnown();
+    const useServer = canRecord() && (server === true || (server == null && !canBrowserListen()));
+    if (!useServer) {
+      if (!canBrowserListen()) {
+        toast.show(L("这台设备用不了语音输入，请打字。", "Voice input doesn't work on this device. Please type instead."), "danger");
+        return;
+      }
+      try {
+        listening.current = startListening((err) => {
+          // permission refused or no service: stop and say so
+          if (!listening.current) return;
+          listening.current.cancel();
+          listening.current = null;
+          clearTimer();
+          setPhase("idle");
+          setSeconds(0);
+          toast.show(listenProblemText(err.code), "danger");
+        });
+      } catch (err) {
+        toast.show(listenProblemText((err as ListenError).code ?? ""), "danger");
+        return;
+      }
+      startTimer();
+      return;
+    }
     try {
       recording.current = await startRecording();
     } catch (err) {
@@ -79,14 +150,7 @@ export function MicButton({
       );
       return;
     }
-    startedAt.current = Date.now();
-    setSeconds(0);
-    setPhase("recording");
-    timer.current = setInterval(() => {
-      const s = Math.floor((Date.now() - startedAt.current) / 1000);
-      setSeconds(s);
-      if (s >= maxSeconds) void finish();
-    }, 250);
+    startTimer();
   };
 
   // leaving the page while recording throws the recording away and frees the microphone
@@ -95,11 +159,11 @@ export function MicButton({
       clearTimer();
       recording.current?.cancel();
       recording.current = null;
+      listening.current?.cancel();
+      listening.current = null;
     },
     [],
   );
-
-  if (!available || !canRecord()) return null;
 
   const onClick = () => {
     if (phase === "idle") void begin();

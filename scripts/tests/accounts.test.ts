@@ -14,7 +14,7 @@ async function main() {
   check("姓名规范化：多余空格", nameKey("  小  张 ") === nameKey("小 张"));
 
   // passwords, as in the teammate's version
-  check("密码为空", passwordProblem("", "") === "还差：密码。");
+  check("密码为空", passwordProblem("", "") === null);
   check("密码太短", /至少 15/.test(passwordProblem("short", "short") ?? ""));
   check("密码太长", /最多 128/.test(passwordProblem("x".repeat(129), "x".repeat(129)) ?? ""));
   check("两次不一样", /不一样/.test(passwordProblem(GOOD, GOOD + "x") ?? ""));
