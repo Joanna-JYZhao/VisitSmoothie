@@ -29,7 +29,7 @@ function Splash() {
  */
 function SosLink() {
   return (
-    <Link href="/sos" className={cn("press inline-flex min-h-11 items-center rounded-full", focusRing)}>
+    <Link href="/sos" data-guide="sos" className={cn("press inline-flex min-h-11 items-center rounded-full", focusRing)}>
       <span className="tile-danger inline-flex min-h-10 items-center gap-1.5 rounded-full px-4 text-base font-semibold whitespace-nowrap text-white transition duration-200 hover:brightness-110">
         <Siren className="h-4.5 w-4.5" aria-hidden="true" />
         应急
@@ -106,13 +106,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       {/* the bar on the right: a composed column — the two doors at the top, the mark resting in the middle, the way out at the foot */}
       <aside className="app-rail no-print order-first flex shrink-0 flex-wrap items-center justify-between gap-1.5 border-b border-line px-2 py-1.5 sm:gap-2 sm:px-3 md:sticky md:top-0 md:z-30 md:order-none md:h-screen md:w-40 md:flex-col md:flex-nowrap md:justify-start md:gap-5 md:border-b-0 md:border-l md:border-ink/15 md:px-0 md:py-0 md:pt-7">
-        <Link href="/me" className={cn(doorCls, "md:h-24 md:w-24 md:rounded-full", focusRing)}>
+        <Link href="/me" data-guide="profile" className={cn(doorCls, "md:h-24 md:w-24 md:rounded-full", focusRing)}>
           <span className="tile-brand hidden h-10 w-10 items-center justify-center rounded-[12px] text-white md:flex">
             <UserRound className="h-5 w-5" />
           </span>
           profile
         </Link>
-        <Link href="/report" className={cn(doorCls, "md:h-20 md:w-24 md:rounded-[20px]", focusRing)}>
+        <Link href="/report" data-guide="report" className={cn(doorCls, "md:h-20 md:w-24 md:rounded-[20px]", focusRing)}>
           <span className="tile-ink hidden h-10 w-10 items-center justify-center rounded-[12px] text-white md:flex">
             <FileText className="h-5 w-5" />
           </span>

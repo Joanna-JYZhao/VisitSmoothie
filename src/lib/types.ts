@@ -250,6 +250,8 @@ export interface Settings {
   metricReminderHours: number;
   /** Chinese unless the user switched. What people recorded themselves stays in the language they used. */
   lang?: Lang;
+  /** 新手引导是否已经完成（注册后第一次进首页时展示一次）。 */
+  tourDone?: boolean;
 }
 
 export type DemoPersona = "lin";

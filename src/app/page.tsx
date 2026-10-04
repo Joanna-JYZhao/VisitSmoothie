@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { AlertCircle, AlertTriangle, Camera, ChevronRight, ListChecks, MessageCircle } from "lucide-react";
 import { useNow, useStore } from "@/lib/store";
 import { checkInQuestion, currentHint, isCheckInDue } from "@/lib/checkin";
 import { TodoList } from "@/components/home/TodoList";
 import { AskBox } from "@/components/home/AskBox";
 import { IconTile, focusRing } from "@/components/ui";
+import { GuideTour, TOUR_FLAG } from "@/components/GuideTour";
 import { unsavedCards } from "@/lib/drafts";
 import { cn } from "@/lib/utils";
 
@@ -26,8 +28,33 @@ const ITEM_TONE = {
 };
 
 export default function HomePage() {
-  const { state } = useStore();
+  const { state, updateSettings } = useStore();
   const now = useNow(60_000);
+  const [tourOpen, setTourOpen] = useState(false);
+
+  // 注册完第一次进首页：开始新手引导（只此一次，完成或跳过后记入 settings.tourDone）
+  useEffect(() => {
+    let flag = false;
+    try {
+      flag = Boolean(state.profile && !state.settings.tourDone && sessionStorage.getItem(TOUR_FLAG));
+    } catch {
+      /* no session storage */
+    }
+    if (!flag) return;
+    const t = window.setTimeout(() => setTourOpen(true), 600); // 等首页卡片落位动画播完
+    return () => window.clearTimeout(t);
+  }, [state.profile, state.settings.tourDone]);
+
+  const finishTour = () => {
+    setTourOpen(false);
+    updateSettings({ tourDone: true });
+    try {
+      sessionStorage.removeItem(TOUR_FLAG);
+    } catch {
+      /* no session storage */
+    }
+  };
+
   if (!state.profile) return null;
 
   const active = state.episodes.filter((e) => e.status === "active");
@@ -54,7 +81,7 @@ export default function HomePage() {
     <div className="space-y-5 sm:space-y-6">
       {/* the two doors: one compact row each, still the first things to move when the page opens */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-        <Link href="/pre" className={cn(doorCls, "rise-1")}>
+        <Link href="/pre" data-guide="pre" className={cn(doorCls, "rise-1")}>
           <span className={cn(iconCls, "tile-brand")}>
             <MessageCircle className="h-5 w-5" strokeWidth={2} />
           </span>
@@ -64,7 +91,7 @@ export default function HomePage() {
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden="true" />
         </Link>
-        <Link href="/post" className={cn(doorCls, "rise-2")}>
+        <Link href="/post" data-guide="post" className={cn(doorCls, "rise-2")}>
           <span className={cn(iconCls, "tile-ink")}>
             <Camera className="h-5 w-5" strokeWidth={2} />
           </span>
@@ -76,7 +103,7 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <section className="rise-3 material-raised rounded-[28px] border border-line/70 p-4 sm:p-6">
+      <section data-guide="todo" className="rise-3 material-raised rounded-[28px] border border-line/70 p-4 sm:p-6">
         <div className="flex items-center gap-3">
           <IconTile tone="solid" size="lg">
             <ListChecks />
@@ -115,6 +142,7 @@ export default function HomePage() {
           <AskBox now={now} />
         </div>
       </section>
+      {tourOpen && <GuideTour onFinish={finishTour} />}
     </div>
   );
 }

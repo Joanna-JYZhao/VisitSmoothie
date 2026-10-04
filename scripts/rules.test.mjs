@@ -179,7 +179,7 @@ check("a medicine that is not on file gets no made-up dose", !/\d+\s*(mg|毫克|
 q = await askIt("我现在胸口很闷，喘不上气，怎么办？");
 check("a question that describes an emergency raises the alarm by rule", q.hint?.level === "urgent" && q.hint.text.includes("120"), q.hint);
 q = await askIt("今天天气怎么样？");
-check("a question the rules cannot answer says so instead of guessing", q.mode === "fallback" && q.sources.length === 0 && /答不了|换个问法/.test(q.answer), q.answer);
+check("an unmatched question asks for rephrasing without guessing", q.mode === "fallback" && q.sources.length === 0 && q.answer === "我还没理解你的意思，可以换一种说法，或补充一点具体情况吗？", q.answer);
 check("an empty question is rejected", (await post("/api/ask", { profile, question: " ", records })).status === 400);
 
 /* ---------- a check-up report without a key ---------- */
