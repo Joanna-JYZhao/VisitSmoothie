@@ -370,52 +370,20 @@ export default function OnboardingPage() {
           返回
         </Link>
         <div className="registration-layout">
+          {/*
+            建档的左栏：用户要求把这一栏做得极简 —— 一句「可跳过」的提示，加两个安静的入口。
+            原来这里的大标题、步骤说明和重复的解释文字都去掉了，表单因此成为主角。
+          */}
           <aside className="registration-guide">
-            <p className="registration-eyebrow">PATIENT PROFILE</p>
-            <h1>
-              先认识
-              <br />
-              一下你。
-            </h1>
-            <p className="guide-description">
-              建立你的个人档案，
-              <br />
-              让每次就诊都有迹可循。
-            </p>
-            <ol className="profile-guide-list">
-              <li>
-                <span className="guide-dot" />
-                <div>
-                  <strong>基本信息</strong>
-                  <p>昵称、出生日期、性别与学历</p>
-                </div>
-              </li>
-              <li>
-                <span className="guide-dot optional-dot" />
-                <div>
-                  <strong>
-                    健康背景<span className="skip-badge">可跳过</span>
-                  </strong>
-                  <p>{"基础病、家族遗传病和过敏史，\n可以稍后在「我的资料」中补充。"}</p>
-                </div>
-              </li>
-            </ol>
-            <div className="guide-note">
-              <p>{"不必一次想起所有细节，\n知道多少，就先记多少。"}</p>
-            </div>
-            <div className="guide-note">
-              <p>
-                想先看看是什么样？
-                <br />
-                已有账号？
-                <Link href="/login" className="text-button">
-                  直接登录
-                </Link>
-                <br />
-                <Link href="/demo/lin" className="underline">
-                  林叔：一次左膝痛（虚构）
-                </Link>
-              </p>
+            <p className="registration-eyebrow">个人档案</p>
+            <p className="guide-hint">健康信息可跳过，之后可以补充。</p>
+            <div className="guide-links">
+              <Link href="/login" className="guide-link">
+                直接登录
+              </Link>
+              <Link href="/demo/lin" className="guide-link">
+                林叔：一次左膝痛（虚构）
+              </Link>
             </div>
           </aside>
 

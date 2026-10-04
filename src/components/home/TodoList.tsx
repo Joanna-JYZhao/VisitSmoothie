@@ -50,20 +50,20 @@ export function TodoList({ now }: { now: number }) {
         const ticked = keys.includes(t.key);
         const r = t.reminder;
         return (
-          <li key={t.key} className="flex items-center gap-3 py-2">
+          <li key={t.key} className="todo-row flex items-center gap-3 py-2">
             <button
               type="button"
               role="checkbox"
               aria-checked={ticked}
               aria-label={`今天做了：${t.title}`}
               onClick={() => tick(t.key)}
-              className="flex min-h-12 min-w-12 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+              className="todo-check flex min-h-12 min-w-12 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
               <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg border-2", ticked ? "border-brand-600 bg-brand-600 text-white" : "border-line-strong bg-surface")}>
                 {ticked && <Check className="h-5 w-5" />}
               </span>
             </button>
-            <div className={cn("min-w-0 flex-1", ticked && "opacity-60")}>
+            <div className={cn("todo-text min-w-0 flex-1", ticked && "opacity-60")}>
               <p className={cn("text-lg leading-snug text-ink", ticked && "line-through")}>
                 <span className="mr-2 font-semibold text-brand-800">{KIND[t.kind]}</span>
                 {t.title}
@@ -77,7 +77,7 @@ export function TodoList({ now }: { now: number }) {
                 aria-checked={r.enabled}
                 aria-label={`提醒：${t.title}`}
                 onClick={() => storeActions.updateReminder(r.id, (x) => ({ ...x, enabled: !x.enabled }))}
-                className="flex min-h-12 shrink-0 items-center gap-2 rounded-xl px-1 text-base font-medium text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                className="todo-switch flex min-h-12 shrink-0 items-center gap-2 rounded-xl px-1 text-base font-medium text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
                 {r.enabled ? "提醒开" : "提醒关"}
                 <span className={cn("relative h-8 w-14 rounded-full transition-colors", r.enabled ? "bg-brand-600" : "bg-line-strong")}>

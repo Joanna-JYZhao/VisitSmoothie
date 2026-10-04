@@ -1,84 +1,101 @@
-/* Visit Smoothie: blue ink on a quiet, open page. */
+/*
+ * Visit Smoothie — 青瓷绿健康手账 (celadon health notebook).
+ *
+ * The welcome sheet, the login card and the registration card are the same paper as the app: a
+ * jade-white canvas, forest-green ink, celadon glaze on the one main button, and the fine jade
+ * rule inlaid on the leading edge of the two cards that carry the flow. Layout, wording and the
+ * order of everything are untouched.
+ */
 .onboarding-shell {
-  --onboarding-paper: #fcfdfd;
-  --onboarding-mist: #edf5f7;
-  --onboarding-ink: #173f4f;
-  --onboarding-blue: #167493;
-  --onboarding-muted: #57717b;
-  --onboarding-line: #d8e4e8;
+  --onboarding-paper: #f4f8f5;
+  --onboarding-mist: #eaf1ec;
+  --onboarding-ink: #173c35;
+  --onboarding-jade: #246a57;
+  --onboarding-muted: #4e6f66;
+  --onboarding-line: #dfeae4;
   min-height: 100vh;
   background: var(--onboarding-paper);
   color: var(--onboarding-ink);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-sans);
 }
 .onboarding-shell button, .onboarding-shell input, .onboarding-shell select, .onboarding-shell textarea { font-family: inherit; }
-.onboarding-shell :focus-visible { outline: 3px solid #167493; outline-offset: 4px; }
+.onboarding-shell :focus-visible { outline: 3px solid var(--onboarding-jade); outline-offset: 4px; }
 .onboarding-header, .onboarding-footer { max-width: 1240px; margin: auto; display: flex; align-items: center; }
-.onboarding-header { min-height: 104px; padding: 24px 48px; gap: 32px; }
-.smoothie-brand { display: inline-flex; align-items: center; gap: 11px; color: var(--onboarding-ink); text-decoration: none; font: 24px Georgia, 'Songti SC', serif; white-space: nowrap; }
-.smoothie-mark { display: inline-flex; align-items: baseline; font-size: 39px; font-style: italic; color: var(--onboarding-blue); line-height: 1; }
-.smoothie-mark span { font: 9px sans-serif; margin-left: 1px; }
+.onboarding-header { min-height: 104px; padding: 24px 48px; gap: 32px; border-bottom: 1px solid var(--onboarding-line); box-shadow: 0 2px 0 -1px var(--color-brand-100); }
+/* the anchor is the tap target: never smaller than 44px, and free to shrink with the column */
+.smoothie-brand { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; min-height: 44px; color: var(--onboarding-ink); text-decoration: none; }
 .onboarding-header-note { margin-left: auto; font-size: 12px; color: var(--onboarding-muted); letter-spacing: .02em; }
-.onboarding-language { background: transparent; color: var(--onboarding-ink); border: 1px solid var(--onboarding-line); border-radius: 100px; padding: 8px 15px; font-size: 12px; min-height: 40px; }
+.onboarding-language { background: var(--color-surface); color: var(--onboarding-ink); border: 1px solid var(--color-line-strong); border-radius: 100px; padding: 8px 15px; font-size: 12px; min-height: 44px; transition: border-color .15s, background-color .15s; }
+.onboarding-language:hover { border-color: var(--color-brand-300); background: var(--color-brand-50); }
+/* the header's 登录 is a navigation label: 17px like the rest, and it never breaks into 登 / 录 —
+   at 320px the button keeps its full 66px and the logo gives up the width instead (its own
+   `max-width: 100%` lets it follow the column, so the header still cannot overflow).
+   The one inside the form card stays compact: at 17px it would squeeze the card's own heading. */
+.onboarding-header .onboarding-language {
+  font-size: 1rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .onboarding-main { max-width: 1240px; margin: auto; padding: 20px 48px 50px; }
 .onboarding-main:focus { outline: none; }
-.welcome-panel { position: relative; min-height: 655px; border: 1px solid #bad5df; border-radius: 30px 46px 32px 42px; padding: 62px 76px 90px; background: #f6fafb; overflow: hidden; }
-.welcome-eyebrow { display: flex; align-items: center; gap: 10px; color: var(--onboarding-blue); font-size: 12px; letter-spacing: .12em; margin: 0 0 32px; }
+/* the welcome sheet: white paper, a soft celadon wash at the head, the jade rule down the left */
+.welcome-panel { position: relative; min-height: 655px; border: 1px solid var(--onboarding-line); border-radius: 30px 46px 32px 42px; padding: 62px 76px 90px; background: linear-gradient(180deg, #ffffff 0%, #f7fbf9 100%); box-shadow: var(--shadow-card); overflow: hidden; }
+.welcome-panel::before, .registration-card::before { content: ''; position: absolute; inset-block: 30px; left: 0; width: 3px; border-radius: 0 999px 999px 0; background: linear-gradient(180deg, var(--color-brand-400), var(--color-brand-600)); pointer-events: none; }
+.welcome-eyebrow { display: flex; align-items: center; gap: 10px; color: var(--onboarding-jade); font-size: 12px; letter-spacing: .12em; margin: 0 0 32px; }
 .welcome-eyebrow > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.welcome-panel h1 { font: 400 clamp(68px, 7.4vw, 105px)/.96 Georgia, 'Songti SC', serif; letter-spacing: -.065em; margin: 0 0 28px; color: var(--onboarding-ink); }
-.welcome-panel h1 em { font-weight: 400; color: var(--onboarding-blue); }
-.welcome-period { color: var(--onboarding-blue); }
+.welcome-panel h1 { font: 400 clamp(68px, 7.4vw, 105px)/.96 var(--font-serif); letter-spacing: -.065em; margin: 0 0 28px; color: var(--onboarding-ink); }
+.welcome-panel h1 em { font-weight: 400; color: var(--onboarding-jade); }
+.welcome-period { color: var(--onboarding-jade); }
 .welcome-description { font-size: 16px; line-height: 1.9; color: var(--onboarding-muted); margin: 0 0 30px; }
-.smoothie-button { display: inline-flex; justify-content: center; align-items: center; gap: 34px; min-height: 52px; border: 1px solid var(--onboarding-blue); border-radius: 12px; padding: 14px 23px; background: var(--onboarding-blue); color: white; font-size: 15px; font-weight: 550; transition: background .15s; }
-.smoothie-button:hover { background: #105c76; }
+.smoothie-button { display: inline-flex; justify-content: center; align-items: center; gap: 34px; min-height: 52px; border: 1px solid var(--color-brand-700); border-radius: 12px; padding: 14px 23px; background: linear-gradient(180deg, var(--color-brand-600), var(--color-brand-650)); color: white; font-size: 15px; font-weight: 550; box-shadow: var(--shadow-btn); transition: background .15s; }
+.smoothie-button:hover { background: var(--color-brand-700); }
+.smoothie-button:disabled { opacity: .6; }
 .smoothie-button > span:not(.spinner) { font-size: 20px; font-weight: 400; line-height: 1; }
-.welcome-handnote { position: absolute; left: 350px; top: 431px; display: flex; align-items: flex-end; gap: 10px; color: var(--onboarding-blue); transform: rotate(-7deg); pointer-events: none; }
+.welcome-handnote { position: absolute; left: 350px; top: 431px; display: flex; align-items: flex-end; gap: 10px; color: var(--onboarding-jade); transform: rotate(-7deg); pointer-events: none; }
 .journey-arrow { width: 135px; height: 90px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.welcome-handnote > span { font-family: 'Kaiti SC', 'STKaiti', Georgia, serif; font-style: italic; font-size: 19px; line-height: 1.5; padding-bottom: 6px; }
-.welcome-margin { position: absolute; right: 67px; top: 70px; bottom: 102px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; color: #5c8c9d; }
+.welcome-handnote > span { font-family: 'Kaiti SC', 'STKaiti', var(--font-serif); font-style: italic; font-size: 19px; line-height: 1.5; padding-bottom: 6px; }
+.welcome-margin { position: absolute; right: 67px; top: 70px; bottom: 102px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; color: var(--onboarding-muted); }
 .welcome-margin > span:first-child { writing-mode: vertical-rl; font-size: 11px; letter-spacing: .2em; }
-.welcome-margin > span:last-child { font-family: Georgia, serif; font-size: 66px; font-weight: 400; transform: rotate(-12deg); }
+.welcome-margin > span:last-child { font-family: var(--font-serif); font-size: 66px; font-weight: 400; color: var(--color-brand-500); transform: rotate(-12deg); }
 .welcome-footnote { position: absolute; left: 76px; right: 76px; bottom: 28px; display: flex; align-items: center; gap: 9px; border-top: 1px solid var(--onboarding-line); padding-top: 20px; font-size: 12px; color: var(--onboarding-muted); }
 .welcome-footnote svg { width: 16px; height: 16px; }
 .onboarding-footer { justify-content: space-between; gap: 20px; padding: 0 48px 25px; font-size: 11px; color: var(--onboarding-muted); }
-.onboarding-footer > span:first-child { font-family: Georgia, serif; font-style: italic; }
+.onboarding-footer > span:first-child { font-family: var(--font-serif); font-style: italic; }
 .is-register { padding-top: 6px; }
-.onboarding-back { display: inline-flex; align-items: center; gap: 5px; background: transparent; color: var(--onboarding-muted); padding: 8px 0; min-height: 40px; margin-bottom: 24px; font-size: 13px; }
+.onboarding-back { display: inline-flex; align-items: center; gap: 5px; background: transparent; color: var(--onboarding-muted); padding: 8px 0; min-height: 44px; margin-bottom: 24px; font-size: 1rem; }
+.onboarding-back:hover { color: var(--onboarding-ink); }
 .onboarding-back svg { width: 16px; height: 16px; }
-.registration-layout { display: grid; grid-template-columns: minmax(230px, .8fr) minmax(0, 1.8fr); gap: 66px; align-items: start; }
-.registration-guide { padding-top: 30px; position: sticky; top: 30px; }
-.registration-eyebrow { font-size: 10px; letter-spacing: .17em; color: var(--onboarding-blue); margin: 0 0 18px; font-weight: 550; }
-.registration-guide h1 { font: 500 clamp(36px, 3.5vw, 48px)/1.32 'Songti SC', 'STSong', Georgia, serif; letter-spacing: -.03em; margin: 0 0 22px; color: var(--onboarding-ink); }
+.registration-layout { display: grid; grid-template-columns: minmax(180px, 200px) minmax(0, 740px); justify-content: space-between; gap: 56px; align-items: start; }
+/* 建档的左栏 (user-requested simplification): one quiet hint and the two ways out, nothing else */
+.registration-guide { padding-top: 34px; position: sticky; top: 30px; }
+.registration-eyebrow { font-size: 10px; letter-spacing: .17em; color: var(--onboarding-jade); margin: 0 0 18px; font-weight: 550; }
+.registration-guide .registration-eyebrow { margin-bottom: 10px; }
+.guide-hint { font-size: 1rem; line-height: 1.7; color: var(--onboarding-muted); margin: 0; }
+/* the two links keep a full 44px hit area and the same 17px type as every other label in the app */
+.guide-links { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--onboarding-line); }
+.guide-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 1rem; line-height: 1.5; color: var(--onboarding-muted); text-decoration: underline; text-underline-offset: 4px; }
+.guide-link:hover { color: var(--onboarding-ink); }
 .guide-description { font-size: 14px; line-height: 1.9; margin: 0; color: var(--onboarding-muted); }
-.profile-guide-list { list-style: none; padding: 0; margin: 42px 0 0; display: grid; gap: 28px; }
-.profile-guide-list li { display: flex; align-items: flex-start; gap: 15px; position: relative; }
-.profile-guide-list li:first-child::after { content: ''; position: absolute; left: 5px; top: 17px; bottom: -26px; width: 1px; background: var(--onboarding-line); }
-.guide-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--onboarding-blue); flex-shrink: 0; margin-top: 6px; }
-.optional-dot { background: var(--onboarding-paper); border: 1px solid #8aabb7; }
-.profile-guide-list strong { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.profile-guide-list p { font-size: 12px; color: var(--onboarding-muted); line-height: 1.85; white-space: pre-line; margin: 7px 0 0; }
-.skip-badge { font-size: 10px; font-weight: 400; border: 1px solid #c5dbe3; padding: 2px 7px; border-radius: 5px; color: #32677b; }
-.guide-note { display: flex; align-items: flex-start; gap: 10px; margin-top: 42px; padding: 20px 0; border-top: 1px solid var(--onboarding-line); }
-.guide-note svg { width: 18px; height: 18px; margin-top: 3px; color: var(--onboarding-blue); flex-shrink: 0; }
-.guide-note p { font-size: 12px; line-height: 1.8; white-space: pre-line; color: var(--onboarding-muted); margin: 0; }
-.registration-card { border: 1px solid var(--onboarding-line); border-radius: 24px; background: white; padding: 34px 38px 30px; box-shadow: 0 12px 42px #173f4f05; }
+/* a card is white porcelain: a hairline edge, the glaze highlight on top, the jade rule at its left */
+.registration-card { position: relative; border: 1px solid var(--onboarding-line); border-radius: 24px; background: var(--color-surface); padding: 34px 38px 30px; box-shadow: var(--shadow-card); }
+.registration-card::before { inset-block: 26px; }
 .registration-card-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
 .registration-card-header .registration-eyebrow { margin-bottom: 8px; font-size: 9px; }
-.registration-card h2 { font-family: inherit; font-weight: 600; line-height: 1.5; font-size: 25px; letter-spacing: -.03em; color: var(--onboarding-ink); margin: 0; }
-.profile-symbol { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: var(--onboarding-mist); color: var(--onboarding-blue); }
+.registration-card h2 { font-family: var(--font-serif); font-weight: 600; line-height: 1.5; font-size: 25px; letter-spacing: -.03em; color: var(--onboarding-ink); margin: 0; }
+.profile-symbol { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: var(--onboarding-mist); color: var(--onboarding-jade); }
 .profile-symbol svg { width: 20px; height: 20px; }
 .form-section-title { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 20px; }
 .form-section-title h3 { margin: 0; font-size: 14px; font-weight: 600; color: var(--onboarding-ink); }
 .form-section-title > span { font-size: 11px; color: var(--onboarding-muted); }
 .registration-section .field-grid { gap: 20px; }
 .registration-card .field label { font-size: 13px; font-weight: 500; color: var(--onboarding-ink); }
-.required-mark { color: #167493; font-weight: 400; }
-.field-optional { font-size: 11px; font-weight: 400; color: #57717b; margin-left: 5px; }
-.registration-card .field input, .registration-card .field select, .registration-card .field textarea { border-color: var(--onboarding-line); border-radius: 8px; background: #fcfdfd; padding: 10px 12px; font-size: 14px; min-height: 44px; color: var(--onboarding-ink); }
-.registration-card .field input::placeholder, .registration-card .field textarea::placeholder { color: #71858d; }
+.required-mark { color: var(--color-danger); font-weight: 400; }
+.field-optional { font-size: 11px; font-weight: 400; color: var(--onboarding-muted); margin-left: 5px; }
+.registration-card .field input, .registration-card .field select, .registration-card .field textarea { border-color: var(--color-line-strong); border-radius: 8px; background: var(--color-surface); padding: 10px 12px; font-size: 14px; min-height: 48px; color: var(--onboarding-ink); }
+.registration-card .field input::placeholder, .registration-card .field textarea::placeholder { color: var(--color-ink-3); }
 .registration-card .field select { cursor: pointer; }
 .registration-card .field textarea { min-height: 78px; line-height: 1.7; resize: vertical; }
-.identity-fields output { display: block; font-size: 11px; line-height: 1.5; color: #57717b; min-height: 17px; }
+.identity-fields output { display: block; font-size: 11px; line-height: 1.5; color: var(--onboarding-muted); min-height: 17px; }
 .identity-fields { align-items: start; }
 .history-section { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--onboarding-line); }
 .history-fields { display: grid; gap: 18px; }
@@ -86,7 +103,7 @@
 .registration-submit p { max-width: 235px; font-size: 11px; color: var(--onboarding-muted); line-height: 1.8; margin: 0; }
 .registration-submit .smoothie-button { gap: 20px; white-space: nowrap; font-size: 14px; min-height: 48px; }
 @media (max-width: 1050px) {
-  .registration-layout { gap: 32px; grid-template-columns: 230px minmax(0, 1fr); }
+  .registration-layout { gap: 32px; grid-template-columns: 180px minmax(0, 1fr); }
   .registration-card { padding: 28px; }
   .registration-submit { align-items: flex-start; flex-direction: column; gap: 15px; }
   .registration-submit p { max-width: none; }
@@ -96,7 +113,6 @@
 @media (max-width: 760px) {
   .onboarding-header { min-height: 84px; padding: 20px 24px; justify-content: space-between; gap: 14px; }
   .onboarding-header-note { display: none; }
-  .smoothie-brand { font-size: 22px; }
   .onboarding-main { padding: 8px 24px 36px; }
   .onboarding-footer { padding: 0 24px 24px; }
   .welcome-panel { padding: 44px 28px 110px; min-height: 640px; border-radius: 24px 36px 24px 30px; }
@@ -109,16 +125,11 @@
   .journey-arrow { width: 105px; }
   .welcome-footnote { left: 28px; right: 28px; font-size: 11px; align-items: flex-start; }
   .welcome-footnote svg { flex-shrink: 0; margin-top: 2px; }
-  .registration-layout { grid-template-columns: 1fr; gap: 24px; }
-  .registration-guide { position: static; padding-top: 0; }
-  .registration-guide h1 { font-size: 32px; margin-bottom: 10px; }
-  .registration-guide h1 br, .guide-description br { display: none; }
-  .registration-eyebrow { margin-bottom: 10px; }
-  .guide-description { font-size: 13px; }
-  .profile-guide-list { margin-top: 22px; display: block; }
-  .profile-guide-list li:first-child, .guide-note { display: none; }
-  .profile-guide-list li { padding: 15px 18px; background: var(--onboarding-mist); border-radius: 12px; }
-  .profile-guide-list p { white-space: normal; font-size: 12px; }
+  /* one concise hint above the form: no column, no headline, little vertical space */
+  .registration-layout { grid-template-columns: 1fr; gap: 16px; }
+  .registration-guide { position: static; padding-top: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; }
+  .registration-guide .registration-eyebrow { display: none; }
+  .guide-links { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0 18px; margin-top: 0; padding-top: 0; border-top: 0; }
   .onboarding-back { margin-bottom: 15px; }
   .registration-card { padding: 26px 22px; border-radius: 20px; }
   .registration-card-header { margin-bottom: 26px; }
@@ -134,28 +145,35 @@
   .form-section-title > span { font-size: 10px; }
   .onboarding-footer { font-size: 10px; }
   .welcome-panel { padding-left: 24px; padding-right: 24px; }
+  .welcome-footnote { left: 24px; right: 24px; }
   .welcome-handnote { left: 58px; }
+  .welcome-panel::before, .registration-card::before { inset-block: 20px; width: 2px; }
 }
 
 /* added with the teammate's accounts version (e57c009) */
 :is(.onboarding-shell, .smoothie-scope) .field { display: grid; gap: 8px; min-width: 0; }
 :is(.onboarding-shell, .smoothie-scope) .field label { font-size: 15px; font-weight: 550; color: var(--onboarding-ink); }
-:is(.onboarding-shell, .smoothie-scope) .field input { width: 100%; min-width: 0; line-height: 1.5; border: 1px solid var(--onboarding-line); border-radius: 8px; background: #fcfdfd; padding: 10px 12px; font-size: 16px; min-height: 48px; color: var(--onboarding-ink); }
+:is(.onboarding-shell, .smoothie-scope) .field input { width: 100%; min-width: 0; line-height: 1.5; border: 1px solid var(--color-line-strong); border-radius: 8px; background: var(--color-surface); padding: 10px 12px; font-size: 16px; min-height: 48px; color: var(--onboarding-ink); }
 :is(.onboarding-shell, .smoothie-scope) .field small { font-size: 13px; line-height: 1.6; color: var(--onboarding-muted); }
 :is(.onboarding-shell, .smoothie-scope) .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 .smoothie-brand { background: transparent; padding: 0; }
-.text-button { color: #167493; background: transparent; padding: 6px; font-weight: 550; text-decoration: underline; text-underline-offset: 4px; }
-.welcome-login { margin-top: 15px; color: #57717b; font-size: 14px; }
+.text-button { color: var(--color-brand-700); background: transparent; padding: 6px; font-weight: 550; text-decoration: underline; text-underline-offset: 4px; }
+.welcome-login { margin-top: 15px; color: var(--onboarding-muted); font-size: 14px; }
 .login-layout { max-width: 490px; margin: 25px auto 80px; }
 .login-card { padding: 38px; }
-.login-card h1 { font: 500 34px/1.4 "Songti SC", Georgia, serif; margin: 0 0 12px; }
+.login-card h1 { font: 500 34px/1.4 var(--font-serif); letter-spacing: -.03em; margin: 0 0 12px; color: var(--onboarding-ink); }
 .login-card form { display: grid; gap: 24px; }
 .login-card .smoothie-button { width: 100%; margin-top: 8px; }
-.login-register { text-align: center; margin: 25px 0 0; color: #57717b; font-size: 14px; }
-.smoothie-alert { border: 1px solid #e5c3bd; background: #fff3ef; color: #843c30; padding: 13px 16px; border-radius: 12px; font-size: 15px; line-height: 1.6; margin: 0; }
-.smoothie-note { border: 1px solid #c5dbe3; background: var(--onboarding-mist); color: var(--onboarding-ink); padding: 13px 16px; border-radius: 12px; font-size: 15px; line-height: 1.6; margin: 0 0 22px; }
+.login-register { text-align: center; margin: 25px 0 0; color: var(--onboarding-muted); font-size: 14px; }
+.smoothie-alert { border: 1px solid var(--color-danger); background: var(--color-danger-bg); color: var(--color-danger); padding: 13px 16px; border-radius: 12px; font-size: 15px; line-height: 1.6; margin: 0; }
+.smoothie-note { border: 1px solid var(--color-info); background: var(--color-info-bg); color: var(--onboarding-ink); padding: 13px 16px; border-radius: 12px; font-size: 15px; line-height: 1.6; margin: 0 0 22px; }
 @media (max-width: 760px) { .login-card { padding: 26px; } .login-layout { margin-top: 18px; } }
 @media (max-width: 470px) { :is(.onboarding-shell, .smoothie-scope) .field-grid { grid-template-columns: 1fr; } .welcome-handnote { top: 457px; } }
 
-.smoothie-scope { --onboarding-ink: #173f4f; --onboarding-line: #d8e4e8; --onboarding-muted: #57717b; }
+.smoothie-scope { --onboarding-ink: #173c35; --onboarding-line: #dfeae4; --onboarding-muted: #4e6f66; }
 .smoothie-scope .history-section { margin-top: 0; padding-top: 0; border-top: 0; }
+
+/* printing the welcome or registration sheet: the jade rule is a screen detail */
+@media print {
+  .welcome-panel::before, .registration-card::before { display: none !important; }
+}

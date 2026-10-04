@@ -1,64 +1,93 @@
 @import "tailwindcss";
 
+/*
+ * 青瓷绿健康手账 — "celadon health notebook".
+ *
+ * One canvas (jade-white paper), one ink (forest green), one accent (celadon glaze), and one
+ * signature: a fine jade rule. The rule runs under the app header, along the notebook margin
+ * (the right rail) and as an inlay on the leading edge of the surfaces that matter most
+ * (the two home doors, the welcome sheet, the registration card) — see `.jade-edge`.
+ *
+ * Meaning colours stay meanings: crimson (danger), amber (warn), burnt sienna (serious),
+ * bamboo (good) and marine (info) each keep a hue of their own, apart from the celadon brand.
+ * Every ratio quoted below is measured against the surface it is used on; see docs/UI-STYLE.md.
+ */
 @theme {
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "Noto Sans CJK SC", "Helvetica Neue", Arial, sans-serif;
 
-  --color-canvas: #f5f7f9;
-  /* the top of every page: a faint brand wash that fades into the canvas */
-  --color-canvas-tint: #e6f2f8;
+  /* the display face: a restrained serif, used only at the top of a page, on the two doors of the
+     home screen and on dialog titles. Latin falls to Georgia, Chinese to Songti — the browser picks
+     per character — and nothing is downloaded. */
+  --font-serif:
+    Georgia, "Times New Roman", "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC",
+    "Noto Serif CJK SC", "SimSun", "宋体", serif;
+
+  /* paper, porcelain, and the pale celadon wash used for wells and segmented tracks */
+  --color-canvas: #f4f8f5;
+  /* the top of every page: a faint celadon wash that fades into the canvas */
+  --color-canvas-tint: #e4f0ea;
   --color-surface: #ffffff;
-  --color-surface-2: #f0f4f7;
-  --color-line: #e4eaef;
-  --color-line-strong: #cfd8e0;
-  --color-ink: #0f1b2d;
-  --color-ink-2: #4a5a6b;
-  /* the quietest text colour still passes 4.5:1 on white: no faint grey text anywhere */
-  --color-ink-3: #647488;
+  --color-surface-2: #eaf1ec;
+  /* hairlines (dividers, card edges) and the ruled edge of a control */
+  --color-line: #dfeae4;
+  --color-line-strong: #6e9086;
+  --color-ink: #173c35; /* 12.1:1 on white */
+  --color-ink-2: #3d5c54; /* 7.4:1 on white */
+  /* the quietest text colour: still 4.8:1 on the pale celadon well, so no faint grey text anywhere */
+  --color-ink-3: #4e6f66;
 
-  --color-brand-50: #eff9fd;
-  --color-brand-100: #d7f0fb;
-  --color-brand-200: #b2dff4;
-  --color-brand-300: #7ec6e6;
-  --color-brand-400: #3fa5cd;
-  --color-brand-500: #1c8cb4;
-  /* the main colour, and the lightest one white text may sit on (4.9:1) */
-  --color-brand-600: #017a9e;
-  /* the lower end of the main button's gradient; white text on it is 5.9:1 */
-  --color-brand-650: #016c8c;
-  --color-brand-700: #00617f;
-  --color-brand-800: #004b63;
+  --color-brand-50: #eff6f2;
+  --color-brand-100: #dfede6;
+  --color-brand-200: #c3dccf;
+  --color-brand-300: #9cc6b4;
+  --color-brand-400: #5fa88e;
+  --color-brand-500: #3b8a70;
+  /* the main colour, and the lightest one white text may sit on (6.4:1) */
+  --color-brand-600: #246a57;
+  /* the lower end of the main button's gradient; white text on it is 8.0:1 */
+  --color-brand-650: #1e5a4a;
+  --color-brand-700: #1b5346;
+  --color-brand-800: #123b31;
 
-  /* Each tone passes 4.5:1 as text on its own tint and on white, and carries white text when solid. */
-  --color-good: #18794e;
-  --color-good-bg: #e7f6ee;
-  --color-warn: #9a5b00;
-  --color-warn-bg: #fff4e0;
-  --color-serious: #b34a20;
-  --color-serious-bg: #fdeee7;
-  --color-danger: #c8373e;
-  --color-danger-bg: #fef0f1;
-  --color-info: #2458b5;
-  --color-info-bg: #e9f0fd;
+  /* Each tone passes 4.5:1 as text on its own tint and on white, and carries white text when solid.
+     Hues are spread apart on purpose: danger 356°, serious 22°, warn 37°, good 119°, info 199° —
+     and the brand celadon sits at 164°, so no meaning can be mistaken for the brand. */
+  --color-good: #2f6b2e;
+  --color-good-bg: #eaf2e2;
+  --color-warn: #8a5a0b;
+  --color-warn-bg: #fbf0dc;
+  --color-serious: #a6501f;
+  --color-serious-bg: #fbeee6;
+  --color-danger: #b2333c;
+  --color-danger-bg: #fbeeee;
+  --color-info: #2c6079;
+  --color-info-bg: #e8f1f4;
 
   /* second chart series, validated together with brand-600 */
-  --color-series-2: #eb6834;
+  --color-series-2: #c2632f;
 
   --radius-card: 20px;
 
-  /* cards rest on the page; floats (toasts, dialogs, the chat box) hover above it */
-  --shadow-card: 0 1px 2px rgba(15, 27, 45, 0.04), 0 6px 20px -8px rgba(15, 27, 45, 0.1);
-  --shadow-float: 0 18px 40px -14px rgba(15, 27, 45, 0.26), 0 4px 12px -2px rgba(15, 27, 45, 0.07);
+  /* Cards rest on the page; the inset highlight is the glaze on their top edge — it is the quiet
+     half of the signature. Floats (toasts, dialogs, the chat box) hover above the page. */
+  --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(23, 60, 53, 0.05),
+    0 12px 28px -22px rgba(23, 60, 53, 0.35);
+  --shadow-float: 0 24px 50px -20px rgba(23, 60, 53, 0.32), 0 6px 16px -6px rgba(23, 60, 53, 0.12);
   /* the selected item of a segmented control, and other small raised things */
-  --shadow-pill: 0 1px 2px rgba(15, 27, 45, 0.1), 0 0 0 1px rgba(15, 27, 45, 0.03);
+  --shadow-pill: 0 1px 2px rgba(23, 60, 53, 0.09), 0 0 0 1px rgba(23, 60, 53, 0.04);
   /* a quiet edge for white buttons and tiles */
-  --shadow-edge: 0 1px 2px rgba(15, 27, 45, 0.05);
+  --shadow-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(23, 60, 53, 0.06);
+  /* a field is a shallow well in the paper */
+  --shadow-well: inset 0 1px 3px rgba(23, 60, 53, 0.07);
   /* the main button: a top highlight and a soft glow of its own colour */
-  --shadow-btn: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(0, 75, 99, 0.3), 0 8px 16px -8px rgba(1, 122, 158, 0.55);
-  --shadow-hero: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 2px 4px rgba(0, 75, 99, 0.2), 0 14px 28px -14px rgba(1, 122, 158, 0.6);
+  --shadow-btn: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(18, 59, 49, 0.28),
+    0 10px 20px -10px rgba(36, 106, 87, 0.5);
+  --shadow-hero: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 4px rgba(18, 59, 49, 0.2),
+    0 16px 30px -16px rgba(36, 106, 87, 0.55);
   /* the page header once the page has scrolled under it */
-  --shadow-header: 0 1px 0 rgba(15, 27, 45, 0.06), 0 10px 24px -16px rgba(15, 27, 45, 0.2);
+  --shadow-header: 0 1px 0 rgba(23, 60, 53, 0.06), 0 10px 24px -18px rgba(23, 60, 53, 0.25);
 
   --animate-fade-up: fade-up 0.35s ease-out both;
   --animate-pulse-dot: pulse-dot 1.2s ease-in-out infinite;
@@ -96,7 +125,7 @@ html {
 }
 
 body {
-  /* a wash of the brand colour behind the top of the page, gone within the first screen */
+  /* a wash of celadon behind the top of the page, gone within the first screen */
   background-color: var(--color-canvas);
   background-image: linear-gradient(180deg, var(--color-canvas-tint), var(--color-canvas));
   background-repeat: no-repeat;
@@ -111,7 +140,300 @@ body {
 }
 
 ::selection {
-  background: var(--color-brand-100);
+  background: var(--color-brand-200);
+}
+
+/*
+ * One focus ring for the whole app: a crisp jade outline, two pixels clear of the control, so it is
+ * never lost against a red emergency button or a celadon one. The soft `ring-brand-200` halo that
+ * most components also carry sits behind it. Measured 6.4:1 against white and 6.0:1 against canvas.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+
+/*
+ * The signature: a fine jade rule inlaid on the leading edge of a surface — the bound edge of a
+ * page in the notebook. One line, never a frame.
+ */
+.jade-edge {
+  position: relative;
+}
+.jade-edge::before {
+  content: "";
+  position: absolute;
+  inset-block: 1.35rem;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(180deg, var(--color-brand-400), var(--color-brand-600));
+  pointer-events: none;
+}
+
+/* ---------- the app shell: main column, header rule, and the notebook margin on the right ---------- */
+
+.app-main {
+  padding: 1.5rem 2rem 2.5rem;
+}
+
+/* the ledger rule under the title: a hairline with a jade line under it */
+.app-header {
+  border-bottom: 1px solid var(--color-line);
+  box-shadow: 0 2px 0 -1px var(--color-brand-100);
+}
+
+/*
+ * The user's logo, used exactly as supplied and sized by width. `height: auto` keeps the 2172×724
+ * artwork at its 3:1 proportions — never stretched — and `max-width: 100%` with a shrinkable anchor
+ * means the fixed width can never push the header wider: on a column narrower than the artwork the
+ * artwork follows the column. `multiply` lets its white ground take on the paper behind it
+ * (jade-white canvas, or the faint celadon wash at the head of a page) instead of showing as a
+ * white rectangle. How large the lettering reads is the browser's business, not a number here.
+ */
+.brand-logo {
+  display: block;
+  width: 17.5rem;
+  height: auto;
+  min-width: 0;
+  max-width: 100%;
+  mix-blend-mode: multiply;
+}
+
+/* the anchor is the tap target: never smaller than 44px, and free to shrink with the column */
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+}
+
+/* the way back is a control too: one line of 17px text, but a full 46.75px of hit area */
+.app-back {
+  min-height: 2.75rem;
+}
+
+.app-rail {
+  width: 11rem;
+  gap: 1.5rem;
+  padding-top: 2.5rem;
+  border-left: 1px solid var(--color-line);
+  /* the same jade inlay as `.jade-edge`, run down the whole margin */
+  box-shadow: inset 2px 0 0 var(--color-brand-100);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 45%);
+}
+
+.rail-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 7rem;
+  height: 7rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  /* the same ruled edge as every other control: 3.27:1 against the canvas, so the shape is never
+     identified by a pale tint alone */
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-ink);
+  text-align: center;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.rail-profile:hover {
+  background: var(--color-brand-50);
+  border-color: var(--color-brand-500);
+}
+
+/* the report is the square one, the profile the round one: the wireframe's own distinction */
+.rail-report {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 7rem;
+  height: 6rem;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.rail-report:hover {
+  background: var(--color-brand-50);
+  border-color: var(--color-brand-500);
+}
+
+.rail-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+/* 应急: the pill shrinks with the margin, the link you actually hit does not */
+.rail-sos {
+  justify-content: center;
+  min-width: 2.9rem;
+}
+
+/*
+ * Responsive treatment of the shell: the main column's padding, the margin's width and the sizes of
+ * the controls scale down so nothing overflows a 390px phone. The rail keeps its place, its order
+ * and — this is a patient-facing control — its type: the labels never go below the 17.85px they have
+ * on the desktop, so the margin widens and its discs grow instead of the words shrinking.
+ */
+@media (max-width: 1024px) {
+  .app-rail {
+    width: 9.5rem;
+    gap: 1.25rem;
+    padding-top: 2rem;
+  }
+  .rail-profile {
+    width: 6.5rem;
+    height: 6.5rem;
+  }
+  .rail-report {
+    width: 6.5rem;
+    height: 5.75rem;
+  }
+  .rail-icon {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-main {
+    padding: 1.25rem 1.25rem 2rem;
+  }
+  .app-header {
+    gap: 0.75rem;
+  }
+  .brand-logo {
+    width: 15rem;
+  }
+  /* 8rem is what “profile”, “report”, 应急 and 退出登录 need at their own size */
+  .app-rail {
+    width: 8rem;
+    gap: 1rem;
+    padding-top: 1.5rem;
+  }
+  .rail-profile {
+    width: 5.75rem;
+    height: 5.75rem;
+  }
+  .rail-report {
+    width: 5.75rem;
+    height: 5.25rem;
+  }
+  .rail-icon {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+  .rail-foot {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-back {
+    font-size: 1rem;
+  }
+  /* the header may drop the way back under the wordmark rather than overflow a narrow column */
+  .app-header {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+  .home-doors {
+    gap: 0.85rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-main {
+    padding: 1rem 0.85rem 1.75rem;
+  }
+  .app-rail {
+    width: 6.5rem;
+    gap: 0.85rem;
+    padding-top: 1.1rem;
+  }
+  .rail-profile {
+    width: 5rem;
+    height: 5rem;
+  }
+  .rail-report {
+    width: 5rem;
+    height: 4.5rem;
+  }
+  .rail-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+  .rail-foot {
+    gap: 0.6rem;
+    margin-bottom: 0.9rem;
+  }
+  .brand-logo {
+    width: 14rem;
+  }
+  /* the two doors and the to-do sheet breathe through smaller padding, never smaller words */
+  .home-entry {
+    padding: 0.9rem 0.6rem;
+  }
+  .home-panel {
+    padding: 1rem 0.9rem;
+  }
+  .jade-edge::before {
+    inset-block: 0.85rem;
+    width: 2px;
+  }
+}
+
+/* ---------- the home to-do row ---------- */
+/*
+ * One line on a wide screen: checkbox, the sentence, the reminder switch on the right. On a phone
+ * that line leaves the sentence about two characters of room, so below 680px (Tailwind's `sm`,
+ * 40rem at the 106.25% root) the switch drops to its own row under the checkbox and the sentence.
+ * Only grid placement changes: the markup, its order and its handlers are untouched, and the text
+ * keeps its 19px.
+ */
+.todo-row,
+.todo-text {
+  min-width: 0;
+}
+
+@media (max-width: 680px) {
+  .todo-row {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    column-gap: 0.6rem;
+    row-gap: 0.4rem;
+    align-items: center;
+  }
+  .todo-check {
+    grid-column: 1;
+  }
+  .todo-text {
+    grid-column: 2;
+  }
+  .todo-switch {
+    grid-column: 1 / -1;
+    justify-self: start;
+    max-width: 100%;
+  }
 }
 
 /* thin scrollbars inside chat */
@@ -125,8 +447,16 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-up {
+  .animate-fade-up,
+  .animate-pulse-dot,
+  .animate-pulse {
     animation: none;
+  }
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -141,6 +471,10 @@ body {
   }
   body {
     background: #fff;
+  }
+  /* the jade rule is a screen detail: on paper the sheet is plain */
+  .jade-edge::before {
+    display: none !important;
   }
   .print-only {
     display: block !important;

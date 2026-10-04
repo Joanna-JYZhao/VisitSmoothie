@@ -8,7 +8,7 @@ import { reloadAccount, useStore } from "@/lib/store";
 import { logoutHere } from "@/lib/accounts";
 import { L } from "@/lib/lang";
 import { cn } from "@/lib/utils";
-import { LogoMark } from "./Logo";
+import { BrandLogo, LogoMark } from "./Logo";
 import { focusRing } from "./ui";
 
 function Splash() {
@@ -29,8 +29,8 @@ function Splash() {
  */
 function SosLink() {
   return (
-    <Link href="/sos" className={cn("inline-flex min-h-11 items-center rounded-full", focusRing)}>
-      <span className="inline-flex min-h-9 items-center rounded-full bg-danger px-4 text-base font-semibold text-white shadow-edge transition hover:bg-[#a92d33]">
+    <Link href="/sos" className={cn("rail-sos inline-flex min-h-11 items-center rounded-full", focusRing)}>
+      <span className="inline-flex min-h-9 items-center rounded-full bg-danger px-4 text-base font-semibold text-white shadow-edge transition hover:bg-[#952e35]">
         应急
       </span>
     </Link>
@@ -72,13 +72,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // with profile (round) and report (square). 应急 stays, small, at the bottom of that bar.
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl">
-      <div className="min-w-0 flex-1 px-8 pt-6 pb-10">
-        <header className="no-print mb-6 flex items-end justify-between gap-4 border-b-2 border-ink pb-2">
-          <Link href="/" className={cn("text-3xl font-bold tracking-tight text-ink", focusRing)}>
-            VisitSmoothie
+      <div className="app-main min-w-0 flex-1">
+        <header className="app-header no-print mb-6 flex items-end justify-between gap-4 pb-2">
+          <Link href="/" className={cn("app-brand", focusRing)}>
+            <BrandLogo />
           </Link>
           {!home && (
-            <Link href="/" className={cn("inline-flex items-center text-base font-medium text-brand-700", focusRing)}>
+            <Link href="/" className={cn("app-back inline-flex items-center text-base font-medium text-brand-700", focusRing)}>
               <ChevronLeft className="h-5 w-5" />
               回首页
             </Link>
@@ -86,21 +86,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main>{children}</main>
       </div>
-      <aside className="no-print sticky top-0 flex h-screen w-44 shrink-0 flex-col items-center gap-6 border-l-2 border-ink pt-10">
-        <Link
-          href="/me"
-          className={cn("flex h-28 w-28 flex-col items-center justify-center rounded-full border-2 border-brand-600 bg-surface text-lg font-semibold text-ink hover:bg-brand-50", focusRing)}
-        >
-          <UserRound className="h-7 w-7 text-brand-700" />
+      <aside className="app-rail no-print sticky top-0 flex h-screen shrink-0 flex-col items-center overflow-y-auto">
+        <Link href="/me" className={cn("rail-profile", focusRing)}>
+          <UserRound className="rail-icon text-brand-600" />
           profile
         </Link>
-        <Link
-          href="/report"
-          className={cn("flex h-24 w-28 items-center justify-center rounded-lg border-2 border-brand-600 bg-surface text-lg font-semibold text-ink hover:bg-brand-50", focusRing)}
-        >
+        <Link href="/report" className={cn("rail-report", focusRing)}>
           report
         </Link>
-        <div className="mt-auto mb-8 flex flex-col items-center gap-4">
+        <div className="rail-foot mt-auto mb-8 flex flex-col items-center gap-4">
           <SosLink />
           {/* log out: this account's records stay saved for the next login */}
           <button
@@ -110,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               reloadAccount();
               router.replace("/welcome");
             }}
-            className={cn("min-h-12 text-base font-medium text-ink-2 underline underline-offset-4 hover:text-ink", focusRing)}
+            className={cn("rail-logout min-h-12 text-base font-medium text-ink-2 underline underline-offset-4 hover:text-ink", focusRing)}
           >
             退出登录
           </button>

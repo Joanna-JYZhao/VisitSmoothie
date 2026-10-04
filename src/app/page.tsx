@@ -39,28 +39,39 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
-        <Link href="/pre" className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-surface p-6 text-center hover:bg-brand-50">
-          <MessageCircle className="h-10 w-10 text-brand-700" />
-          <span className="text-3xl font-semibold text-ink">pre</span>
-          <span className="text-base text-ink-2">看医生之前：哪里不舒服，跟我说</span>
+      {/* the two doors: the same paper card, a jade edge on the left, the word set in the display serif */}
+      <div className="home-doors grid grid-cols-2 gap-6">
+        <Link
+          href="/pre"
+          className="home-entry jade-edge flex min-h-48 flex-col items-center justify-center gap-2.5 rounded-card border border-line bg-surface p-6 text-center shadow-card transition hover:border-brand-300 hover:bg-brand-50/50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+        >
+          <MessageCircle className="h-12 w-12 rounded-full bg-brand-50 p-2.5 text-brand-600" />
+          <span className="font-serif text-3xl font-semibold tracking-tight text-ink">pre</span>
+          <span className="text-base leading-relaxed text-ink-2">看医生之前：哪里不舒服，跟我说</span>
         </Link>
-        <Link href="/post" className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-surface p-6 text-center hover:bg-brand-50">
-          <Camera className="h-10 w-10 text-brand-700" />
-          <span className="text-3xl font-semibold text-ink">post</span>
-          <span className="text-base text-ink-2">看完医生：把医嘱拍给我</span>
+        <Link
+          href="/post"
+          className="home-entry jade-edge flex min-h-48 flex-col items-center justify-center gap-2.5 rounded-card border border-line bg-surface p-6 text-center shadow-card transition hover:border-brand-300 hover:bg-brand-50/50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+        >
+          <Camera className="h-12 w-12 rounded-full bg-brand-50 p-2.5 text-brand-600" />
+          <span className="font-serif text-3xl font-semibold tracking-tight text-ink">post</span>
+          <span className="text-base leading-relaxed text-ink-2">看完医生：把医嘱拍给我</span>
         </Link>
       </div>
 
-      <section className="min-h-48 rounded-2xl border-2 border-brand-600 bg-surface p-6">
-        <h2 className="text-2xl font-semibold text-ink">to do &amp; tips</h2>
+      <section className="home-panel jade-edge min-h-48 rounded-card border border-line bg-surface p-6 shadow-card">
+        <h2 className="text-2xl font-semibold tracking-tight text-ink">to do &amp; tips</h2>
         <TodoList now={now} />
         {items.length > 0 && (
           <ul className="mt-4 space-y-2">
             {items.map((it) => {
               const cls =
-                it.tone === "red" ? "bg-danger-bg text-danger" : it.tone === "warn" ? "bg-warn-bg text-ink" : "bg-surface-2 text-ink";
-              const body = <span className={`block rounded-xl px-4 py-3 text-lg leading-relaxed ${cls}`}>{it.text}</span>;
+                it.tone === "red"
+                  ? "border-danger bg-danger-bg text-danger"
+                  : it.tone === "warn"
+                    ? "border-warn bg-warn-bg text-ink"
+                    : "border-brand-300 bg-surface-2 text-ink";
+              const body = <span className={`block rounded-r-xl border-l-[3px] px-4 py-3 text-lg leading-relaxed ${cls}`}>{it.text}</span>;
               return <li key={it.key}>{it.href ? <Link href={it.href} className="block hover:opacity-80">{body}</Link> : body}</li>;
             })}
           </ul>

@@ -306,7 +306,7 @@ function Item({
     <div>
       <label htmlFor={htmlFor} className="mb-2 flex flex-wrap items-center gap-2 text-lg font-medium text-ink">
         {skippable && (
-          <span className="rounded-full border-2 border-brand-500 bg-brand-50 px-3 py-0.5 text-base font-semibold text-brand-800">可跳过</span>
+          <span className="rounded-full border border-brand-300 bg-brand-50 px-3 py-0.5 text-base font-semibold text-brand-800">可跳过</span>
         )}
         {label}
         {required ? <span className="text-danger">*</span> : !skippable && <span className="text-base font-normal text-ink-2">（选填）</span>}

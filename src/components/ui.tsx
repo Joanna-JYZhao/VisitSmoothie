@@ -13,7 +13,7 @@ import type { Tone } from "@/lib/utils";
  * more, and everything tappable is at least 48px tall. (1rem is 17px, see globals.css.)
  */
 
-/** The one focus style: a soft halo in the brand colour. For anything tappable that is not built from the parts below. */
+/** The one focus style: a soft halo in the celadon brand. Paired with the crisp jade outline in globals.css. */
 export const focusRing = "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
 
 /* ---------- buttons ---------- */
@@ -21,15 +21,15 @@ export const focusRing = "focus-visible:outline-none focus-visible:ring-4 focus-
 const btnBase =
   "inline-flex items-center justify-center gap-2 rounded-2xl text-center font-semibold leading-tight select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50";
 const btnVariants = {
-  /** the one main action on a screen. The gradient starts at brand-600 and only gets darker, so white text never drops below 4.9:1 */
+  /** the one main action on a screen. A celadon glaze: the gradient starts at brand-600 and only gets darker, so white text never drops below 6.4:1 */
   primary: "bg-linear-to-b from-brand-600 to-brand-650 text-white shadow-btn hover:from-brand-700 hover:to-brand-700",
-  secondary: "border-2 border-line-strong bg-surface text-ink shadow-edge hover:border-brand-400 hover:bg-brand-50",
+  secondary: "border-2 border-line-strong bg-surface text-ink shadow-edge hover:border-brand-500 hover:bg-brand-50",
   soft: "bg-brand-50 text-brand-800 hover:bg-brand-100",
   /** clearly a button, clearly not the main one: brand outline on white */
   outline: "border-2 border-brand-600 bg-surface text-brand-800 shadow-edge hover:bg-brand-50",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
-  danger: "bg-danger text-white shadow-edge hover:bg-[#a92d33]",
-  dangerSoft: "bg-danger-bg text-danger hover:bg-[#f8d7d9]",
+  danger: "bg-danger text-white shadow-edge hover:bg-[#952e35]",
+  dangerSoft: "bg-danger-bg text-danger hover:bg-[#f7e1e2]",
   dangerGhost: "text-danger hover:bg-danger-bg",
 } as const;
 const btnSizes = {
@@ -321,7 +321,7 @@ export function TileLink({
 /* ---------- forms ---------- */
 
 export const inputCls =
-  "w-full rounded-2xl border-2 border-line-strong bg-surface px-4 text-lg text-ink placeholder:text-ink-3 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:bg-surface-2";
+  "w-full rounded-2xl border-2 border-line-strong bg-surface px-4 text-lg text-ink shadow-well placeholder:text-ink-3 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100 disabled:bg-surface-2";
 
 export function Field({
   label,
@@ -486,7 +486,7 @@ export function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
-          <h3 className="text-xl leading-snug font-semibold text-ink">{title}</h3>
+          <h3 className="font-serif text-xl leading-snug font-semibold tracking-tight text-ink">{title}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -531,7 +531,8 @@ export function BackButton({ href, children = L("返回", "Back") }: { href: str
   );
 }
 
-const titleCls = "text-[1.65rem] leading-tight font-semibold tracking-tight text-balance text-ink";
+/* The top of a page speaks in the display serif; everything below it stays in the body face. */
+const titleCls = "font-serif text-[1.65rem] leading-tight font-semibold tracking-tight text-balance text-ink";
 const subCls = "mt-1.5 text-lg leading-relaxed text-ink-2";
 
 export function PageTitle({ children, sub, className }: { children: React.ReactNode; sub?: React.ReactNode; className?: string }) {
@@ -585,8 +586,8 @@ export function PageHeader({
 export function SectionTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="mb-2 flex min-h-10 items-center justify-between gap-3">
-      {/* a short brand mark in front: sections are found by it when scrolling a long page */}
-      <h2 className="flex items-center gap-2.5 text-lg font-semibold text-ink before:h-[1.05em] before:w-1 before:shrink-0 before:rounded-full before:bg-brand-500">
+      {/* a short jade mark in front: sections are found by it when scrolling a long page */}
+      <h2 className="flex items-center gap-2.5 text-lg font-semibold text-ink before:h-[1.05em] before:w-[3px] before:shrink-0 before:rounded-full before:bg-linear-to-b before:from-brand-400 before:to-brand-600">
         {children}
       </h2>
       {action}

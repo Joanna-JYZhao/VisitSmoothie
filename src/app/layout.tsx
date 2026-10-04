@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // the colour at the very top of every page, so the browser's own bar blends into it
-  themeColor: "#e6f2f8",
+  // the colour at the very top of every page, so the browser's own bar blends into the celadon wash
+  themeColor: "#e4f0ea",
   width: "device-width",
   initialScale: 1,
 };

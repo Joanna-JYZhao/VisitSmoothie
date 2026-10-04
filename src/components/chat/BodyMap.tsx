@@ -7,9 +7,9 @@ import { useState } from "react";
  * 点完调用 onPick("右膝内侧") 这样的规范名称。左右都按患者自己的身体说：正面图上，患者的右边在画面左边。
  */
 
-const BRAND = "#017a9e";
-const LIGHT = "#eff9fd";
-const LINE = "#9ccfe0";
+const BRAND = "#246a57";
+const LIGHT = "#eff6f2";
+const LINE = "#9cc6b4";
 
 type Side = "右" | "左";
 type Detail = { kind: "knee" | "shoulder"; side: Side } | { kind: "belly" } | { kind: "back" };
@@ -122,7 +122,7 @@ function Figure({ zones, onZone }: { zones: Zone[]; onZone: (z: Zone) => void })
           role="button"
           tabIndex={0}
           aria-label={z.name}
-          className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-[3] [&:hover>rect]:fill-[#d6f0f8]"
+          className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-[3] [&:hover>rect]:fill-[#dfede6]"
           onClick={() => onZone(z)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -153,7 +153,7 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
 
   if (picked) {
     return (
-      <div className="rounded-2xl border border-[#9ccfe0] bg-white p-4 text-lg text-ink">
+      <div className="rounded-2xl border border-[#9cc6b4] bg-white p-4 text-lg text-ink">
         你点的是：<span className="font-semibold" style={{ color: BRAND }}>{picked}</span>
       </div>
     );
@@ -171,7 +171,7 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
                 key={name}
                 type="button"
                 onClick={() => pick(name)}
-                className="min-h-16 rounded-2xl border-2 px-2 py-2 text-lg leading-snug text-ink transition hover:bg-[#d6f0f8] focus-visible:ring-4 focus-visible:ring-[#9ccfe0] focus-visible:outline-none"
+                className="min-h-16 rounded-2xl border-2 px-2 py-2 text-lg leading-snug text-ink transition hover:bg-[#dfede6] focus-visible:ring-4 focus-visible:ring-[#9cc6b4] focus-visible:outline-none"
                 style={{ borderColor: BRAND, background: LIGHT }}
               >
                 {name.replace(/^(右膝|左膝|右肩|左肩)/, "")}
