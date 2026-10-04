@@ -304,11 +304,12 @@ check("fallback: 「上次体检」 is not 「上次看医生」", fb(W("上次�
 check("fallback: a question about coming back is answered with what is on file about it", fb(W("医生说要复查是查什么")).answer === "记下的下一次：今天（10月3日 周六）要去看医生：年度复诊。" && fb(L("医生说要复查是查什么")).answer.startsWith("记录里没有定好日子的复查。7月2日（约 3 个月前）看医生时，医生是这么说的："), [fb(W("医生说要复查是查什么")), fb(L("医生说要复查是查什么"))]);
 const stomach = fb(L("我上次胃疼是什么时候"));
 check("fallback: an earlier complaint named in the question is read back, entry by entry", stomach.answer.startsWith("2026年6月30日（约 3 个月前）前后开始的「胃痛」，已经好了（2026年7月9日）。\n6月30日第一次记：晚饭后胃部隐痛，伴反酸、嗳气。\n") && stomach.sources.join() === idOf(L(""), /「胃痛」$/), stomach);
-check("fallback: a complaint that is not on file is not answered with some other record", fb(W("我上次胃痛是什么时候")).answer.startsWith("这个问题我现在答不了。") && fb(W("我上次胃痛是什么时候")).sources.length === 0, fb(W("我上次胃痛是什么时候")));
+check("fallback: a complaint that is not on file is not answered with some other record", fb(W("我上次胃痛是什么时候")).answer === "我还没理解你的意思，可以换一种说法，或补充一点具体情况吗？" && fb(W("我上次胃痛是什么时候")).sources.length === 0, fb(W("我上次胃痛是什么时候")));
 check("fallback: surgery and family history come from the profile", fb(L("我做过什么手术")).answer.endsWith("做过的手术：阑尾切除（2015）。") && fb(L("我做过什么手术")).sources.join() === "P", fb(L("我做过什么手术")));
 const explain = fb(L("上次医生说的幽门螺杆菌是什么意思"));
 check("fallback: what it cannot explain it says it cannot, and reads the visit back", explain.answer.startsWith("这个问题我现在解释不了，先把最近一次看医生的记录念给你。\n最近一次看医生是 7月2日") && explain.sources.join() === idOf(L(""), /^7月2日 看医生/), explain);
-check("fallback: anything else gets the list of what can be looked up", fb(W("今天天气怎么样")).answer.startsWith("这个问题我现在答不了。我能直接查到的是：") && fb(W("今天天气怎么样")).sources.length === 0);
+check("fallback: an unmatched question asks for rephrasing without inventing a record", fb(W("今天天气怎么样")).answer === "我还没理解你的意思，可以换一种说法，或补充一点具体情况吗？" && fb(W("今天天气怎么样")).sources.length === 0);
+check("fallback: casual feedback also gets the gentle clarification prompt", fb(W("牛逼")).answer === "我还没理解你的意思，可以换一种说法，或补充一点具体情况吗？" && fb(W("牛逼")).sources.length === 0);
 check("fallback: an emergency in the question raises the alert whatever the answer is", fb(W("我现在胸口痛，喘不上气，怎么办")).hint?.level === "urgent" && fb(L("胃疼得受不了了，刚才还吐了血")).hint?.level === "urgent");
 
 /* ---------- danger signals in a question ---------- */

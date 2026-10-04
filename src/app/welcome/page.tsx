@@ -8,12 +8,7 @@ import { useStore } from "@/lib/store";
 import { SmoothieFooter, SmoothieHeader } from "@/components/Smoothie";
 import "./smoothie.css";
 
-/*
- * 登录界面: the teammate's Visit Smoothie welcome screen (TriMedManagement, branch
- * codex/visit-smoothie-onboarding), set like a keynote title: the wordmark huge in the middle of a
- * lit stage, one button under it, the hand-written note beside the button. Shown only when nobody
- * is logged in: register (开始我的健康旅程) or log in (登录).
- */
+/* A calm welcome sheet, with the existing registration and login destinations. */
 
 export default function WelcomePage() {
   const { state, ready } = useStore();
@@ -37,7 +32,6 @@ export default function WelcomePage() {
       />
       <main className="onboarding-main is-welcome">
         <section className="welcome-stage">
-          <div className="welcome-light" aria-hidden="true" />
           <div className="welcome-intro">
             <p className="welcome-eyebrow">
               <span />
@@ -64,20 +58,6 @@ export default function WelcomePage() {
                 登录
               </Link>
             </p>
-            <div className="welcome-handnote">
-              <svg className="journey-arrow" viewBox="0 0 170 92" fill="none" aria-hidden="true">
-                <path d="M15 6C-3 70 70 87 144 45M126 44l24-4-6 23" pathLength={1} />
-              </svg>
-              <span>
-                让健康旅程，
-                <br />
-                顺畅一点。
-              </span>
-            </div>
-          </div>
-          <div className="welcome-margin" aria-hidden="true">
-            <span>HELLO, YOU.</span>
-            <span>☺</span>
           </div>
           <div className="welcome-footnote">
             <span aria-hidden="true">

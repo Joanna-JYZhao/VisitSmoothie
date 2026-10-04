@@ -184,7 +184,7 @@ export default function PostPage() {
       />
 
       {/* the two doors, side by side: record, or photograph */}
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="rise-1">
           <Recorder
             onBusy={setRecording}
@@ -195,8 +195,8 @@ export default function PostPage() {
           />
         </div>
         <div className="rise-2">
-          <button type="button" disabled={recording || photos.length >= MAX_PHOTOS} onClick={() => cameraRef.current?.click()} className={bigTileCls}>
-            <IconTile tone="solid" size="xl" className="animate-breathe transition-transform duration-300 group-hover:scale-105" >
+          <button type="button" disabled={recording || photos.length >= MAX_PHOTOS} onClick={() => cameraRef.current?.click()} className={cn(bigTileCls, "bg-surface")}>
+            <IconTile tone="solid" size="md">
               <Camera strokeWidth={2.2} />
             </IconTile>
             <span className="t-heading">上传</span>

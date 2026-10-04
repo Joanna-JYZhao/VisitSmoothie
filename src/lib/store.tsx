@@ -38,6 +38,7 @@ const DEFAULT_SETTINGS: Settings = {
   trackedMetrics: [],
   metricReminderHours: 24,
   lang: "zh",
+  tourDone: false,
 };
 const EMPTY: AppState = {
   version: 1,

@@ -1,13 +1,12 @@
 import Link from "next/link";
+import { BrandLogo, LogoMark } from "./Logo";
 
 /* The Visit Smoothie header and footer, shared by the welcome screen and the registration screen. */
 
+/* The user's own logo, in the same link to the same place, with the same accessible name as before. */
 const brand = (
   <Link className="smoothie-brand" href="/welcome" aria-label="Visit Smoothie">
-    <span className="smoothie-mark" aria-hidden="true">
-      v<span>●</span>
-    </span>
-    <span>Visit Smoothie</span>
+    <BrandLogo />
   </Link>
 );
 
@@ -30,11 +29,10 @@ export function SmoothieFooter() {
   );
 }
 
-/** The wordmark's mark on its own, as an app icon above the login card. */
+/**
+ * The app's own mark above the login card: the same celadon tile the rest of the app uses, rather
+ * than a second, different fragment of the wordmark on the same screen.
+ */
 export function SmoothieAppMark() {
-  return (
-    <span className="login-mark" aria-hidden="true">
-      v<span>●</span>
-    </span>
-  );
+  return <LogoMark className="login-mark-tile" />;
 }

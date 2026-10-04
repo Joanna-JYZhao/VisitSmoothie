@@ -37,7 +37,7 @@ export function AskBox({ now }: { now: number }) {
           void send(text);
         }}
       >
-        <IconTile tone="brand" size="lg" className="hidden shrink-0 self-center sm:flex">
+        <IconTile tone="brand" size="sm" className="hidden shrink-0 self-center sm:flex">
           <MessageCircleQuestion />
         </IconTile>
         <input
@@ -45,9 +45,9 @@ export function AskBox({ now }: { now: number }) {
           onChange={(e) => setText(e.target.value)}
           placeholder="对吃药或就诊有疑问？问我"
           aria-label="对吃药或就诊有疑问？问我"
-          className="min-h-14 min-w-0 flex-1 rounded-full border-[1.5px] border-line-strong bg-surface px-5 text-lg max-sm:px-4 max-sm:text-[17px] text-ink shadow-[inset_0_1px_2px_rgba(20,38,47,0.05)] transition duration-200 placeholder:text-ink-2 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
+          className="min-h-11 min-w-0 flex-1 rounded-lg border border-line-strong bg-surface px-3 text-base text-ink transition duration-200 placeholder:text-ink-2 focus-visible:border-brand-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
         />
-        <Button type="submit" size="lg" className="h-14 w-14 shrink-0 px-0 text-xl" disabled={!text.trim() || pending != null}>
+        <Button type="submit" size="sm" className="w-11 shrink-0" disabled={!text.trim() || pending != null}>
           问
         </Button>
       </form>
@@ -58,7 +58,7 @@ export function AskBox({ now }: { now: number }) {
               key={q}
               type="button"
               onClick={() => void send(q)}
-              className="press material min-h-12 rounded-full border border-line/80 px-4 text-base font-medium text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+              className="press material min-h-11 rounded-lg border border-line/80 px-4 text-base font-medium text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
               {q}
             </button>
@@ -89,7 +89,7 @@ export function AskBox({ now }: { now: number }) {
       {recent.length > 0 && (
         <ul className="mt-3 space-y-3">
           {recent.map((t) => (
-            <li key={t.id} className="material animate-pop rounded-[20px] border border-line/80 px-5 py-5">
+            <li key={t.id} className="animate-fade-up rounded-xl bg-surface-2/60 px-4 py-4">
               <p className="t-heading text-ink">{t.question}</p>
               {t.hint && (
                 <div className="mt-2">

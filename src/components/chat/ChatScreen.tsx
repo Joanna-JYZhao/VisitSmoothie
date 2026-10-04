@@ -148,14 +148,14 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
       {/* the sheet: part of the page, not pasted on — a fade above it, a raised surface, the report one tap away inside it */}
       <div className="sticky bottom-0 z-10 -mx-4 px-4 pb-3 sm:-mx-2 sm:px-2">
         <div aria-hidden="true" className="pointer-events-none h-8 bg-linear-to-t from-canvas to-canvas/0" />
-        <div className="material-raised space-y-3 rounded-[32px] border border-line/70 p-3">
+        <div className="space-y-3 rounded-2xl border border-line bg-surface p-2.5">
           {report && (
             <button
               type="button"
               onClick={() => router.push(report)}
-              className="press flex min-h-14 w-full items-center gap-3 rounded-full bg-brand-50 py-1 pr-4 pl-1.5 text-left text-lg font-medium text-brand-800 transition duration-200 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+              className="press flex min-h-12 w-full items-center gap-3 rounded-lg bg-brand-50 py-1 pr-4 pl-1.5 text-left text-base font-medium text-brand-800 transition duration-200 hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
-              <IconTile size="lg" tone="solid" className="rounded-full">
+              <IconTile size="sm" tone="brand">
                 <FileText />
               </IconTile>
               <span className="min-w-0 flex-1 truncate">给医生看的报告（{reportTitle}）</span>

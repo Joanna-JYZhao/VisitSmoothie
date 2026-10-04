@@ -37,11 +37,11 @@ import { BodyMap } from "@/components/chat/BodyMap";
  * short fade.
  */
 
-const bubble = "max-w-[86%] rounded-[22px] px-5 py-3.5 whitespace-pre-wrap";
-/** the patient: the brand gradient on the right, white text (brand-600 and darker only: 5.3:1 and up) */
-const mine = "rounded-br-[6px] bg-linear-to-b from-brand-600 to-brand-700 text-lg leading-relaxed text-white shadow-btn";
+const bubble = "max-w-[90%] rounded-2xl px-4 py-3 whitespace-pre-wrap";
+/** The patient: solid blue on the right, with readable white text. */
+const mine = "rounded-br-[6px] bg-brand-600 text-base leading-relaxed text-white";
 /** the assistant, earlier: a white sheet on the left with a hairline edge */
-const theirs = "material rounded-bl-[6px] border border-line/80 bg-surface text-lg leading-relaxed text-ink";
+const theirs = "rounded-bl-[6px] bg-surface text-base leading-relaxed text-ink";
 
 export function Bubble({ from, children }: { from: "user" | "ai"; children: React.ReactNode }) {
   return (
@@ -62,16 +62,16 @@ function Mark() {
  */
 function OpenQuestion({ text, chips, onChip, opening }: { text: string; chips?: string[]; onChip: (text: string) => void; opening?: boolean }) {
   return (
-    <div className={cn("animate-fade-up pt-1", opening && "relative flex flex-col items-center py-6 text-center")}>
+    <div className={cn("animate-fade-up pt-1", opening && "relative flex flex-col items-center py-4 text-center")}>
       {opening ? (
         <>
           <span aria-hidden="true" className="pool -top-10 left-1/2 h-64 w-64 -translate-x-1/2" />
-          <LogoMark className="relative h-16 w-16 animate-breathe rounded-[18px] shadow-glow" />
+          <LogoMark className="relative h-11 w-11 rounded-xl" />
         </>
       ) : (
         <Mark />
       )}
-      <p className={cn("relative mt-3 whitespace-pre-wrap text-ink", opening ? "t-display mt-7 max-w-xl" : "t-title")}>{text}</p>
+      <p className={cn("relative mt-3 whitespace-pre-wrap text-ink", opening ? "t-title mt-5 max-w-xl" : "t-heading")}>{text}</p>
       {chips && chips.length > 0 && (
         <div className={cn("relative mt-5 flex flex-wrap gap-2.5", opening && "mt-8 justify-center")} aria-label="可以直接点的回答">
           {chips.map((c, i) => (
@@ -80,7 +80,7 @@ function OpenQuestion({ text, chips, onChip, opening }: { text: string; chips?: 
               type="button"
               onClick={() => onChip(c)}
               className={cn(
-                "press material min-h-14 rounded-full border border-line/70 px-6 text-lg font-semibold text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+                "press bg-surface min-h-11 rounded-lg border border-line/70 px-4 text-base font-semibold text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
                 ["rise-1", "rise-2", "rise-3", "rise-4"][Math.min(i, 3)],
               )}
             >

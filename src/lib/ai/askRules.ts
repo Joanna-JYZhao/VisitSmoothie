@@ -384,7 +384,7 @@ function byRule(req: AskRequest): AskResponse {
     return done(lastVisitAnswer(req, "这个问题我现在解释不了，先把最近一次看医生的记录念给你。\n"));
   }
   return done({
-    answer: "这个问题我现在答不了。我能直接查到的是：上次医生说了什么、药是怎么开的、什么时候复查、对什么过敏、最近的血糖血压。可以换个问法试试。",
+    answer: "我还没理解你的意思，可以换一种说法，或补充一点具体情况吗？",
     sources: [],
   });
 }

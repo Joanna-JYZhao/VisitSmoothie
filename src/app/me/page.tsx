@@ -54,7 +54,7 @@ export default function MePage() {
   const age = (profile.birthDate ? ageFromBirthDate(profile.birthDate) : null) ?? ageOf(profile.birthYear);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-6">
       <PageHeader
         title="我的档案"
         aside={
@@ -71,24 +71,22 @@ export default function MePage() {
         }
       />
 
-      {/* The Medical ID card: the person in display type on a glossy tile, then the facts in hairline rows. */}
+      {/* Identity and medical facts form one plain, grouped list. */}
       <Card tone="raised" className="animate-pop overflow-hidden">
-        <div className="relative px-5 pt-7 pb-6 sm:px-6 sm:pt-8">
-          {/* a quiet brand glow behind the tile, the way a Health card is lit */}
-          <span aria-hidden="true" className="pointer-events-none absolute -top-16 -left-10 h-48 w-48 rounded-full bg-brand-200/35 blur-3xl" />
-          <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-4 sm:gap-x-5">
+        <div className="relative px-4 pt-5 pb-4 sm:px-5 sm:pt-6 sm:pb-5">
+          <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3.5 sm:gap-x-5">
             <span
               aria-hidden="true"
-              className="tile-brand flex h-18 w-18 shrink-0 items-center justify-center rounded-[22px] text-[2rem] leading-none font-semibold text-white sm:row-span-2 sm:h-20 sm:w-20 sm:text-[2.25rem]"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#7056bf] text-[1.4rem] leading-none font-semibold text-white sm:row-span-2"
             >
               {Array.from(profile.name.trim())[0] ?? ""}
             </span>
-            <h2 className="t-display col-start-2 self-center text-ink sm:self-start sm:pt-0.5">{profile.name}</h2>
+            <h2 className="name-title col-start-2 self-center text-ink sm:self-start sm:pt-0.5">{profile.name}</h2>
             <LinkButton href="/me/edit" variant="secondary" size="sm" className="press col-start-3 self-center sm:self-start">
               修改
             </LinkButton>
             {/* on a phone the facts take the full width under the tile; beside it there is room to sit under the name */}
-            <p className="t-lead col-span-3 mt-4 text-ink-2 sm:col-span-2 sm:col-start-2 sm:mt-1">
+            <p className="t-lead col-span-3 mt-3 text-ink-2 sm:col-span-2 sm:col-start-2 sm:mt-1">
               {/* each part stays whole when the line wraps on a narrow phone */}
               {[profile.gender, `${age} 岁`, profile.education].filter(Boolean).map((part, i) => (
                 <Fragment key={i}>
@@ -107,7 +105,7 @@ export default function MePage() {
               const allergy = list === profile.allergies;
               const warn = allergy && list.length > 0;
               return (
-                <div key={label} className={cn("flex items-start gap-3.5 px-5 py-4 sm:px-6", warn && "bg-danger-bg/50")}>
+                <div key={label} className={cn("flex items-start gap-3 px-4 py-3 sm:px-5", warn && "bg-danger-bg/50")}>
                   {allergy && (
                     <IconTile tone={warn ? "danger" : "neutral"} size="sm" className="mt-0.5">
                       <ShieldAlert />
@@ -123,14 +121,14 @@ export default function MePage() {
               );
             })}
           {profile.notes && (
-            <div className="px-5 py-4 sm:px-6">
+            <div className="px-4 py-3 sm:px-5">
               <dt className="text-base font-medium text-ink-2">还想让医生知道的</dt>
               <dd className="t-body mt-0.5 text-ink">{profile.notes}</dd>
             </div>
           )}
         </dl>
         {/* who to call: the first thing the emergency page shows, so it is kept in sight here */}
-        <div className="flex items-center gap-3.5 border-t border-line bg-surface-2/60 px-5 py-4 sm:px-6">
+        <div className="flex items-center gap-3 border-t border-line bg-surface-2/60 px-4 py-3.5 sm:px-5">
           <IconTile tone={contact ? "good" : "neutral"} size="lg">
             <Phone />
           </IconTile>
@@ -158,7 +156,7 @@ export default function MePage() {
       </div>
 
       {state.nextVisit && (
-        <Card tone="brand" className="rise-2 flex items-start gap-4 p-5 sm:p-6">
+        <Card tone="brand" className="rise-2 flex items-start gap-3.5 p-4 sm:p-5">
           <IconTile tone="solid" size="lg">
             <CalendarCheck />
           </IconTile>
@@ -222,8 +220,8 @@ function PastHistory() {
     toast.show(`已记进档案：${[...conditions, ...surgeries].join("、")}`, "good");
   };
   return (
-    <Card className="p-5 sm:p-6">
-      <div className="flex items-start gap-4">
+    <Card className="p-4 sm:p-5">
+      <div className="flex items-start gap-3.5">
         <IconTile size="lg">
           <History />
         </IconTile>
@@ -232,7 +230,7 @@ function PastHistory() {
           <p className="t-body mt-1 text-ink-2">以前得过的病、受过的伤、做过的手术，补上以后，问诊时我会一起考虑。</p>
         </div>
       </div>
-      <Button size="lg" variant="secondary" className="press mt-5 w-full" onClick={() => setOpen(true)}>
+      <Button size="lg" variant="secondary" className="press mt-4 w-full" onClick={() => setOpen(true)}>
         <NotebookPen className="h-6 w-6" />
         补充以往病史
       </Button>

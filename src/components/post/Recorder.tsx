@@ -8,12 +8,9 @@ import { IconTile, Spinner } from "@/components/ui";
 
 type Phase = { kind: "idle" } | { kind: "recording"; seconds: number } | { kind: "working"; done: number; total: number };
 
-/**
- * The look shared by the two big tiles on the page (this one and the camera): a raised sheet with a
- * glossy app-icon tile in it. On a phone the icon sits beside the word; from `sm` up the tile is a square.
- */
+/** Compact, flat entry rows shared by recording and uploading. */
 export const bigTileCls =
-  "press lift group relative flex min-h-24 w-full items-center gap-5 overflow-hidden rounded-card border border-line/60 material-raised light px-5 py-5 text-left text-ink sm:min-h-60 sm:flex-col sm:justify-center sm:gap-4 sm:px-6 sm:py-7 sm:text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:pointer-events-none disabled:opacity-60";
+  "press lift group relative flex min-h-20 w-full items-center gap-3 overflow-hidden rounded-card border border-line/60 px-4 py-3 text-left text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:pointer-events-none disabled:opacity-60";
 
 /** The sound bars beside the clock while recording: a visual pulse only, there is no meter behind it. */
 function SoundBars() {
@@ -97,7 +94,7 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
         disabled={disabled || phase.kind === "working"}
         onClick={() => void (recording ? stop() : start())}
         aria-pressed={recording}
-        className={cn(bigTileCls, recording && "border-danger/30 bg-danger-bg/40 text-danger ring-4 ring-danger/10")}
+        className={cn(bigTileCls, recording ? "border-danger/30 bg-danger-bg text-danger" : "bg-surface")}
       >
         {/* the tile: the brand icon at rest, a red square with rings while recording, the spinner while transcribing */}
         <span aria-hidden="true" className="relative flex shrink-0 items-center justify-center">
@@ -108,15 +105,15 @@ export function Recorder({ onText, onBusy, disabled }: { onText: (t: LongTranscr
             </>
           )}
           {working ? (
-            <IconTile tone="brand" size="xl">
+            <IconTile tone="brand" size="md">
               <Spinner className="h-8 w-8" />
             </IconTile>
           ) : recording ? (
-            <IconTile tone="solidDanger" size="xl" className="relative">
+            <IconTile tone="solidDanger" size="md" className="relative">
               <Square className="fill-current" />
             </IconTile>
           ) : (
-            <IconTile tone="solid" size="xl" className="animate-breathe transition-transform duration-300 group-hover:scale-105">
+            <IconTile tone="solid" size="md" className="animate-breathe transition-transform duration-300 group-hover:scale-105">
               <Mic strokeWidth={2.2} />
             </IconTile>
           )}

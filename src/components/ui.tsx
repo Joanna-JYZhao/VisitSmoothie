@@ -10,36 +10,36 @@ import type { Tone } from "@/lib/utils";
 
 /*
  * Sizes follow one rule: body text is 17px or more, anything that must not be missed is 20px or
- * more, and everything tappable is at least 48px tall. (1rem is 17px, see globals.css.)
+ * more, and shared controls are at least 44px tall. (1rem is 17px, see globals.css.)
  */
 
 /** The one focus style: a soft halo in the brand colour. For anything tappable that is not built from the parts below. */
-export const focusRing = "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
+export const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
 
 /* ---------- buttons ---------- */
 
 const btnBase =
-  "inline-flex items-center justify-center gap-2 rounded-full text-center font-semibold leading-tight tracking-[-0.005em] select-none transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:scale-[0.97] active:opacity-90 disabled:pointer-events-none disabled:opacity-45";
+  "inline-flex items-center justify-center gap-2 rounded-xl text-center font-semibold leading-tight tracking-[-0.005em] select-none transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:opacity-75 disabled:pointer-events-none disabled:opacity-45";
 const btnVariants = {
-  /** the one main action on a screen. The gradient starts at brand-600 and only gets darker, so white text never drops below 4.9:1 */
-  primary: "bg-linear-to-b from-brand-600 to-brand-650 text-white shadow-btn hover:from-brand-650 hover:to-brand-700 hover:shadow-hero",
-  secondary: "material text-ink hover:bg-brand-50 hover:text-brand-800",
+  /** Flat blue primary action; white text clears AA contrast. */
+  primary: "bg-brand-600 text-white hover:bg-brand-700",
+  secondary: "bg-surface-2 text-brand-700 hover:bg-brand-100",
   /** frosted: sits on photos, gradients and other busy ground */
   glass: "glass border border-white/60 text-ink shadow-pill hover:bg-white/90",
   soft: "bg-brand-50 text-brand-800 hover:bg-brand-100",
   /** clearly a button, clearly not the main one: brand outline on white */
-  outline: "border-[1.5px] border-brand-600 bg-surface text-brand-800 shadow-edge hover:bg-brand-50",
+  outline: "border border-brand-600 bg-surface text-brand-700 hover:bg-brand-50",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
-  danger: "bg-danger text-white shadow-edge hover:bg-[#b02f36]",
-  dangerSoft: "bg-danger-bg text-danger hover:bg-[#f8d7d9]",
+  danger: "bg-danger text-white shadow-edge hover:bg-[#952e35]",
+  dangerSoft: "bg-danger-bg text-danger hover:bg-[#f7e1e2]",
   dangerGhost: "text-danger hover:bg-danger-bg",
 } as const;
 const btnSizes = {
   sm: "min-h-11 px-4 text-base",
-  md: "min-h-12 px-6 text-base",
-  lg: "min-h-14 px-7 text-lg",
+  md: "min-h-11 px-5 text-base",
+  lg: "min-h-12 px-5 text-base",
   /** an answer to tap: as tall as `lg`, but with little side padding so three fit on a phone */
-  tile: "min-h-14 rounded-2xl px-1.5 text-lg",
+  tile: "min-h-12 rounded-xl px-1.5 text-base",
 } as const;
 
 export type ButtonVariant = keyof typeof btnVariants;
@@ -93,7 +93,7 @@ export function LinkButton({
 }
 
 const linkBase =
-  "inline-flex min-h-12 items-center gap-0.5 rounded-xl px-2 text-base font-medium underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
+  "inline-flex min-h-12 items-center gap-0.5 rounded-xl px-2 text-base font-medium underline-offset-4 transition hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
 const linkTones = { brand: "text-brand-700", danger: "text-danger", plain: "text-ink", muted: "text-ink-2" } as const;
 type LinkTone = keyof typeof linkTones;
 
@@ -138,8 +138,8 @@ export function TextButton({
  */
 const cardTones = {
   plain: "material border border-line/80 bg-surface",
-  /** the one card that matters most on the screen: deeper, lit from the corner */
-  raised: "material-raised light border border-line/60 bg-surface",
+  /** White grouped surface, shared with the other cards. */
+  raised: "bg-surface border border-line/60",
   /** frosted glass over whatever is behind it */
   glass: "glass border border-white/70 shadow-card",
   /** tinted: the thing that matters today (an appointment, something to confirm) */
@@ -175,7 +175,7 @@ export type BadgeTone = keyof typeof toneStyles;
 
 export function Badge({ tone = "neutral", className, children }: { tone?: BadgeTone; className?: string; children: React.ReactNode }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-base font-medium leading-7 tracking-[-0.005em]", toneStyles[tone], className)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-base font-medium leading-7 tracking-[-0.005em]", toneStyles[tone], className)}>
       {children}
     </span>
   );
@@ -189,7 +189,7 @@ const tileTones = {
   danger: "bg-danger-bg text-danger",
   serious: "bg-serious-bg text-serious",
   neutral: "bg-surface-2 text-ink-2",
-  /** solid: a white icon on the brand gradient, the way an app icon looks */
+  /** White icon on a solid action colour. */
   solid: "tile-brand text-white",
   solidInk: "tile-ink text-white",
   solidDanger: "tile-danger text-white",
@@ -222,7 +222,7 @@ export function IconTile({
 }
 
 const rowCls =
-  "flex min-h-16 w-full items-center gap-3 px-5 py-3.5 text-left transition duration-200 hover:bg-surface-2/70 focus-visible:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-200";
+  "flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition duration-200 hover:bg-surface-2/70 focus-visible:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-200";
 
 function RowBody({ title, detail, icon, iconTone }: { title: React.ReactNode; detail?: React.ReactNode; icon?: React.ReactNode; iconTone: IconTone }) {
   return (
@@ -333,7 +333,7 @@ export function TileLink({
 /* ---------- forms ---------- */
 
 export const inputCls =
-  "w-full rounded-2xl border-[1.5px] border-line-strong bg-surface px-4 text-lg text-ink shadow-[inset_0_1px_2px_rgba(20,38,47,0.04)] placeholder:text-ink-3 outline-none transition duration-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:bg-surface-2";
+  "w-full rounded-lg border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-ink-3 outline-none transition duration-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:bg-surface-2";
 
 export function Field({
   label,
@@ -361,7 +361,7 @@ export function Field({
 }
 
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(inputCls, "h-13", className)} {...props} />;
+  return <input className={cn(inputCls, "h-11", className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
@@ -371,7 +371,7 @@ export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<H
 export function Select({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div className="relative">
-      <select className={cn(inputCls, "h-13 appearance-none pr-11", className)} {...props}>
+      <select className={cn(inputCls, "h-11 appearance-none pr-11", className)} {...props}>
         {children}
       </select>
       <ChevronDown className="pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-ink-3" />
@@ -382,7 +382,7 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
 /** The look of one option inside a segmented control (also used by tab bars built from links). */
 export const segmentCls = (selected: boolean) =>
   cn(
-    "min-h-11 rounded-[14px] px-4 text-base font-medium whitespace-nowrap transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+    "min-h-11 rounded-lg px-4 text-base font-medium whitespace-nowrap transition duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
     selected ? "bg-surface text-ink shadow-pill" : "text-ink-2 hover:text-ink",
   );
 
@@ -400,7 +400,7 @@ export function Segmented<T extends string>({
   label?: string;
 }) {
   return (
-    <div className={cn("inline-flex flex-wrap gap-1 rounded-[18px] bg-surface-3/80 p-1", className)} role="radiogroup" aria-label={label}>
+    <div className={cn("inline-flex flex-wrap gap-1 rounded-xl bg-surface-3/80 p-1", className)} role="radiogroup" aria-label={label}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -521,7 +521,7 @@ export function Modal({
 /* ---------- layout bits ---------- */
 
 const backCls =
-  "no-print -ml-2 inline-flex min-h-12 items-center gap-0.5 rounded-xl px-2 text-base font-medium text-ink-2 transition hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
+  "no-print -ml-2 inline-flex min-h-12 items-center gap-0.5 rounded-xl px-2 text-base font-medium text-ink-2 transition hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600";
 
 export function BackLink({ href, children = L("返回", "Back") }: { href: string; children?: React.ReactNode }) {
   return (
@@ -544,7 +544,7 @@ export function BackButton({ href, children = L("返回", "Back") }: { href: str
 }
 
 const titleCls = "t-display text-balance text-ink";
-const subCls = "t-lead mt-3 text-ink-2";
+const subCls = "t-body mt-2 text-ink-2";
 
 export function PageTitle({ children, sub, className }: { children: React.ReactNode; sub?: React.ReactNode; className?: string }) {
   return (

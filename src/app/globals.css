@@ -1,504 +1,144 @@
 @import "tailwindcss";
 
-/*
- * The look: Apple-level calm. One accent (the Visit Smoothie ocean blue), near-white surfaces,
- * hairline separators, soft layered depth, the system font, and motion that is felt rather than seen.
- */
+/* Reminders-inspired: neutral grouped surfaces, system type, quiet rules, colour for actions. */
 @theme {
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "Noto Sans CJK SC", "Helvetica Neue", Arial, sans-serif;
-
-  --color-canvas: #f5f6f8;
-  /* the top of every page: a faint brand wash that fades into the canvas */
-  --color-canvas-tint: #edf4f7;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  /* Older components using font-serif inherit the same system typography. */
+  --font-serif: var(--font-sans);
+  --color-canvas: #f2f2f7;
+  --color-canvas-tint: #f2f2f7;
   --color-surface: #ffffff;
-  --color-surface-2: #f2f4f6;
-  --color-surface-3: #e9edf0;
-  /* hairlines: the only separator between things that are not cards */
-  --color-line: #e5e9ed;
-  --color-line-strong: #cfd7dd;
-  --color-ink: #14262f;
-  --color-ink-2: #4a5b66;
-  /* the quietest text colour still passes 4.5:1 on white: no faint grey text anywhere */
-  --color-ink-3: #62737c;
+  --color-surface-2: #f2f2f7;
+  --color-surface-3: #e5e5ea;
+  --color-line: #e2e2e7;
+  --color-line-strong: #8e8e93;
+  --color-ink: #1c1c1e;
+  --color-ink-2: #56565c;
+  --color-ink-3: #66666e;
 
-  /* the one accent: Visit Smoothie's ocean blue, so the welcome screen and the app are one brand */
-  --color-brand-50: #eef6f9;
-  --color-brand-100: #dbedf3;
-  --color-brand-200: #b8dce8;
-  --color-brand-300: #85c1d6;
-  --color-brand-400: #4ba2bf;
-  --color-brand-500: #2287a8;
-  /* the main colour, and the lightest one white text may sit on (5.3:1) */
-  --color-brand-600: #167493;
-  /* the lower end of the main button's gradient; white text on it is 6.2:1 */
-  --color-brand-650: #126881;
-  --color-brand-700: #105c76;
-  --color-brand-800: #0c4559;
-  /* the deep ink of the Visit Smoothie wordmark */
-  --color-brand-ink: #173f4f;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #e0edff;
+  --color-brand-200: #b9d6ff;
+  --color-brand-300: #8abbfa;
+  --color-brand-400: #559bf0;
+  --color-brand-500: #2480e5;
+  --color-brand-600: #0066cc;
+  --color-brand-650: #005ebd;
+  --color-brand-700: #0058b0;
+  --color-brand-800: #00468d;
+  --color-brand-ink: #1c1c1e;
 
-  /* Each tone passes 4.5:1 as text on its own tint and on white, and carries white text when solid. */
-  --color-good: #18794e;
-  --color-good-bg: #e8f6ee;
-  --color-warn: #9a5b00;
-  --color-warn-bg: #fff4e1;
-  --color-serious: #b34a20;
-  --color-serious-bg: #fdeee7;
-  --color-danger: #c8373e;
-  --color-danger-bg: #fef0f1;
-  --color-info: #2458b5;
-  --color-info-bg: #e9f0fd;
+  /* Clinical meaning stays separate from blue actions. */
+  --color-good: #287738;
+  --color-good-bg: #edf7ee;
+  --color-warn: #89570a;
+  --color-warn-bg: #fff5df;
+  --color-serious: #a6501f;
+  --color-serious-bg: #fbeee6;
+  --color-danger: #c12c35;
+  --color-danger-bg: #fff0f0;
+  --color-info: #395da1;
+  --color-info-bg: #eef2fb;
+  --color-series-2: #bd5b20;
+  --radius-card: 12px;
+  --radius-sheet: 16px;
 
-  /* second chart series, validated together with brand-600 */
-  --color-series-2: #eb6834;
-
-  --radius-card: 22px;
-  --radius-sheet: 28px;
-
-  /* depth: cards rest on the page; floats (toasts, dialogs, the chat box) hover above it */
-  --shadow-card: 0 1px 1px rgba(20, 38, 47, 0.03), 0 2px 6px -1px rgba(20, 38, 47, 0.05), 0 16px 40px -20px rgba(20, 38, 47, 0.12);
-  --shadow-card-hover: 0 1px 1px rgba(20, 38, 47, 0.03), 0 6px 16px -4px rgba(20, 38, 47, 0.1), 0 28px 56px -24px rgba(22, 116, 147, 0.25);
-  --shadow-float: 0 24px 64px -16px rgba(20, 38, 47, 0.28), 0 6px 16px -4px rgba(20, 38, 47, 0.08), 0 0 0 1px rgba(20, 38, 47, 0.04);
-  /* the selected item of a segmented control, and other small raised things */
-  --shadow-pill: 0 1px 3px rgba(20, 38, 47, 0.12), 0 0 0 0.5px rgba(20, 38, 47, 0.04);
-  /* a quiet edge for white buttons and tiles */
-  --shadow-edge: 0 1px 2px rgba(20, 38, 47, 0.06), 0 0 0 1px rgba(20, 38, 47, 0.04);
-  /* the main button: a top highlight and a soft glow of its own colour */
-  --shadow-btn: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(12, 69, 89, 0.25), 0 10px 20px -10px rgba(22, 116, 147, 0.6);
-  --shadow-hero: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 4px rgba(12, 69, 89, 0.18), 0 18px 36px -16px rgba(22, 116, 147, 0.65);
-  /* the page header once the page has scrolled under it */
-  --shadow-header: 0 1px 0 rgba(20, 38, 47, 0.06), 0 10px 24px -16px rgba(20, 38, 47, 0.2);
-  /* the glow behind an app-icon tile */
-  --shadow-glow: 0 10px 30px -10px rgba(22, 116, 147, 0.55);
+  --shadow-card: 0 0 #0000;
+  --shadow-card-hover: 0 0 #0000;
+  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.12);
+  --shadow-pill: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-edge: 0 0 #0000;
+  --shadow-btn: 0 0 #0000;
+  --shadow-hero: 0 0 #0000;
+  --shadow-header: 0 1px 0 var(--color-line);
+  --shadow-glow: 0 0 #0000;
+  --shadow-inset-top: 0 0 #0000;
+  --shadow-raised: 0 0 #0000;
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
-
-  /* materials: a card is not flat white but a sheet lit from above */
-  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --shadow-raised: 0 1px 1px rgba(20, 38, 47, 0.04), 0 8px 24px -8px rgba(20, 38, 47, 0.12), 0 32px 64px -32px rgba(22, 116, 147, 0.3);
-
-  --animate-fade-up: fade-up 0.4s var(--ease-out-soft) backwards;
-  --animate-rise: rise 0.7s var(--ease-out-soft) backwards;
+  --ease-spring: var(--ease-out-soft);
+  --animate-fade-up: fade-up 0.2s ease-out backwards;
+  --animate-rise: fade-up 0.2s ease-out backwards;
   --animate-pulse-dot: pulse-dot 1.2s ease-in-out infinite;
   --animate-shimmer: shimmer 1.6s linear infinite;
-  --animate-pop: pop 0.5s var(--ease-spring) backwards;
-  --animate-breathe: breathe 2.4s ease-in-out infinite;
-  --animate-spin-soft: spin 0.9s cubic-bezier(0.4, 0.1, 0.6, 0.9) infinite;
-
-  @keyframes shimmer {
-    from {
-      background-position: 200% 0;
-    }
-    to {
-      background-position: -200% 0;
-    }
-  }
-  @keyframes pop {
-    from {
-      opacity: 0;
-      transform: scale(0.92);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-  @keyframes breathe {
-    0%,
-    100% {
-      transform: scale(1);
-      opacity: 0.9;
-    }
-    50% {
-      transform: scale(1.06);
-      opacity: 1;
-    }
-  }
-
-  @keyframes fade-up {
-    from {
-      opacity: 0;
-      transform: translateY(6px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(18px) scale(0.985);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-  @keyframes pulse-dot {
-    0%,
-    80%,
-    100% {
-      opacity: 0.25;
-      transform: scale(0.8);
-    }
-    40% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
+  --animate-pop: fade-up 0.2s ease-out backwards;
+  --animate-breathe: none;
+  --animate-spin-soft: spin 0.9s linear infinite;
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  @keyframes fade-up { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse-dot { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
 }
 
 html {
   color-scheme: light;
-  /* everything is sized in rem, so this makes body text 17px and a 3rem button 51px */
   font-size: 106.25%;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
 }
-
 body {
-  /* a wash of the brand colour behind the top of the page, gone within the first screen */
-  background-color: var(--color-canvas);
-  background-image: linear-gradient(180deg, var(--color-canvas-tint), var(--color-canvas));
-  background-repeat: no-repeat;
-  background-size: 100% 26rem;
+  background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "kern", "liga", "calt";
-  /* no single character left alone on a last line, and no long number pushing the page sideways */
   text-wrap: pretty;
   overflow-wrap: break-word;
 }
+h1, h2, h3 { letter-spacing: -0.02em; text-wrap: balance; }
+::selection { background: var(--color-brand-100); }
+.glass { background: rgba(255, 255, 255, 0.94); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.lift { transition: background-color 0.15s, border-color 0.15s; }
+@media (hover: hover) { .lift:hover { filter: brightness(0.985); } }
+.press { transition: opacity 0.15s; }
+.press:active { opacity: 0.7; }
+.rise-1, .rise-2, .rise-3, .rise-4, .page-enter { animation: var(--animate-fade-up); }
 
-h1,
-h2,
-h3 {
-  /* display sizes sit tighter, the way the system font is meant to be set large */
-  letter-spacing: -0.015em;
-  text-wrap: balance;
-}
+.t-display { font-size: clamp(1.75rem, 1.5rem + 1vw, 2rem); line-height: 1.2; font-weight: 700; letter-spacing: -0.035em; }
+.t-title { font-size: 1.4rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.025em; }
+.t-heading { font-size: 1.15rem; line-height: 1.35; font-weight: 600; }
+.t-lead { font-size: 1.05rem; line-height: 1.55; }
+.t-body { font-size: 1rem; line-height: 1.55; }
+.t-number { font-size: 2.3rem; line-height: 1; font-weight: 700; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
+.tabular { font-variant-numeric: tabular-nums; }
+.name-title { font-size: 1.5rem; line-height: 1.2; font-weight: 650; letter-spacing: -0.025em; overflow-wrap: anywhere; }
 
-::selection {
-  background: var(--color-brand-100);
-}
+.material, .material-raised, .light { background-color: var(--color-surface); }
+.tile-brand { background-color: var(--color-brand-600); }
+.tile-ink { background-color: #7056bf; }
+.tile-danger { background-color: var(--color-danger); }
 
-/* frosted glass: the header once content scrolls under it, and anything that floats over the page */
-.glass {
-  background-color: rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
-}
-
-/* a card that answers the hand: lifts a little on hover, settles on press */
-.lift {
-  transition:
-    transform 0.3s var(--ease-out-soft),
-    box-shadow 0.3s var(--ease-out-soft),
-    border-color 0.2s ease;
-}
-@media (hover: hover) {
-  .lift:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-card-hover);
-  }
-}
-.lift:active {
-  transform: scale(0.985);
-  transition-duration: 0.1s;
-}
-
-/* staggered entrances: the home page's two doors come up one after the other */
-.rise-1 {
-  animation: var(--animate-rise);
-}
-.rise-2 {
-  animation: var(--animate-rise);
-  animation-delay: 0.08s;
-}
-.rise-3 {
-  animation: var(--animate-rise);
-  animation-delay: 0.16s;
-}
-.rise-4 {
-  animation: var(--animate-rise);
-  animation-delay: 0.24s;
+/* The supplied artwork remains unchanged and keeps its native 3:1 proportions. */
+.brand-logo { display: block; width: 13rem; height: auto; min-width: 0; max-width: 100%; mix-blend-mode: multiply; }
+.app-brand, .smoothie-brand { align-items: center; min-width: 0; max-width: 100%; min-height: 2.75rem; }
+.app-rail { background: #ebebf0; }
+.nav-row { display: flex; align-items: center; gap: 0.65rem; min-height: 2.75rem; border-radius: 9px; padding: 0.45rem 0.6rem; font-size: 1rem; font-weight: 500; }
+.nav-row:hover { background: #e0e0e7; }
+.nav-row[aria-current="page"] { background: var(--color-brand-100); color: var(--color-brand-700); }
+.nav-icon { display: inline-flex; align-items: center; justify-content: center; width: 1.7rem; height: 1.7rem; flex-shrink: 0; border-radius: 7px; color: white; }
+@media (max-width: 767px) {
+  .brand-logo { width: 11rem; }
+  .app-rail { background: transparent; }
+  .nav-row { gap: 0.35rem; padding-inline: 0.35rem; }
+  .nav-icon { width: 1.35rem; height: 1.35rem; border-radius: 5px; }
 }
 
-/*
- * The type system, five steps. Everything the patient reads is 17px or more; the steps above it are
- * for what must be seen first. (1rem = 17px.)
- *   t-display  page titles and hero words      2.25–3rem, tight
- *   t-title    the title of a card or screen    1.65rem
- *   t-heading  a section inside a card          1.25rem
- *   t-lead     one important sentence           1.2rem, roomy
- *   t-body     reading text                     1rem, roomy
- *   t-number   a measurement, big and tabular   2.6rem
- */
-.t-display {
-  font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3rem);
-  line-height: 1.05;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-}
-.t-title {
-  font-size: 1.65rem;
-  line-height: 1.15;
-  font-weight: 650;
-  letter-spacing: -0.025em;
-}
-.t-heading {
-  font-size: 1.25rem;
-  line-height: 1.3;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-.t-lead {
-  font-size: 1.2rem;
-  line-height: 1.5;
-  letter-spacing: -0.008em;
-}
-.t-body {
-  font-size: 1rem;
-  line-height: 1.6;
-}
-.t-number {
-  font-size: 2.6rem;
-  line-height: 1;
-  font-weight: 650;
-  letter-spacing: -0.035em;
-  font-variant-numeric: tabular-nums;
-}
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
-
-/* materials */
-/* a sheet of paper lit from above: a faint top-to-bottom gradient and a hairline highlight on the top edge */
-.material {
-  background-image: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
-  box-shadow: var(--shadow-inset-top), var(--shadow-card);
-}
-/* the one card on a screen that matters most: deeper, with a tint of the brand light at its foot */
-.material-raised {
-  background-image: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
-  box-shadow: var(--shadow-inset-top), var(--shadow-raised);
-}
-/* a soft light from the top-left corner, for a hero surface */
-.light {
-  background-image:
-    radial-gradient(120% 90% at 0% 0%, rgba(22, 116, 147, 0.1), transparent 55%),
-    linear-gradient(180deg, #ffffff 0%, #f9fbfc 100%);
-}
-/* an app-icon tile in the brand gradient, with the glossy top edge iOS icons have */
-.tile-brand {
-  background-image: linear-gradient(180deg, var(--color-brand-500) 0%, var(--color-brand-700) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.08),
-    var(--shadow-glow);
-}
-.tile-ink {
-  background-image: linear-gradient(180deg, #25586c 0%, var(--color-brand-ink) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-    0 10px 30px -10px rgba(23, 63, 79, 0.55);
-}
-.tile-danger {
-  background-image: linear-gradient(180deg, #d9494f 0%, #b52f36 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 10px 30px -10px rgba(200, 55, 62, 0.55);
-}
-
-/* the wordmark, the same identity as the welcome screen: Georgia, the italic "v." mark in ocean blue */
-.wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: Georgia, "Songti SC", "STSong", serif;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: var(--color-brand-ink);
-  white-space: nowrap;
-}
-.wordmark-mark {
-  display: inline-flex;
-  align-items: baseline;
-  font-style: italic;
-  line-height: 1;
-  color: var(--color-brand-600);
-}
-.wordmark-mark > span {
-  font: 0.26em sans-serif;
-  margin-left: 0.04em;
-}
-/* the mark resting in the sidebar: a watermark, not a sign */
-.wordmark-mark.faint {
-  color: rgba(22, 116, 147, 0.13);
-}
-/* a soft pool of brand light, blurred: the stage the welcome screen stands on, reused behind the doors */
-.pool {
-  position: absolute;
-  border-radius: 999px;
-  background: radial-gradient(closest-side, rgba(22, 116, 147, 0.22), rgba(22, 116, 147, 0));
-  filter: blur(24px);
-  pointer-events: none;
-}
-
-/* press feedback: anything tapped gives a little under the finger */
-.press {
-  transition:
-    transform 0.15s var(--ease-out-soft),
-    opacity 0.15s ease;
-}
-.press:active {
-  transform: scale(0.97);
-  opacity: 0.92;
-}
-
-/*
- * A page coming in: the whole screen settles into place. `backwards`, never `both`: a filled-in
- * transform on an ancestor would make fixed children (dialogs, docks) position inside it.
- */
-.page-enter {
-  animation: rise 0.5s var(--ease-out-soft) backwards;
-}
-
-/* loading: the shape of what is coming, shimmering quietly */
-.skeleton {
-  border-radius: 12px;
-  background: linear-gradient(90deg, var(--color-surface-2) 0%, var(--color-surface-3) 50%, var(--color-surface-2) 100%);
-  background-size: 200% 100%;
-  animation: var(--animate-shimmer);
-}
-
-/* the spinner: a ring of the brand colour, one bright arc going round */
-.spinner-ring {
-  border-radius: 999px;
-  border: 3px solid var(--color-brand-100);
-  border-top-color: var(--color-brand-600);
-  animation: var(--animate-spin-soft);
-}
-
-/* scrollbars: thin, rounded, quiet — anywhere one shows */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-line-strong) transparent;
-}
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-line-strong);
-  border-radius: 999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-.scroll-thin::-webkit-scrollbar-thumb {
-  border-color: var(--color-surface);
-}
-
-/* native controls that must not look native: the date picker's icon, number spinners, search clear buttons */
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"] {
-  -webkit-appearance: none;
-  appearance: none;
-  min-height: 3.25rem;
-}
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  width: 1.4rem;
-  height: 1.4rem;
-  padding: 0.2rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  opacity: 0.8;
-  background-color: var(--color-brand-50);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23167493' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='4'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E");
-  background-size: 1rem;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-  background-color: var(--color-brand-100);
-}
-input[type="date"]::-webkit-datetime-edit,
-input[type="time"]::-webkit-datetime-edit {
-  padding: 0;
-}
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-input[type="search"]::-webkit-search-decoration,
-input[type="search"]::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-}
-/* native checkboxes and radios that are still visible take the brand colour */
-input[type="checkbox"],
-input[type="radio"] {
-  accent-color: var(--color-brand-600);
-}
-/* the one focus style for anything that forgot to set its own */
-:focus-visible {
-  outline: 3px solid var(--color-brand-300);
-  outline-offset: 2px;
-  border-radius: 0.5rem;
-}
-.focus-visible\:ring-4:focus-visible {
-  outline: none;
-}
+/* Retained utility names for older cards; ornament no longer occupies the reading surface. */
+.jade-edge { position: relative; }
+.pool { display: none; }
+.skeleton { border-radius: 6px; background: linear-gradient(90deg, var(--color-surface-2), var(--color-surface-3), var(--color-surface-2)); background-size: 200% 100%; animation: var(--animate-shimmer); }
+.spinner-ring { border-radius: 999px; border: 3px solid var(--color-brand-100); border-top-color: var(--color-brand-600); animation: var(--animate-spin-soft); }
+* { scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+.scroll-thin::-webkit-scrollbar-thumb { border-color: var(--color-surface); }
+input[type="date"], input[type="time"], input[type="datetime-local"] { min-height: 2.75rem; min-width: 0; }
+input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { width: 1.2rem; height: 1.2rem; padding: 0.2rem; cursor: pointer; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-brand-600); }
+:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-up,
-  .animate-rise,
-  .rise-1,
-  .rise-2,
-  .rise-3,
-  .rise-4 {
-    animation: none;
-  }
-  .lift,
-  .lift:hover,
-  .lift:active,
-  .press:active {
-    transform: none;
-    transition: none;
-  }
-  .page-enter,
-  .skeleton,
-  .animate-pop,
-  .animate-breathe {
-    animation: none;
-  }
-  .spinner-ring {
-    animation-duration: 1.5s;
-  }
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
 /* the sheet handed to the doctor: collapsed details open up on paper */
@@ -512,6 +152,9 @@ input[type="radio"] {
   }
   body {
     background: #fff;
+  }
+  .jade-edge::before {
+    display: none !important;
   }
   .print-only {
     display: block !important;
