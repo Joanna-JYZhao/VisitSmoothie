@@ -82,7 +82,7 @@ function EpisodeSheet({ episode: e }: { episode: Episode }) {
       {alarm?.level === "urgent" && <HintBanner hint={alarm} className="no-print" />}
       <DoctorTabs current="episode" episodeHref={`/doctor/${e.id}`} yearHref={chronic ? "/doctor/year" : null} />
 
-      <GlanceSheet profile={profile} subject={e.title} lines={view.glance} generatedAt={view.generatedAt} busy={working} />
+      <GlanceSheet profile={profile} subject={e.title} lines={view.glance} generatedAt={view.generatedAt} busy={working} narrative={view.narrative} />
 
       {/* what can be done with the sheet, in one place right under it: 导出 PDF, 打印, 复制文字, 重新整理 */}
       <SheetActions pdf text={() => summaryToText(view, profile, e)} onRefresh={() => void refreshSummary(e.id)} busy={busy} />
@@ -91,7 +91,10 @@ function EpisodeSheet({ episode: e }: { episode: Episode }) {
 
       <SheetDetails>
         <SheetSection title={L("主诉", "Main complaint")}>{view.chiefComplaint}</SheetSection>
-        <SheetSection title={L("现病史", "How it has gone")}>{view.presentIllness}</SheetSection>
+        <SheetSection title={L("现病史", "How it has gone")}>
+          {/* one point per line, not a paragraph */}
+          {points(view.presentIllness).length > 1 ? <SheetList items={points(view.presentIllness)} /> : view.presentIllness}
+        </SheetSection>
         {view.timeline.length > 0 && (
           <SheetSection title={L("时间线", "Timeline")}>
             <SheetPairs rows={view.timeline.map((t) => ({ head: t.time, body: t.event }))} />
@@ -120,6 +123,29 @@ function EpisodeSheet({ episode: e }: { episode: Episode }) {
       <SheetFootnote />
     </div>
   );
+}
+
+/**
+ * A paragraph cut into its points: at each full stop or semicolon, and at the "问诊补充：" / "Location: …"
+ * labels the record carries. Brackets are kept whole ("绞痛（患者原话：拧着疼）").
+ */
+function points(text: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cur = "";
+  for (const ch of text) {
+    if (ch === "（" || ch === "(") depth++;
+    if (ch === "）" || ch === ")") depth = Math.max(0, depth - 1);
+    cur += ch;
+    if (depth === 0 && /[。；;\n]/.test(ch)) {
+      out.push(cur);
+      cur = "";
+    }
+  }
+  out.push(cur);
+  return out
+    .map((x) => x.replace(/^问诊补充：/, "").replace(/[。；;\n]+$/, "").trim())
+    .filter((x) => x.length > 1);
 }
 
 /** The space the questions will take, shimmering, so the page does not jump when they arrive. */

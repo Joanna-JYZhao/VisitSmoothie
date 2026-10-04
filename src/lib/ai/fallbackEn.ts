@@ -1,4 +1,4 @@
-import type { ChatRequest, ChatResponse, Episode, Hint, Profile } from "../types";
+import type { ChatRequest, ChatResponse, DoctorSummaryBody, Episode, Hint, Profile, SummaryRequest } from "../types";
 
 /*
  * The English side of the rules, for when the app is in English. The Chinese rule engine reads
@@ -121,6 +121,88 @@ function severityOf(text: string): number | null {
 export function titleEn(said: string): string {
   const s = said.replace(/^location:\s*/i, "").replace(/[.!?]+$/, "").replace(/:\s*/, " ").trim();
   return s.length > 40 ? `${s.slice(0, 39)}…` : s || "Not feeling well";
+}
+
+/* ---------- the page for the doctor, without a model ---------- */
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "1 Oct" / "1 Oct, 09:00" */
+function dateEn(iso: string, time = false): string {
+  const d = new Date(iso);
+  const day = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return time ? `${day}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}` : day;
+}
+/** "about 3 days" / "since today" */
+function spanEn(fromIso: string, toIso?: string): string {
+  const days = Math.floor(((toIso ? new Date(toIso).getTime() : Date.now()) - new Date(fromIso).getTime()) / 86_400_000);
+  if (days < 1) return "since today";
+  if (days < 14) return `about ${days} day${days === 1 ? "" : "s"}`;
+  if (days < 60) return `about ${Math.round(days / 7)} weeks`;
+  return `about ${Math.round(days / 30)} months`;
+}
+/** a one-tap answer to the daily question is stored as its Chinese label; on the English page it reads in English */
+const TAPPED: Record<string, string> = { 好多了: "Much better", 差不多: "About the same", 更严重了: "Worse" };
+const noteEn = (note: string) => TAPPED[note.trim()] ?? note.trim();
+const feelEn = (s: number | null | undefined) => (s == null ? "" : s >= 8 ? "very bad" : s >= 5 ? "quite bad" : s > 0 ? "a little bad" : "fine");
+const TEMP = /(3[5-9]|4[0-2])(\.\d)?\s*(°|℃|degrees|度)/;
+
+/**
+ * The whole page for the doctor in English, by rule: the same kinds of lines as the Chinese rules,
+ * written in English. What the patient said is quoted as they said it.
+ */
+export function summaryByRuleEn(req: SummaryRequest): DoctorSummaryBody {
+  const { profile, episode, related } = req;
+  const entries = [...episode.entries].sort((a, b) => a.at.localeCompare(b.at));
+  const first = entries[0];
+  const last = entries[entries.length - 1];
+  const known = episode.startedAt !== episode.createdAt;
+  const span = known ? spanEn(episode.startedAt, episode.resolvedAt ?? undefined) : `first noted ${dateEn(episode.createdAt)}`;
+  const felt = [...entries].reverse().find((e) => e.severity != null && e.source !== "checkin");
+  const temps = [...entries.map((e) => e.temp).filter((t): t is number => t != null), ...entries.flatMap((e) => (e.note.match(TEMP) ? [Number(e.note.match(TEMP)![1] + (e.note.match(TEMP)![2] ?? ""))] : []))];
+  const maxTemp = temps.length ? Math.max(...temps) : null;
+  const notes = entries.slice(1).map((e) => noteEn(e.note)).filter(Boolean);
+  const glance = [
+    `${episode.title}, ${span}${felt ? `, now ${feelEn(felt.severity)}` : ""}`,
+    maxTemp != null ? `Highest temperature ${maxTemp} °C` : "",
+    first && first.note.trim() && first.note.trim() !== episode.title ? `At first (${dateEn(first.at)}): ${first.note.trim().slice(0, 80)}` : "",
+    last && last !== first ? `Latest (${dateEn(last.at)}): ${noteEn(last.note).slice(0, 80)}` : "",
+    episode.visit ? `Seen a doctor: ${episode.visit.diagnosis}` : "",
+    related[0] ? `Something similar before: ${related[0].date} “${related[0].title}”${related[0].diagnosis ? `, then ${related[0].diagnosis}` : ""}` : "",
+    ...(req.vitals ?? []),
+  ].filter(Boolean);
+  const presentIllness = [
+    known ? `Started around ${dateEn(episode.startedAt)}.` : `First noted on ${dateEn(episode.createdAt)}; the start was not given.`,
+    ...notes.map((n) => (/[.!?]$/.test(n) ? n : `${n}.`)),
+    temps.length ? `Temperatures noted: ${temps.join(", ")} °C.` : "",
+    episode.visit ? `Seen a doctor on ${episode.visit.date}: ${episode.visit.diagnosis}; treatment: ${episode.visit.treatment}.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const relevantHistory = [
+    ...profile.conditions.map((c) => `History: ${c}`),
+    profile.allergies.length ? `Allergies: ${profile.allergies.join(", ")}` : "Allergies: none on record",
+    ...profile.medications.map((m) => `Regular medicine: ${m}`),
+    ...profile.surgeries.map((s) => `Surgery: ${s}`),
+    ...profile.familyHistory.map((f) => `Family history: ${f}`),
+    ...(req.background ?? []),
+  ];
+  const hints: Hint[] = [];
+  const days = Math.floor((Date.now() - new Date(episode.startedAt).getTime()) / 86_400_000);
+  if (known && days >= 3 && episode.status === "active" && !episode.visit) hints.push({ level: "warn", text: `Going on for ${days} days; no doctor's visit on record.` });
+  if (maxTemp != null && maxTemp >= 38.5) hints.push({ level: "warn", text: `Highest temperature ${maxTemp} °C.` });
+  if (related[0]) hints.push({ level: "info", text: `Similar to “${related[0].title}” on ${related[0].date}${related[0].diagnosis ? ` (diagnosed then: ${related[0].diagnosis})` : ""}.` });
+  return {
+    glance: glance.slice(0, 5),
+    narrative: narrativeEn(episode, profile),
+    chiefComplaint: `${episode.title}, ${span}`,
+    presentIllness,
+    timeline: entries.map((e) => ({ time: dateEn(e.at, true), event: noteEn(e.note) })),
+    currentStatus: last ? `Last noted (${dateEn(last.at, true)}): ${felt && felt === last ? feelEn(felt.severity) : noteEn(last.note).slice(0, 100)}.` : "Nothing noted yet.",
+    relevantHistory,
+    priorSimilar: related.map((r) => `${r.date} “${r.title}”${r.diagnosis ? `, diagnosis: ${r.diagnosis}` : ""}${r.treatment ? `, treatment: ${r.treatment}` : ""}${r.outcome ? `, outcome: ${r.outcome}` : ""}`),
+    hints: hints.slice(0, 3),
+    questionsForDoctor: ["Do I need any tests?", "Is there anything I should eat, avoid or watch out for?", "When should I come back, or go to the emergency department?"],
+  };
 }
 
 /* ---------- the description, without a model ---------- */

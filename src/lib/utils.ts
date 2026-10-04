@@ -468,23 +468,25 @@ export function findSimilarEpisodes(
 
 /** An earlier record as context for the model and for the doctor's page. Generated text: Chinese whatever the interface says. */
 export function toRelatedContext(e: Episode): RelatedEpisodeContext {
-  return inChinese(() => relatedContextOf(e));
+  // in English the page for the doctor is English, dates included; in Chinese it is built in Chinese as before
+  return getLang() === "en" ? relatedContextOf(e) : inChinese(() => relatedContextOf(e));
 }
 
 function relatedContextOf(e: Episode): RelatedEpisodeContext {
   const first = sortedEntries(e)[0];
   const outcome =
     e.status === "resolved"
-      ? `已好转${e.resolvedAt ? `（${fmtDate(e.resolvedAt)}）` : ""}`
+      ? L(`已好转${e.resolvedAt ? `（${fmtDate(e.resolvedAt)}）` : ""}`, `got better${e.resolvedAt ? ` (${fmtDate(e.resolvedAt)})` : ""}`)
       : e.visit
-        ? "已就医，还在跟踪中"
-        : "还在跟踪中，尚未结束";
+        ? L("已就医，还在跟踪中", "seen a doctor, still being followed")
+        : L("还在跟踪中，尚未结束", "still being followed");
+  const sep = L("。", ". ");
   return {
     title: e.title,
     date: fmtDate(e.startedAt, { year: true }),
     diagnosis: e.visit?.diagnosis,
     treatment: e.visit?.treatment,
-    outcome: e.visit?.archiveSummary ? `${outcome}。${e.visit.archiveSummary}` : `${outcome}${first ? `。主要表现：${first.note}` : ""}`,
+    outcome: e.visit?.archiveSummary ? `${outcome}${sep}${e.visit.archiveSummary}` : `${outcome}${first ? `${sep}${L("主要表现：", "Mainly: ")}${first.note}` : ""}`,
   };
 }
 
@@ -522,9 +524,40 @@ export function profileLine(p: Profile) {
   return bits.join(" · ");
 }
 
-/** The page for the doctor as plain text to copy. It is made of the stored summary, so it is Chinese whatever the interface says. */
+/** The page for the doctor as plain text to copy, in the language of the interface (as the page itself is). */
 export function summaryToText(summary: DoctorSummary, profile: Profile, episode: Episode) {
+  if (getLang() === "en") return summaryTextEn(summary, profile, episode);
   return inChinese(() => summaryText(summary, profile, episode));
+}
+
+function summaryTextEn(summary: DoctorSummary, profile: Profile, episode: Episode) {
+  const L: string[] = [];
+  const level = (l: string) => (l === "urgent" ? "Urgent" : l === "warn" ? "Note" : "Info");
+  const list = (items: string[], none: string) => (items.length ? items : [none]).forEach((x) => L.push(`- ${x}`));
+  L.push("[VisitSmoothie · Summary for the doctor]");
+  L.push(`Patient: ${profileLine(profile)}`);
+  L.push(`Problem: ${episode.title} (since ${fmtDate(episode.startedAt, { year: true, time: true })})`);
+  L.push(`Written: ${fmtDate(summary.generatedAt, { year: true, time: true })}`);
+  if (summary.narrative) L.push("", "In the patient's words", summary.narrative);
+  if (summary.glance?.length) {
+    L.push("", "Read these first");
+    summary.glance.forEach((g) => L.push(`- ${g}`));
+  }
+  L.push("", "1. Main complaint", summary.chiefComplaint);
+  L.push("", "2. How it has gone", summary.presentIllness);
+  L.push("", "3. Timeline");
+  summary.timeline.forEach((t) => L.push(`- ${t.time}  ${t.event}`));
+  L.push("", "4. How it is now", summary.currentStatus);
+  L.push("", "5. History / allergies / medicines");
+  list(summary.relevantHistory, "Nothing notable");
+  L.push("", "6. Similar problems before");
+  list(summary.priorSimilar, "None");
+  L.push("", "7. Noted while organising (not a diagnosis)");
+  summary.hints.forEach((h) => L.push(`- [${level(h.level)}] ${h.text}`));
+  L.push("", "8. Questions for the doctor");
+  summary.questionsForDoctor.forEach((q) => L.push(`- ${q}`));
+  L.push("", "— Recorded by the patient and organised by VisitSmoothie. For the doctor's reference only; not a diagnosis.");
+  return L.join("\n");
 }
 
 function summaryText(summary: DoctorSummary, profile: Profile, episode: Episode) {
@@ -534,6 +567,11 @@ function summaryText(summary: DoctorSummary, profile: Profile, episode: Episode)
   L.push(`患者：${profileLine(profile)}`);
   L.push(`症状：${episode.title}（开始于 ${fmtDate(episode.startedAt, { year: true, time: true })}）`);
   L.push(`生成时间：${fmtDate(summary.generatedAt, { year: true, time: true })}`);
+  if (summary.narrative) {
+    L.push("");
+    L.push("患者自述");
+    L.push(summary.narrative);
+  }
   if (summary.glance?.length) {
     L.push("");
     L.push("医生先看这几条");

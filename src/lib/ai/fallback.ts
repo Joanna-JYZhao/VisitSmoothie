@@ -14,7 +14,7 @@ import type {
   SummaryResponse,
 } from "../types";
 import { getLang, inChinese } from "../lang";
-import { fallbackChatEn, narrativeEn, urgentEn } from "./fallbackEn";
+import { fallbackChatEn, summaryByRuleEn, urgentEn } from "./fallbackEn";
 import { confirmQuestion, confirmedNote, findColloquial, termAsked } from "../colloquial";
 import { evaluateMeasurement } from "../metrics";
 import {
@@ -115,6 +115,13 @@ function urgentIn(text: string): Hint | null {
  * reading in the dangerous range. Runs in the browser before any model is asked.
  */
 export function instantAlert(text: string): Hint | null {
+  // in English the alarm is said in English: a reading in the dangerous range, then the English danger signals
+  if (getLang() === "en") {
+    const reading = extractMeasurements(text)
+      .map((m) => evaluateMeasurement(m))
+      .find((h): h is Hint => h != null && h.level === "urgent");
+    return reading ?? urgentEn(text) ?? inChinese(() => urgentIn(text));
+  }
   return inChinese(() => alertIn(text));
 }
 
@@ -513,6 +520,16 @@ const SAID_WHAT_WAS_TAKEN = /药|热敷|冰敷|没吃|吃了|吃过|喝了|服�
  * does not say when it began, and "吃了海鲜之后" does not say what was taken for it.
  */
 export function missingBasics(said: string, onsetKnown = false): { key: string; ask: string }[] {
+  if (getLang() === "en") {
+    // what was said is English: read it in English, and ask in English
+    const covered: Record<string, boolean> = {
+      onset: onsetKnown || /\b(since|ago|yesterday|today|started|began|days?|weeks?|months?)\b/i.test(said),
+      severity: /\b(a little|mild|slight|quite bad|very bad|severe|terrible|unbearable|\d+\s*(\/|out of)\s*10)\b/i.test(said),
+      measures: /\b(took|taken|taking|medicine|medication|pills?|tablets?|nothing for it|no medicine|cream|ointment)\b/i.test(said),
+    };
+    const asks: Record<string, string> = { onset: "When did it start?", severity: "How bad is it?", measures: "Have you taken anything for it?" };
+    return ["onset", "severity", "measures"].filter((k) => !covered[k]).map((k) => ({ key: k, ask: asks[k] }));
+  }
   return inChinese(() => basicsMissingFrom(said, onsetKnown));
 }
 
@@ -1207,11 +1224,9 @@ export function ownQuestions(said: string): string[] {
 const READING_NAME: Record<ChatMeasurement["type"], string> = { bp: "血压", fbg: "空腹血糖", ppg: "血糖", hba1c: "糖化血红蛋白", weight: "体重" };
 
 export function fallbackSummary(req: SummaryRequest): SummaryResponse {
-  const out = inChinese(() => summaryByRule(req));
-  if (getLang() !== "en") return out;
-  // in English the description the patient sees is put together in English
-  const notes = sortedEntries(req.episode).slice(1).map((e) => e.note.trim()).filter(Boolean);
-  return { ...out, summary: { ...out.summary, narrative: narrativeEn(req.episode, req.profile), chiefComplaint: req.episode.title, presentIllness: notes.join(" ") } };
+  // in English the whole page for the doctor is written in English
+  if (getLang() === "en") return { mode: "fallback", summary: summaryByRuleEn(req) };
+  return inChinese(() => summaryByRule(req));
 }
 
 /** A diagnosis worth naming: not empty, and not a note that there was none. */

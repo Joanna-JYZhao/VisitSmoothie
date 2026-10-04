@@ -6,7 +6,7 @@ import { createBusy } from "./busy";
 import { generateAnnual, generateSummary } from "./ai/client";
 import { fallbackAnnual, fallbackSummary } from "./ai/fallback";
 import { relatedEpisodesOf } from "./episodeAI";
-import { inChinese } from "./lang";
+import { getLang, inChinese } from "./lang";
 import { checkupBackground } from "./checkup";
 import { METRICS, buildAnnualFacts, formatValue, latestOf } from "./metrics";
 import { fmtDate, nowISO, toRelatedContext } from "./utils";
@@ -44,12 +44,19 @@ export function vitalsLines(state: AppState, now: number = Date.now()): string[]
   return lines.slice(0, 2);
 }
 
+/**
+ * The material the page for the doctor is written from (earlier records, readings, the check-up):
+ * Chinese while the app is in Chinese, as the rules and the model read it; in English, English, so
+ * the English page has no Chinese dates or labels in it.
+ */
+const inMaterialLang = <T,>(fn: () => T): T => (getLang() === "en" ? fn() : inChinese(fn));
+
 export function instantSummary(e: Episode, state: AppState): DoctorSummaryBody | null {
   const profile = state.profile;
   if (!profile) return null;
   // the material is put together in Chinese (it is what the rules read); the description the
   // patient sees comes out in the language of the interface, as the server's will
-  const material = inChinese(() => ({
+  const material = inMaterialLang(() => ({
     related: relatedEpisodesOf(e, state.episodes).map(toRelatedContext),
     vitals: vitalsLines(state),
     background: checkupBackground(state),
@@ -67,7 +74,7 @@ export async function refreshSummary(episodeId: string): Promise<void> {
     const res = await generateSummary({
       profile: state.profile,
       episode,
-      ...inChinese(() => ({
+      ...inMaterialLang(() => ({
         related: relatedEpisodesOf(episode, state.episodes).map(toRelatedContext),
         vitals: vitalsLines(state),
         background: checkupBackground(state),

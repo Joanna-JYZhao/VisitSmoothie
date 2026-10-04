@@ -27,7 +27,7 @@ const LEFT: Tab[] = [
   { href: "/post", label: ["看病后", "post"], guide: "post", Icon: Camera },
 ];
 const RIGHT: Tab[] = [
-  { href: "/report", label: ["健康记录", "Health Record"], guide: "report", Icon: FileText },
+  { href: "/report", label: ["健康报告", "Record"], guide: "report", Icon: FileText },
   { href: "/set", label: ["设置", "set"], guide: "profile", Icon: Settings },
 ];
 

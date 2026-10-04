@@ -25,6 +25,7 @@ import {
   fallbackAnnual,
   fallbackChat,
   fallbackSummary,
+  instantAlert,
   MAX_QUESTIONS,
   answerEntry,
   consultPlan,
@@ -325,9 +326,13 @@ export function normalizeChat(raw: unknown, req: ChatRequest): ChatResponse {
   let hint: Hint | null;
   // An alarm raised by the rules keeps the rules' own wording: it is already on the user's screen,
   // and a second version arriving three seconds later ("或去急诊" then "不要自行前往医院") is worse than none.
-  if (rules.urgent) hint = rules.urgent;
+  // The rules word their advice in Chinese: in English the same decision is said in English.
+  const enRule = getLang() === "en";
+  const ruleUrgent = rules.urgent && enRule && /[一-鿿]/.test(rules.urgent.text) ? (instantAlert(said) ?? { level: "urgent" as const, text: "This needs medical help now. Go to the emergency department or call 120." }) : rules.urgent;
+  const ruleWarn = rules.warn && enRule && /[一-鿿]/.test(rules.warn.text) ? { level: "warn" as const, text: "It's best to see a doctor today." } : rules.warn;
+  if (ruleUrgent) hint = ruleUrgent;
   else if (modelHint?.level === "urgent") hint = modelHint;
-  else if (rules.warn) hint = modelHint?.level === "warn" ? modelHint : rules.warn;
+  else if (ruleWarn) hint = modelHint?.level === "warn" ? modelHint : ruleWarn;
   else hint = modelHint ? { ...modelHint, level: "info" } : null;
 
   // A yes-or-no question always comes with a way to say no.
@@ -622,8 +627,8 @@ export function normalizeSummary(raw: unknown, req: SummaryRequest): DoctorSumma
   const history = [...cleanList(o.relevantHistory, 10).filter((x) => !/体检/.test(x)), ...background];
   const relevantHistory = history.length > background.length ? history : base.relevantHistory;
   // the doctor needs the allergy line to prescribe: it is there whatever the model chose to list
-  if (!relevantHistory.some((x) => /过敏/.test(x))) {
-    const allergy = base.relevantHistory.find((x) => x.startsWith("过敏史"));
+  if (!relevantHistory.some((x) => /过敏|allerg/i.test(x))) {
+    const allergy = base.relevantHistory.find((x) => x.startsWith("过敏史") || x.startsWith("Allergies"));
     if (allergy) relevantHistory.splice(relevantHistory.length - background.length, 0, allergy);
   }
   // Questions: what the patient said they want to know comes first, in their words. The model's

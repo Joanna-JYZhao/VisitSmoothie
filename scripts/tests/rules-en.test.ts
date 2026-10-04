@@ -9,7 +9,7 @@
  */
 import { check, finish } from "./_check";
 import { getLang, inChinese as inChineseOfLang, setLang } from "../../src/lib/lang";
-import type { AnnualFacts, AnnualSummary, ChatRequest, DoctorSummary, Episode, Profile } from "../../src/lib/types";
+import type { AnnualFacts, AnnualSummary, ChatRequest, DoctorSummary, Episode, Hint, Profile } from "../../src/lib/types";
 import {
   detectUrgent,
   fallbackAfter,
@@ -276,26 +276,34 @@ try {
 
   /* the rule engine: however it is called, it writes what it writes in Chinese */
   const enRules = ruleEngine();
-  check("en: the first screen for the doctor is the Chinese one, to the letter", JSON.stringify(enRules.summary.glance) === JSON.stringify(zhRules.summary.glance) && enRules.summary.glance[0] === "肚子痛约 2 天，目前比较难受", enRules.summary.glance);
+  // in English the page for the doctor is written in English; what the patient recorded is quoted as recorded
+  check("en: the first screen for the doctor is written in English", enRules.summary.glance[0] === "肚子痛, about 2 days, now quite bad" && enRules.summary.glance[1] === "At first (1 Oct): 晚饭后隐痛", enRules.summary.glance);
+  check("zh: the first screen for the doctor is unchanged", zhRules.summary.glance[0] === "肚子痛约 2 天，目前比较难受", zhRules.summary.glance);
   // in English the description the patient reads is written in English (what was recorded stays as it was said)
   check("en: the patient's description is put together in English", (enRules.summary.narrative ?? "").startsWith("I'm ") && /Since \d+ \w+, /.test(enRules.summary.narrative ?? ""), enRules.summary.narrative);
   check("zh: the patient's description stays Chinese", (zhRules.summary.narrative ?? "").startsWith("我"), zhRules.summary.narrative);
-  check("en: the timeline is the Chinese one, with Chinese dates", JSON.stringify(enRules.summary.timeline) === JSON.stringify(zhRules.summary.timeline) && enRules.summary.timeline[0]?.time === "10月1日 09:00" && JSON.stringify(enRules.timeline) === JSON.stringify(zhRules.timeline), [enRules.summary.timeline, enRules.timeline]);
-  check("en: no English date or duration in the first screen, the history or the timeline", !ENGLISH_DATE.test(wording([enRules.summary.glance, enRules.summary.presentIllness, enRules.summary.timeline, enRules.summary.chiefComplaint, enRules.summary.currentStatus]).join("\n")), wording([enRules.summary.glance, enRules.summary.presentIllness, enRules.summary.timeline]));
+  check("en: the timeline has English dates", enRules.summary.timeline[0]?.time === "1 Oct, 09:00" && zhRules.summary.timeline[0]?.time === "10月1日 09:00", [enRules.summary.timeline, zhRules.summary.timeline]);
+  check("zh: no English date or duration in the first screen, the history or the timeline", !ENGLISH_DATE.test(wording([zhRules.summary.glance, zhRules.summary.presentIllness, zhRules.summary.timeline, zhRules.summary.chiefComplaint, zhRules.summary.currentStatus]).join("\n")), wording([zhRules.summary.glance, zhRules.summary.presentIllness, zhRules.summary.timeline]));
+  // the words the rules write themselves on the English page: no Chinese dates, durations or labels
+  const CHINESE_WORDING = /\d+月\d+日|约 ?\d|目前|起初|最近（|既往史|过敏史|长期用药|记录：|诊断：|处理：|已经持续|体温最高|这次需要/;
   for (const key of ["summary", "summaryFiveDays", "summarySeen", "summaryUnsaid", "summaryAfterTap"] as const) {
-    // apart from the description the patient reads (narrative, chiefComplaint, presentIllness), which is English
-    const doctorPart = (x: object) => JSON.stringify({ ...x, narrative: undefined, chiefComplaint: undefined, presentIllness: undefined });
-    check(`en: page for the doctor (${key}) is the same as in Chinese`, doctorPart(enRules[key]) === doctorPart(zhRules[key]), enRules[key]);
+    const page = enRules[key];
+    const written = JSON.stringify({ ...page, glance: page.glance.filter((g) => !/^最近(血压|血糖)/.test(g)) });
+    check(`en: page for the doctor (${key}) is written in English`, !CHINESE_WORDING.test(written) && /^I'm /.test(page.narrative ?? ""), written.match(CHINESE_WORDING)?.[0] ?? page);
   }
+  check("en: a one-tap answer reads in English on the page", enRules.summaryAfterTap.glance.some((g) => g.includes("Much better")), enRules.summaryAfterTap.glance);
   check("en: the yearly summary is the same as in Chinese", JSON.stringify(enRules.annual) === JSON.stringify(zhRules.annual) && enRules.annual.glance[0] === "目前：「脚麻」已经约 3 周" && enRules.annual.medicationChanges[0]?.time === "2026年1月12日", enRules.annual);
   check("en: what the doctor said is organised the same as in Chinese", JSON.stringify([enRules.after, enRules.afterVague, enRules.parsed]) === JSON.stringify([zhRules.after, zhRules.afterVague, zhRules.parsed]), enRules.after);
   // in English the conversation is held in English: without a model, the rules ask in English too
   check("en: the conversation by rule asks in English", !hasChinese(enRules.first.reply) && /\?$/.test(enRules.first.reply) && enRules.first.suggestedReplies.length > 0 && enRules.first.suggestedReplies.every((x) => !hasChinese(x)), enRules.first);
   check("zh: the conversation by rule is unchanged", zhRules.first.reply === "记下了。现在有多难受？" && zhRules.first.suggestedReplies.join() === "有点难受,比较难受,非常难受" && zhRules.worse.hint?.text.includes("建议今天去看医生") === true, zhRules.first);
-  check("en: when to see a doctor, what to ask next and what is missing are the same as in Chinese", JSON.stringify([enRules.hints, enRules.must, enRules.missing]) === JSON.stringify([zhRules.hints, zhRules.must, zhRules.missing]), [enRules.hints, enRules.must, enRules.missing]);
-  check("en: danger signals are raised the same as in Chinese", JSON.stringify([enRules.urgent, enRules.alerts]) === JSON.stringify([zhRules.urgent, zhRules.alerts]) && enRules.urgent.filter(Boolean).length === 5 && enRules.alerts.filter(Boolean).length === 3, [enRules.urgent, enRules.alerts]);
+  check("en: when to see a doctor and what to ask next are decided the same as in Chinese", JSON.stringify([enRules.hints, enRules.must]) === JSON.stringify([zhRules.hints, zhRules.must]), [enRules.hints, enRules.must]);
+  check("en: what the doctor will ask is said in English", JSON.stringify(enRules.missing).length > 2 && !hasChinese(JSON.stringify(enRules.missing)), enRules.missing);
+  // the same sentences raise the same alarms in either language (what the alarm says may follow the language)
+  const levels = (xs: (Hint | null)[]) => JSON.stringify(xs.map((x) => x?.level ?? null));
+  check("en: danger signals are raised the same as in Chinese", levels(enRules.urgent) === levels(zhRules.urgent) && levels(enRules.alerts) === levels(zhRules.alerts) && enRules.urgent.filter(Boolean).length === 5 && enRules.alerts.filter(Boolean).length === 3, [enRules.urgent, enRules.alerts]);
   const low = instantAlert("测了血糖 3.4");
-  check("en: the alarm for a glucose of 3.4 is in Chinese", low?.level === "urgent" && hasChinese(low.text) && !/[A-Za-z]{2,}/.test(low.text) && low.text.includes("低血糖") && low.text.includes("15 克") && low.text.includes("120"), low);
+  check("en: the alarm for a glucose of 3.4 is raised, in English", low?.level === "urgent" && !hasChinese(low.text) && low.text.includes("120"), low);
   check("zh: nothing the rule engine writes in Chinese carries an English date, duration or sentence", !ENGLISH_DATE.test(wording(zhRules).join("\n")) && !/[A-Za-z]{2,} [a-z]{2,}/.test(wording(zhRules).filter((x) => x !== "fallback").join("\n")), wording(zhRules).filter((x) => ENGLISH_DATE.test(x) || /[A-Za-z]{2,} [a-z]{2,}/.test(x)));
   check("en: after the rule engine has run, the interface is still in English", getLang() === "en" && dayLabel(fresh, now) === "Day 3" && checkInQuestion(fresh, now) === 'How is "肚子痛" today?');
 
@@ -338,11 +346,12 @@ try {
   check("en: 有点难受 / 比较难受 / 非常难受 stay as they are", JSON.stringify(enKept.feel) === JSON.stringify(zhKept.feel) && JSON.stringify(enKept.options) === JSON.stringify(zhKept.options) && enKept.options.join() === "有点难受=3,比较难受=6,非常难受=8", enKept.options);
   check("en: the severity words stay as they are", JSON.stringify(enKept.severity) === JSON.stringify(zhKept.severity), enKept.severity);
   check("en: a working title is still read from Chinese words", JSON.stringify(enKept.titles) === '["喉咙痛","头痛","肚子痛"]', enKept.titles);
-  check("en: an earlier record handed to the model is the same as in Chinese", JSON.stringify(enKept.related) === JSON.stringify(zhKept.related), enKept.related);
-  check("en: its date and outcome are Chinese", enKept.related[0].date === "2026年10月1日" && enKept.related[3].outcome?.startsWith("已好转（") === true && !/[A-Za-z]{3,}/.test(enKept.related.flatMap((r) => Object.values(r)).join(" ")), enKept.related);
-  check("en: the text copied for the doctor is the same as in Chinese", enKept.summaryText === zhKept.summaryText, enKept.summaryText);
+  // an earlier record put on the English page for the doctor is in English; the Chinese one is unchanged
+  check("en: an earlier record on the English page has an English date and outcome", enKept.related[0].date === "Oct 1, 2026" && enKept.related[3].outcome?.startsWith("got better (") === true, enKept.related);
+  check("zh: its date and outcome are Chinese", zhKept.related[0].date === "2026年10月1日" && zhKept.related[3].outcome?.startsWith("已好转（") === true && !/[A-Za-z]{3,}/.test(zhKept.related.flatMap((r) => Object.values(r)).join(" ")), zhKept.related);
+  check("en: the text copied for the doctor is in English", enKept.summaryText.startsWith("[VisitSmoothie · Summary for the doctor]") && zhKept.summaryText.startsWith("【医伴 · 就医摘要】"), enKept.summaryText.slice(0, 80));
   check("en: the yearly text copied for the doctor is the same as in Chinese", enKept.annualText === zhKept.annualText, enKept.annualText);
-  check("en: neither carries an English date or an English patient line", !/years old|Male|Oct|Jan/.test(enKept.summaryText + enKept.annualText), enKept.summaryText.slice(0, 120));
+  check("zh: the Chinese texts carry no English date or patient line", !/years old|Male|Oct|Jan/.test(zhKept.summaryText + zhKept.annualText), zhKept.summaryText.slice(0, 120));
 
   // the helper that keeps generated text Chinese hands the interface language back, even on an error
   check("there is one inChinese: utils passes on the one in lang.ts", inChinese === inChineseOfLang);

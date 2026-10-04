@@ -91,21 +91,18 @@ export function GlanceSheet({
   lines,
   generatedAt,
   busy,
+  narrative,
 }: {
   profile: Profile;
   subject: string;
   lines: string[];
   generatedAt: string;
   busy: boolean;
+  /** the description in the patient's own voice (我46岁，左膝内侧…), printed with the sheet */
+  narrative?: string;
 }) {
-  const background = [
-    profile.conditions.length
-      ? L(`既往：${joined(profile.conditions)}`, `History: ${joined(profile.conditions)}`)
-      : L("既往：无特殊", "History: nothing notable"),
-    profile.surgeries.length ? L(`手术：${joined(profile.surgeries)}`, `Surgery: ${joined(profile.surgeries)}`) : "",
-  ]
-    .filter(Boolean)
-    .join(L("　", " · "));
+  // past history and operations: one item per line, never run together into a paragraph
+  const history = [...profile.conditions, ...profile.surgeries.map((s) => L(`手术：${s}`, `Surgery: ${s}`))];
   return (
     <Card tone="raised" className="print-sheet animate-fade-up overflow-hidden">
       {/* the letterhead: this card is a document, the one thing here that leaves the phone */}
@@ -137,7 +134,21 @@ export function GlanceSheet({
       <LetterheadRule />
       {/* the standing facts, one per hairline-ruled row, like the fields of a form */}
       <div className="divide-y divide-line border-b border-line px-4 text-lg leading-relaxed text-ink print:px-0! print:text-black">
-        <p className="py-3">{background}</p>
+        <div className="py-3">
+          <p className="text-base font-semibold text-brand-700 print:text-black">{L("既往病史", "Past history")}</p>
+          {history.length ? (
+            <ul className="mt-1.5 space-y-1">
+              {history.map((h, i) => (
+                <li key={i} className="flex gap-3">
+                  <span aria-hidden="true" className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600 print:bg-black" />
+                  <span className="min-w-0">{h}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1">{L("无特殊", "Nothing notable")}</p>
+          )}
+        </div>
         <p className="py-3 font-semibold text-danger print:text-black">
           {L(
             `过敏：${profile.allergies.length ? joined(profile.allergies) : "无已知过敏"}`,
@@ -148,6 +159,13 @@ export function GlanceSheet({
           <p className="py-3">{L(`长期用药：${joined(profile.medications)}`, `Regular medicines: ${joined(profile.medications)}`)}</p>
         )}
       </div>
+      {/* the patient's own description, as it was written up in pre: what they would say to the doctor */}
+      {narrative && (
+        <div className="border-b border-line px-4 py-4 print:break-inside-avoid print:px-0!">
+          <p className="text-base font-semibold text-brand-700 print:text-black">{L("患者自述", "In the patient's words")}</p>
+          <p className="t-body mt-1.5 text-ink print:text-black">{narrative}</p>
+        </div>
+      )}
       {/* the lines that matter most: each one comes in a beat after the one before */}
       <ul className="divide-y divide-line px-4 py-1 print:px-0!">
         {lines.map((line, i) => (

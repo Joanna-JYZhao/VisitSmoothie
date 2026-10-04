@@ -36,7 +36,7 @@ export default function ReportPage() {
   return (
     <div className="space-y-5">
       <header className="animate-fade-up pt-1">
-        <h1 className="t-display text-ink">{L("健康记录", "Health Record")}</h1>
+        <h1 className="t-display text-ink">{L("健康报告", "Record")}</h1>
       </header>
       {rows.length === 0 && <Notice icon={<FolderOpen className="h-6 w-6" />} title={L("还没有记录。", "No records yet.")} />}
       {rows.length > 0 && (

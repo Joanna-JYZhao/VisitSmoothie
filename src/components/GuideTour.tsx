@@ -30,7 +30,7 @@ const steps = (): GuideStep[] => {
     { target: "post", title: L("诊后解析", "After the visit"), body: L("拍处方或传录音，自动翻译成清晰的「医嘱行动」。", "Photograph the prescription or upload a recording, and get clear action items from the doctor's orders."), button: next },
     { target: "todo", title: L("待办与答疑", "To do and questions"), body: L("用药复查自动生成提醒。有疑问随时在底部提问。", "Medicine and check-up reminders are made for you. Ask questions at the bottom any time."), button: next },
     { target: "profile", title: L("个人中心", "Your account"), body: L("管理你的账号信息与个性化就诊偏好。", "Manage your account and your visit preferences."), button: next },
-    { target: "report", title: L("健康档案", "Health records"), body: L("所有的历史摘要和护理计划都在此安全归档。", "All past summaries and care plans are kept safely here."), button: next },
+    { target: "report", title: L("健康报告", "Record"), body: L("所有的历史摘要和护理计划都在此安全归档。", "All past summaries and care plans are kept safely here."), button: next },
     { target: "sos", title: L("紧急求助", "Emergency help"), body: L("问诊奶昔不做诊断。突发严重不适，请立刻点击此处寻求人工帮助。", "The AI does not diagnose. If you suddenly feel very unwell, tap here right away to get help from people."), button: L("完成", "Done") },
     { title: L("准备就绪", "All set"), body: L("欢迎使用 问诊奶昔，让每一次就诊都清晰、安心。", "Welcome to VisitSmoothie. Every visit, clear and calm."), button: L("开始使用", "Get started") },
   ];
