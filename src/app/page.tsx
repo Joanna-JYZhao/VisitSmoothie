@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { AlertCircle, AlertTriangle, ArrowRight, Camera, ChevronRight, ListChecks, MessageCircle } from "lucide-react";
 import { useNow, useStore } from "@/lib/store";
 import { checkInQuestion, currentHint, isCheckInDue } from "@/lib/checkin";
 import { TodoList } from "@/components/home/TodoList";
 import { AskBox } from "@/components/home/AskBox";
 import { IconTile, focusRing } from "@/components/ui";
+import { GuideTour, TOUR_FLAG } from "@/components/GuideTour";
 import { unsavedCards } from "@/lib/drafts";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +27,33 @@ const ITEM_TONE = {
 };
 
 export default function HomePage() {
-  const { state } = useStore();
+  const { state, updateSettings } = useStore();
   const now = useNow(60_000);
+  const [tourOpen, setTourOpen] = useState(false);
+
+  // 注册完第一次进首页：开始新手引导（只此一次，完成或跳过后记入 settings.tourDone）
+  useEffect(() => {
+    let flag = false;
+    try {
+      flag = Boolean(state.profile && !state.settings.tourDone && sessionStorage.getItem(TOUR_FLAG));
+    } catch {
+      /* no session storage */
+    }
+    if (!flag) return;
+    const t = window.setTimeout(() => setTourOpen(true), 600); // 等首页卡片落位动画播完
+    return () => window.clearTimeout(t);
+  }, [state.profile, state.settings.tourDone]);
+
+  const finishTour = () => {
+    setTourOpen(false);
+    updateSettings({ tourDone: true });
+    try {
+      sessionStorage.removeItem(TOUR_FLAG);
+    } catch {
+      /* no session storage */
+    }
+  };
+
   if (!state.profile) return null;
 
   const active = state.episodes.filter((e) => e.status === "active");
@@ -53,7 +80,7 @@ export default function HomePage() {
     <div className="space-y-6 sm:space-y-8">
       {/* the two doors: big, calm, and the first things to move when the page opens */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
-        <Link href="/pre" className={cn(doorCls, "rise-1")}>
+        <Link href="/pre" data-guide="pre" className={cn(doorCls, "rise-1")}>
           {/* the stage: a pool of light behind the tile, as on the welcome screen */}
           <span aria-hidden="true" className="pool -top-24 left-1/2 h-72 w-72 -translate-x-1/2" />
           <span className={cn(iconCls, "tile-brand")}>
@@ -63,7 +90,7 @@ export default function HomePage() {
           <span className="t-lead relative mt-3 text-ink-2">看医生之前：哪里不舒服，跟我说</span>
           <ArrowRight className="absolute right-6 bottom-6 hidden h-6 w-6 text-brand-400 transition-transform duration-300 group-hover:translate-x-1 sm:block" aria-hidden="true" />
         </Link>
-        <Link href="/post" className={cn(doorCls, "rise-2")}>
+        <Link href="/post" data-guide="post" className={cn(doorCls, "rise-2")}>
           {/* the stage: a pool of light behind the tile, as on the welcome screen */}
           <span aria-hidden="true" className="pool -top-24 left-1/2 h-72 w-72 -translate-x-1/2" />
           <span className={cn(iconCls, "tile-ink")}>
@@ -75,7 +102,7 @@ export default function HomePage() {
         </Link>
       </div>
 
-      <section className="rise-3 material-raised min-h-48 rounded-[32px] border border-line/70 p-5 sm:p-8">
+      <section data-guide="todo" className="rise-3 material-raised min-h-48 rounded-[32px] border border-line/70 p-5 sm:p-8">
         <div className="flex items-center gap-3.5">
           <IconTile tone="solid" size="lg">
             <ListChecks />
@@ -114,6 +141,7 @@ export default function HomePage() {
           <AskBox now={now} />
         </div>
       </section>
+      {tourOpen && <GuideTour onFinish={finishTour} />}
     </div>
   );
 }

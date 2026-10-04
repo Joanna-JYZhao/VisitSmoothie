@@ -11,6 +11,7 @@ import type { CheckupResult, Gender, MetricType, Profile } from "@/lib/types";
 import { reloadAccount, useStore } from "@/lib/store";
 import { placeholderName } from "@/lib/dev";
 import { currentAccountId, legacyProfile, passwordProblem, registerHere, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/accounts";
+import { TOUR_FLAG } from "@/components/GuideTour";
 import { L } from "@/lib/lang";
 import { PhotoError, readCheckup } from "@/lib/ai/client";
 import { SAMPLE_CHECKUP, SAMPLE_CHECKUP_URL, readingText, saveCheckup } from "@/lib/checkup";
@@ -126,6 +127,14 @@ export default function OnboardingPage() {
     // Someone with diabetes or high blood pressure is asked for those numbers from the start: no question about it.
     const metrics = metricsFor(profile.conditions, profile.medications);
     if (metrics.length) updateSettings({ longTerm: true, trackedMetrics: metrics });
+    if (!hasAccount) {
+      // 新注册：进首页后展示一次新手引导
+      try {
+        sessionStorage.setItem(TOUR_FLAG, "1");
+      } catch {
+        /* no session storage */
+      }
+    }
     router.replace("/");
     return null;
   };
