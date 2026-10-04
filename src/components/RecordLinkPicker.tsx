@@ -68,21 +68,30 @@ function YesNo({ value, onChange, yes, no }: { value: boolean | null; onChange: 
 }
 
 /**
- * post asks two things before the visit is sorted out: is this a follow-up visit, and of which record;
- * and was 看医生之前 (pre) used before this visit, and which record that was. Either can be answered no.
+ * post asks first whether 看医生之前 (pre) was used before this visit, and which record that was: picked,
+ * the visit is kept with it and takes its 复诊 setting as it is. Only without pre does it ask whether this
+ * is a follow-up visit, and of which record. Either can be answered no. Once answered, the questions fold
+ * into one line saying what this visit is linked to, with a way to change it.
  */
 function PostLinkQuestions({ value, onChange, exclude }: { value: RecordLink; onChange: (v: RecordLink) => void; exclude?: string[] }) {
   const { state } = useStore();
   const records = allRecords(state).filter((r) => !exclude?.includes(r.id));
   // the pre records of a visit not yet seen: what was written before this visit
-  const preRecords = records.filter((r) => r.kind === "episode" && !r.hasVisit && r.id !== value.followUpOf).slice(0, 6);
+  const preRecords = records.filter((r) => r.kind === "episode" && !r.hasVisit).slice(0, 6);
   // what can be followed up: a record a doctor has seen
-  const earlier = records.filter((r) => r.hasVisit && r.id !== value.pre).slice(0, 8);
-  // 是 tapped before a record is picked: the list stays open with nothing picked yet
-  const [followUp, setFollowUp] = useState<boolean | null>(value.followUpOf ? true : null);
+  const earlier = records.filter((r) => r.hasVisit).slice(0, 8);
+  // 用过 / 是 tapped before a record is picked: the list stays open with nothing picked yet
   const [usedPre, setUsedPre] = useState<boolean | null>(value.pre ? true : null);
-  const isFollowUp = value.followUpOf ? true : followUp;
+  const [followUp, setFollowUp] = useState<boolean | null>(value.followUpOf ? true : null);
   const hadPre = value.pre ? true : usedPre;
+  const isFollowUp = value.followUpOf ? true : followUp;
+  const answered = hadPre === true ? Boolean(value.pre) : hadPre === false && (isFollowUp === false || Boolean(value.followUpOf));
+  const [editing, setEditing] = useState(false);
+  const pre = recordById(state, value.pre);
+  const prev = recordById(state, value.followUpOf);
+
+  // a pre record picked: its 复诊 setting comes with it
+  const pickPre = (id: string) => onChange({ pre: id, followUpOf: state.episodes.find((e) => e.id === id)?.followUpOf ?? null });
 
   const list = (items: RecordRef[], current: string | null | undefined, set: (id: string) => void, empty: string) =>
     items.length ? (
@@ -97,51 +106,81 @@ function PostLinkQuestions({ value, onChange, exclude }: { value: RecordLink; on
       <p className="mt-2 px-1 text-base text-ink-3">{empty}</p>
     );
 
+  if (answered && !editing) {
+    const lines = [
+      pre ? L(`看医生之前：${recordLabel(pre)}`, `Before the doctor: ${recordLabel(pre)}`) : L("没有用过看医生之前", "Didn't use “Before the doctor”"),
+      prev ? L(`复诊：关联到「${recordLabel(prev)}」`, `Follow-up of “${recordLabel(prev)}”`) : L("不是复诊", "Not a follow-up"),
+    ];
+    return (
+      <div className="flex items-start gap-3 rounded-2xl border border-line/80 bg-surface px-3.5 py-3">
+        <Link2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" />
+        <div className="min-w-0 flex-1 space-y-0.5 text-base leading-snug">
+          <p className="font-semibold text-ink">{L("这次关联的记录", "Linked to this visit")}</p>
+          {lines.map((x, i) => (
+            <p key={i} className="text-ink-2">
+              {x}
+            </p>
+          ))}
+        </div>
+        <button type="button" onClick={() => setEditing(true)} className={cn("press min-h-11 shrink-0 rounded-full bg-surface-2 px-3.5 text-base font-medium text-brand-800", focusRing)}>
+          {L("改一下", "Change")}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 rounded-2xl border border-line/80 bg-surface px-3 py-3.5">
       <section>
         <p className="flex items-center gap-2 px-1 pb-2 text-lg font-semibold text-ink">
           <Link2 aria-hidden="true" className="h-5 w-5 shrink-0 text-brand-700" />
-          {L("这次是复诊吗？", "Is this a follow-up visit?")}
+          {L("这次看医生之前，用过「看医生之前」吗？", "Did you use “Before the doctor” before this visit?")}
         </p>
-        <YesNo
-          value={isFollowUp}
-          yes={L("是复诊", "Yes")}
-          no={L("不是", "No")}
-          onChange={(v) => {
-            setFollowUp(v);
-            if (!v) onChange({ ...value, followUpOf: null });
-          }}
-        />
-        {isFollowUp && (
-          <>
-            <p className="px-1 pt-3 text-base text-ink-2">{L("关联上一次的哪条记录？（新建一条，标注是它的复诊）", "Which earlier record? (A new record, marked as its follow-up)")}</p>
-            {list(earlier, value.followUpOf, (id) => onChange({ ...value, followUpOf: id }), L("还没有看过医生的记录可以关联。", "No records from a doctor's visit to link yet."))}
-          </>
-        )}
-      </section>
-      <section className="border-t border-line pt-4">
-        <p className="px-1 pb-2 text-lg font-semibold text-ink">{L("这次看医生之前，用过「看医生之前」吗？", "Did you use “Before the doctor” before this visit?")}</p>
         <YesNo
           value={hadPre}
           yes={L("用过", "Yes")}
           no={L("没有", "No")}
           onChange={(v) => {
             setUsedPre(v);
-            if (!v) onChange({ ...value, pre: null });
+            if (v !== (hadPre === true)) onChange({ pre: null, followUpOf: null });
+            setFollowUp(null);
           }}
         />
         {hadPre && (
           <>
-            <p className="px-1 pt-3 text-base text-ink-2">{L("是哪一条？（和这次存成一条记录）", "Which one? (Kept as one record with this visit)")}</p>
-            {list(preRecords, value.pre, (id) => onChange({ ...value, pre: id }), L("还没有看医生之前的记录。", "No “Before the doctor” records yet."))}
+            <p className="px-1 pt-3 text-base text-ink-2">{L("是哪一条？（和这次存成一条记录，复诊的设置跟着它）", "Which one? (Kept as one record with this visit, with its follow-up setting)")}</p>
+            {list(preRecords, value.pre, pickPre, L("还没有看医生之前的记录。", "No “Before the doctor” records yet."))}
           </>
         )}
       </section>
+      {hadPre === false && (
+        <section className="border-t border-line pt-4">
+          <p className="px-1 pb-2 text-lg font-semibold text-ink">{L("这次是复诊吗？", "Is this a follow-up visit?")}</p>
+          <YesNo
+            value={isFollowUp}
+            yes={L("是复诊", "Yes")}
+            no={L("不是", "No")}
+            onChange={(v) => {
+              setFollowUp(v);
+              if (!v) onChange({ pre: null, followUpOf: null });
+            }}
+          />
+          {isFollowUp && (
+            <>
+              <p className="px-1 pt-3 text-base text-ink-2">{L("关联上一次的哪条记录？（新建一条，标注是它的复诊）", "Which earlier record? (A new record, marked as its follow-up)")}</p>
+              {list(earlier, value.followUpOf, (id) => onChange({ pre: null, followUpOf: id }), L("还没有看过医生的记录可以关联。", "No records from a doctor's visit to link yet."))}
+            </>
+          )}
+        </section>
+      )}
+      {answered && (
+        <button type="button" onClick={() => setEditing(false)} className={cn("press min-h-11 w-full rounded-xl bg-surface-2 text-base font-medium text-ink", focusRing)}>
+          {L("好了", "Done")}
+        </button>
+      )}
     </div>
   );
 }
-
 export function RecordLinkPicker({ mode, value, onChange, exclude }: { mode: "pre" | "post"; value: RecordLink; onChange: (v: RecordLink) => void; exclude?: string[] }) {
   if (mode === "post") return <PostLinkQuestions value={value} onChange={onChange} exclude={exclude} />;
   return <PreLinkPicker value={value} onChange={onChange} exclude={exclude} />;

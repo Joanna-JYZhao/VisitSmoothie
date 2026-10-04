@@ -160,12 +160,7 @@ export default function PostPage() {
         >
           {L("这次看医生的结果", "Results of this visit")}
         </PageTitle>
-        {/* which records this visit goes with: still open to change until it is saved */}
-        <RecordLinkPicker
-          mode="post"
-          value={{ pre: plan.episodeId, followUpOf: plan.followUpOf ?? null }}
-          onChange={(v) => storeActions.patchPostDraft((d) => ({ ...d, episodeId: v.pre ?? null, followUpOf: v.followUpOf ?? null }))}
-        />
+
         <ClinicalPlan draft={plan} onSave={save} saving={saving} />
         <StartOver
           confirming={confirmNew}

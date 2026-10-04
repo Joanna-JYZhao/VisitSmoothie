@@ -165,3 +165,10 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 - 测试：`post-link.test.ts` 加复诊标题、两级跳转、描述去掉档案信息。
 
 验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1573 项全部通过；`npm run build` 通过。
+
+## 2026-10-04 改动：post 先问用没用过 pre，再问复诊；答完显示关联了哪条，Clinical Plan 页不再有关联选项（Yueran，推 main）
+
+- `src/components/RecordLinkPicker.tsx`：post 先问「这次看医生之前，用过『看医生之前』吗？」——用过就选哪条 pre，和这次存成一条，复诊设置跟着那条 pre；没有用过才问「这次是复诊吗？」并选关联哪条。答完收成一张「这次关联的记录」卡片（写明哪条 pre、复诊关联哪条），可以「改一下」。
+- `src/app/post/page.tsx`：整理出 Clinical Plan 之后不再显示关联选项，直接是 Clinical Plan 和解释；存储照旧按选的关联保存。
+
+验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1573 项全部通过；`npm run build` 通过。
