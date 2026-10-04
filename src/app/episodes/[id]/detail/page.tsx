@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ChartLine, FileSearch, History, ListOrdered, Stethoscope } from "lucide-react";
+import { ChartLine, ChevronDown, FileSearch, History, Lightbulb, ListOrdered, Stethoscope } from "lucide-react";
 import type { Episode } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { useRelatedEpisodes } from "@/lib/episodeAI";
@@ -144,6 +144,26 @@ function Detail({ episode: e }: { episode: Episode }) {
               </div>
             )}
           </dl>
+        </Card>
+      )}
+
+      {v?.learned && v.learned.length > 0 && (
+        // what was asked about the orders after the visit and explained: part of the same record
+        <Card className="animate-rise px-4 pt-4 pb-2 rise-2">
+          <CardTitle icon={<Lightbulb />}>{L("看完医生后了解到的", "What I learned after the visit")}</CardTitle>
+          <ul className="divide-y divide-line">
+            {v.learned.map((x, i) => (
+              <li key={i}>
+                <details className="group py-3">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-lg font-medium text-ink [&::-webkit-details-marker]:hidden">
+                    <span className="min-w-0">{x.about}</span>
+                    <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-ink-3 transition-transform duration-200 group-open:rotate-180" />
+                  </summary>
+                  <p className="t-body mt-2 rounded-2xl bg-brand-50/70 px-4 py-3 whitespace-pre-line text-ink">{x.text}</p>
+                </details>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 

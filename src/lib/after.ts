@@ -1,4 +1,4 @@
-import type { AfterMedication, AfterResult, AiMode, Episode, Measurement, VisitRecord } from "./types";
+import type { AfterMedication, AfterResult, AiMode, Episode, LearnedItem, Measurement, VisitRecord } from "./types";
 import { getState, storeActions } from "./store";
 import { holidayBetween } from "./metrics";
 import { NO_DIAGNOSIS, autoTags, fmtISODate, nowISO } from "./utils";
@@ -72,7 +72,12 @@ export interface SavedAfter {
   linked: string[];
 }
 
-export function saveAfter(result: AfterResult, episodeId: string | null, mode: AiMode, said = ""): SavedAfter {
+/**
+ * Files the visit. Linked to a pre record (`episodeId`), it goes into that record, so the complaint and
+ * what the doctor said are one record; otherwise it is a visit record of its own. `learned`: what the
+ * patient asked about the orders and had explained, kept with the visit.
+ */
+export function saveAfter(result: AfterResult, episodeId: string | null, mode: AiMode, said = "", learned: LearnedItem[] = []): SavedAfter {
   const today = fmtISODate(new Date());
   const date = result.date ?? today;
   // readings from an earlier visit are filed at noon of that day; today's at this moment
@@ -101,6 +106,7 @@ export function saveAfter(result: AfterResult, episodeId: string | null, mode: A
     followUpAt: null,
     mode,
     recordedAt: nowISO(),
+    ...(learned.length ? { learned } : {}),
   };
 
   if (episodeId) {
@@ -123,6 +129,7 @@ export function saveAfter(result: AfterResult, episodeId: string | null, mode: A
       plan: treatment,
       advice: [result.advice, result.followUpNote].filter(Boolean).join(L("；", "; ")) || undefined,
       summary: result.summary || undefined,
+      ...(learned.length ? { learned } : {}),
     },
     readings,
   );

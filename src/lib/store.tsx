@@ -26,7 +26,7 @@ import type {
 } from "./types";
 import { autoTags, findSimilarEpisodes, nowISO, provisionalTitle, uid, uniq } from "./utils";
 import { buildLinState } from "./demo-lin";
-import { getLang, setLang } from "./lang";
+import { L, getLang, setLang } from "./lang";
 import { SESSION_KEY, currentAccountId, dataKey, isDemoAccountId } from "./accounts";
 
 export type { DemoPersona };
@@ -478,7 +478,7 @@ const actions: Omit<StoreApi, "state" | "ready"> = {
               id: uid(),
               at: e.visit.recordedAt,
               severity: null,
-              note: `${e.visit.date} 看医生：${e.visit.diagnosis}；${e.visit.treatment}`,
+              note: L(`${e.visit.date} 看医生：${e.visit.diagnosis}；${e.visit.treatment}`, `${e.visit.date} doctor's visit: ${e.visit.diagnosis}; ${e.visit.treatment}`),
               location: null,
               source: "ai",
             },

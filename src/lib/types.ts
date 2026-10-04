@@ -101,6 +101,15 @@ export interface VisitRecord {
   followUpAt?: string | null;
   mode?: AiMode;
   recordedAt: string;
+  /** what the patient asked the assistant about this visit's orders, and learned (post, Clinical Plan) */
+  learned?: LearnedItem[];
+}
+
+/** One line of the orders the patient asked about after the visit, and what was explained (follow-ups included). */
+export interface LearnedItem {
+  /** the line it is about: a medicine, a piece of advice, the diagnosis */
+  about: string;
+  text: string;
 }
 
 export interface Episode {
@@ -157,6 +166,8 @@ export interface FollowUp {
   /** the archive paragraph: everything the doctor said, including remarks like "控制得不错" */
   summary?: string;
   recordedAt: string;
+  /** what the patient asked the assistant about this visit's orders, and learned */
+  learned?: LearnedItem[];
 }
 
 /** One health check-up (体检): what the report flagged, kept as the starting point of the record. */

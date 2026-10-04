@@ -112,3 +112,12 @@ TypeScript 的输入范围收紧至主应用、脚本、Next.js 配置和语音�
 - 测试：`rules-en.test.ts` 里「英文页面和中文一样」的断言改成「英文页面是英文、中文版不变」。
 
 验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 16 个文件 1544 项全部通过；`npm run build` 通过；听写测试 18 项通过；用智谱实测生成英文「给医生看」，10 个字段都没有中文。
+
+## 2026-10-04 改动：pre 随时开新的、post 关联 pre 存成一条记录、问过的解释记进记录（Yueran，推 main）
+
+- `src/components/chat/ChatScreen.tsx`：「开新的」只要说过话就在标题旁边：这一轮没完成就连同未保存的记录一起放弃；已经完成的只是清空对话、从「今天哪里不舒服」重来，已保存的记录不动。
+- `src/lib/after.ts` / `src/app/post/page.tsx`：post 选了关联的 pre，就存进那条 pre 记录（健康报告里是一条「问诊 + 医嘱」），不再多一条；不关联才单独存一条医嘱记录。
+- 在 Clinical Plan 里让 AI 解释过、追问过的内容（`learnedOf`），保存时作为 `VisitRecord.learned`（不关联时存在 `FollowUp.learned`）记进同一条记录；记录详情页多一块「看完医生后了解到的」，一条一条可以展开。没问过的照旧只存记录、加待办和提醒。
+- 新测试 `scripts/tests/post-link.test.ts`：关联时不多出记录、医嘱进 pre 记录、了解到的内容在同一条记录里、不关联时单独一条。
+
+验证（Windows 本机）：`npx tsc --noEmit`、`npm run lint` 通过；单元测试 17 个文件 1550 项全部通过；`npm run build` 通过。

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays, Check, CircleAlert, ClipboardList, HelpCircle, Lightbulb, Link2, MessageCircleQuestion, Stethoscope } from "lucide-react";
-import type { AfterResult, Episode, PostDraft, Todo } from "@/lib/types";
+import type { AfterResult, Episode, LearnedItem, PostDraft, Todo } from "@/lib/types";
 import { getState, storeActions, useStore } from "@/lib/store";
 import { buildTodos, explainQuestion, followUpNote, scheduleText } from "@/lib/reminders";
 import { cn, fmtDate } from "@/lib/utils";
@@ -127,6 +127,22 @@ function Why({ turns, onAsk, busy, disabled }: { turns: Turn[]; onAsk: (q: strin
       )}
     </div>
   );
+}
+
+/**
+ * What was asked about and explained in this Clinical Plan, one item per line asked about, in the
+ * order of the plan: kept with the visit in the record when it is saved.
+ */
+export function learnedOf(draft: PostDraft): LearnedItem[] {
+  const out: LearnedItem[] = [];
+  const add = (id: string, about: string) => {
+    const text = turnsText(draft.turns[id]);
+    if (text) out.push({ about, text });
+  };
+  if (draft.result.diagnosis) add("diagnosis", L(`诊断：${draft.result.diagnosis}`, `Diagnosis: ${draft.result.diagnosis}`));
+  if (draft.result.findings.length) add("findings", L("检查结果", "Test results"));
+  for (const t of draft.todos) add(t.id, t.kind === "followup" ? followUpNote(t.text) : t.text);
+  return out;
 }
 
 /** A new Clinical Plan for what was read: every line ticked, nothing explained yet. */

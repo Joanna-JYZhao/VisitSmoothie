@@ -13,7 +13,7 @@ import { setReminders } from "@/lib/reminders";
 import { clipText, type LongTranscript } from "@/lib/audio";
 import { compressImage } from "@/lib/image";
 import { Recorder, bigTileCls } from "@/components/post/Recorder";
-import { ClinicalPlan, newPostDraft } from "@/components/post/ClinicalPlan";
+import { ClinicalPlan, learnedOf, newPostDraft } from "@/components/post/ClinicalPlan";
 import { filedLine } from "@/components/post/filed";
 import { useToast } from "@/components/Toast";
 import { L } from "@/lib/lang";
@@ -117,10 +117,19 @@ export default function PostPage() {
     // 加入待办并保存: the visit goes on record (with the pre record picked), the lines ticked go on the to-do list (with what was explained), and back home
     const save = (todos: Todo[], episodeId: string | null) => {
       setSaving(true);
-      saveAfter(plan.result, episodeId, plan.mode, plan.text);
+      // linked to a pre record: the visit goes into that record, so pre and post are one record;
+      // what was asked about the orders and explained is kept with it
+      const learned = learnedOf(plan);
+      saveAfter(plan.result, episodeId, plan.mode, plan.text, learned);
       const set = setReminders(todos, episodeId, Date.now(), { all: true });
       storeActions.setPostDraft(null);
-      toast.show(filedLine(set), "good");
+      const linked = episodeId ? getState().episodes.find((e) => e.id === episodeId)?.title : null;
+      const where = linked
+        ? L(`已和「${linked}」存成一条记录${learned.length ? `，问过的 ${learned.length} 条解释也记进去了` : ""}。`, `Saved as one record with “${linked}”${learned.length ? `, with the ${learned.length} explanation${learned.length === 1 ? "" : "s"} you asked for` : ""}.`)
+        : learned.length
+          ? L(`问过的 ${learned.length} 条解释也记进去了。`, `The ${learned.length} explanation${learned.length === 1 ? "" : "s"} you asked for ${learned.length === 1 ? "is" : "are"} saved too.`)
+          : "";
+      toast.show(`${where}${where ? " " : ""}${filedLine(set)}`, "good");
       router.push("/");
     };
     // 开新的: this Clinical Plan is dropped without being saved, and the page is ready for the next visit

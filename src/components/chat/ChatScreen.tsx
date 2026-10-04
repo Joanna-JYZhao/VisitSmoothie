@@ -144,8 +144,10 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
   // Before the patient has said anything the screen is an invitation, not a thread: the opening
   // question sits in the middle of the page, and the ways to answer sit right under it.
   const opening = !state.thread.some((t) => t.kind === "user");
-  // a round under way, which 开新的 can drop
-  const going = !busy && inProgress(state.thread, state.episodes);
+  // 开新的 is there as soon as anything has been said: an unfinished round is dropped with it,
+  // a finished one just leaves the page (what was saved stays saved)
+  const unfinished = inProgress(state.thread, state.episodes);
+  const going = !busy && (unfinished || !opening);
 
   /*
    * A phone chat, like Messages: the title at the top, the conversation in the middle, and docked
@@ -173,7 +175,11 @@ export function ChatScreen(_props: { mode?: "pre" | "post" }) {
               setConfirmNew(false);
               startOverPre();
             }}
-            what={L("这一次还没问完、没保存，开新的就不要它了。已经保存的记录不受影响。", "This round isn't finished or saved yet. Starting a new one drops it. Records you already saved stay.")}
+            what={
+              unfinished
+                ? L("这一次还没问完、没保存，开新的就不要它了。已经保存的记录不受影响。", "This round isn't finished or saved yet. Starting a new one drops it. Records you already saved stay.")
+                : L("清空这段对话，从「今天哪里不舒服」重新开始。已经保存的记录不受影响。", "Clear this chat and start again from the first question. Records you already saved stay.")
+            }
           />
         </div>
       )}
