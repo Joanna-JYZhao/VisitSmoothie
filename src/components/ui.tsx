@@ -19,25 +19,27 @@ export const focusRing = "focus-visible:outline-none focus-visible:ring-4 focus-
 /* ---------- buttons ---------- */
 
 const btnBase =
-  "inline-flex items-center justify-center gap-2 rounded-2xl text-center font-semibold leading-tight select-none transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-full text-center font-semibold leading-tight tracking-[-0.005em] select-none transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:scale-[0.97] active:opacity-90 disabled:pointer-events-none disabled:opacity-45";
 const btnVariants = {
   /** the one main action on a screen. The gradient starts at brand-600 and only gets darker, so white text never drops below 4.9:1 */
-  primary: "bg-linear-to-b from-brand-600 to-brand-650 text-white shadow-btn hover:from-brand-700 hover:to-brand-700",
-  secondary: "border-2 border-line-strong bg-surface text-ink shadow-edge hover:border-brand-400 hover:bg-brand-50",
+  primary: "bg-linear-to-b from-brand-600 to-brand-650 text-white shadow-btn hover:from-brand-650 hover:to-brand-700 hover:shadow-hero",
+  secondary: "material text-ink hover:bg-brand-50 hover:text-brand-800",
+  /** frosted: sits on photos, gradients and other busy ground */
+  glass: "glass border border-white/60 text-ink shadow-pill hover:bg-white/90",
   soft: "bg-brand-50 text-brand-800 hover:bg-brand-100",
   /** clearly a button, clearly not the main one: brand outline on white */
-  outline: "border-2 border-brand-600 bg-surface text-brand-800 shadow-edge hover:bg-brand-50",
+  outline: "border-[1.5px] border-brand-600 bg-surface text-brand-800 shadow-edge hover:bg-brand-50",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
-  danger: "bg-danger text-white shadow-edge hover:bg-[#a92d33]",
+  danger: "bg-danger text-white shadow-edge hover:bg-[#b02f36]",
   dangerSoft: "bg-danger-bg text-danger hover:bg-[#f8d7d9]",
   dangerGhost: "text-danger hover:bg-danger-bg",
 } as const;
 const btnSizes = {
   sm: "min-h-11 px-4 text-base",
-  md: "min-h-12 px-5 text-base",
-  lg: "min-h-14 px-6 text-lg",
+  md: "min-h-12 px-6 text-base",
+  lg: "min-h-14 px-7 text-lg",
   /** an answer to tap: as tall as `lg`, but with little side padding so three fit on a phone */
-  tile: "min-h-14 px-1.5 text-lg",
+  tile: "min-h-14 rounded-2xl px-1.5 text-lg",
 } as const;
 
 export type ButtonVariant = keyof typeof btnVariants;
@@ -135,11 +137,15 @@ export function TextButton({
  * the card's own. A card that is not plain white says so with `tone`.
  */
 const cardTones = {
-  plain: "border border-line bg-surface shadow-card",
+  plain: "material border border-line/80 bg-surface",
+  /** the one card that matters most on the screen: deeper, lit from the corner */
+  raised: "material-raised light border border-line/60 bg-surface",
+  /** frosted glass over whatever is behind it */
+  glass: "glass border border-white/70 shadow-card",
   /** tinted: the thing that matters today (an appointment, something to confirm) */
-  brand: "border border-brand-200 bg-brand-50 shadow-card",
+  brand: "border border-brand-200/70 bg-brand-50 shadow-card",
   /** a red edge: to be dealt with before anything else on the screen */
-  alert: "border-2 border-danger bg-surface shadow-card",
+  alert: "border-[1.5px] border-danger bg-surface shadow-card",
 } as const;
 export type CardTone = keyof typeof cardTones;
 
@@ -169,7 +175,7 @@ export type BadgeTone = keyof typeof toneStyles;
 
 export function Badge({ tone = "neutral", className, children }: { tone?: BadgeTone; className?: string; children: React.ReactNode }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-base font-medium leading-7", toneStyles[tone], className)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-base font-medium leading-7 tracking-[-0.005em]", toneStyles[tone], className)}>
       {children}
     </span>
   );
@@ -181,13 +187,19 @@ const tileTones = {
   good: "bg-good-bg text-good",
   warn: "bg-warn-bg text-warn",
   danger: "bg-danger-bg text-danger",
+  serious: "bg-serious-bg text-serious",
   neutral: "bg-surface-2 text-ink-2",
+  /** solid: a white icon on the brand gradient, the way an app icon looks */
+  solid: "tile-brand text-white",
+  solidInk: "tile-ink text-white",
+  solidDanger: "tile-danger text-white",
 } as const;
 export type IconTone = keyof typeof tileTones;
 const tileSizes = {
-  sm: "h-9 w-9 rounded-xl",
-  md: "h-10 w-10 rounded-xl",
-  lg: "h-12 w-12 rounded-2xl",
+  sm: "h-9 w-9 rounded-[11px] [&>svg]:h-5 [&>svg]:w-5",
+  md: "h-10 w-10 rounded-[12px] [&>svg]:h-5 [&>svg]:w-5",
+  lg: "h-12 w-12 rounded-[15px] [&>svg]:h-6 [&>svg]:w-6",
+  xl: "h-16 w-16 rounded-[20px] [&>svg]:h-8 [&>svg]:w-8",
 } as const;
 
 /** A small icon on a tinted square: what tells one row or entry from the next at a glance. */
@@ -210,7 +222,7 @@ export function IconTile({
 }
 
 const rowCls =
-  "flex min-h-16 w-full items-center gap-3 px-5 py-3.5 text-left transition hover:bg-brand-50/60 focus-visible:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-200";
+  "flex min-h-16 w-full items-center gap-3 px-5 py-3.5 text-left transition duration-200 hover:bg-surface-2/70 focus-visible:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-200";
 
 function RowBody({ title, detail, icon, iconTone }: { title: React.ReactNode; detail?: React.ReactNode; icon?: React.ReactNode; iconTone: IconTone }) {
   return (
@@ -299,7 +311,7 @@ export function TileLink({
     <Link
       href={href}
       className={cn(
-        "flex min-h-16 flex-col rounded-card border border-line bg-surface py-3.5 shadow-card transition hover:border-brand-300 hover:bg-brand-50/60 active:scale-[0.99]",
+        "lift material flex min-h-16 flex-col rounded-card border border-line/80 py-3.5 hover:border-brand-200",
         stacked ? "px-3" : "px-3.5",
         focusRing,
         className,
@@ -321,7 +333,7 @@ export function TileLink({
 /* ---------- forms ---------- */
 
 export const inputCls =
-  "w-full rounded-2xl border-2 border-line-strong bg-surface px-4 text-lg text-ink placeholder:text-ink-3 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:bg-surface-2";
+  "w-full rounded-2xl border-[1.5px] border-line-strong bg-surface px-4 text-lg text-ink shadow-[inset_0_1px_2px_rgba(20,38,47,0.04)] placeholder:text-ink-3 outline-none transition duration-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:bg-surface-2";
 
 export function Field({
   label,
@@ -338,7 +350,7 @@ export function Field({
 }) {
   return (
     <div className={className}>
-      <div className="mb-2 text-base font-medium text-ink">
+      <div className="mb-2 text-base font-semibold text-ink">
         {label}
         {required && <span className="text-danger"> *</span>}
       </div>
@@ -353,7 +365,7 @@ export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInp
 }
 
 export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={cn(inputCls, "min-h-28 resize-y py-3 leading-relaxed", className)} {...props} />;
+  return <textarea className={cn(inputCls, "min-h-28 resize-none py-3 leading-relaxed", className)} {...props} />;
 }
 
 export function Select({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
@@ -370,7 +382,7 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
 /** The look of one option inside a segmented control (also used by tab bars built from links). */
 export const segmentCls = (selected: boolean) =>
   cn(
-    "min-h-11 rounded-xl px-4 text-base font-medium whitespace-nowrap transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+    "min-h-11 rounded-[14px] px-4 text-base font-medium whitespace-nowrap transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
     selected ? "bg-surface text-ink shadow-pill" : "text-ink-2 hover:text-ink",
   );
 
@@ -388,7 +400,7 @@ export function Segmented<T extends string>({
   label?: string;
 }) {
   return (
-    <div className={cn("inline-flex flex-wrap gap-1 rounded-2xl bg-surface-2 p-1", className)} role="radiogroup" aria-label={label}>
+    <div className={cn("inline-flex flex-wrap gap-1 rounded-[18px] bg-surface-3/80 p-1", className)} role="radiogroup" aria-label={label}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -439,8 +451,8 @@ export function Toggle({
         <span className="block text-lg font-medium text-ink">{label}</span>
         {detail && <span className="mt-0.5 block text-base leading-relaxed text-ink-2">{detail}</span>}
       </span>
-      <span className={cn("relative ml-1 h-8 w-14 shrink-0 rounded-full transition-colors", checked ? "bg-brand-600" : "bg-line-strong")}>
-        <span className={cn("absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all", checked ? "left-7" : "left-1")} />
+      <span className={cn("relative ml-1 h-8 w-14 shrink-0 rounded-full transition-colors duration-300", checked ? "bg-brand-600" : "bg-line-strong")}>
+        <span className={cn("absolute top-0.5 h-7 w-7 rounded-full bg-white shadow-[0_2px_6px_rgba(20,38,47,0.25),0_0_0_0.5px_rgba(20,38,47,0.06)] transition-all duration-300", checked ? "left-[26px]" : "left-0.5")} />
       </span>
     </button>
   );
@@ -475,18 +487,18 @@ export function Modal({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-ink/45 p-4 backdrop-blur-[3px] sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-ink/40 p-3 backdrop-blur-[6px] sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full max-w-md animate-fade-up rounded-card bg-surface p-6 shadow-float"
+        className="w-full max-w-md animate-rise rounded-sheet bg-surface p-6 shadow-float"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
-          <h3 className="text-xl leading-snug font-semibold text-ink">{title}</h3>
+          <h3 className="t-title text-ink">{title}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -531,12 +543,12 @@ export function BackButton({ href, children = L("返回", "Back") }: { href: str
   );
 }
 
-const titleCls = "text-[1.65rem] leading-tight font-semibold tracking-tight text-balance text-ink";
-const subCls = "mt-1.5 text-lg leading-relaxed text-ink-2";
+const titleCls = "t-display text-balance text-ink";
+const subCls = "t-lead mt-3 text-ink-2";
 
 export function PageTitle({ children, sub, className }: { children: React.ReactNode; sub?: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("mb-5", className)}>
+    <div className={cn("mb-7 animate-fade-up", className)}>
       <h1 className={titleCls}>{children}</h1>
       {sub && <p className={subCls}>{sub}</p>}
     </div>
@@ -566,7 +578,7 @@ export function PageHeader({
 }) {
   const beside = aside ?? (back ? null : action);
   return (
-    <header className={className}>
+    <header className={cn("animate-fade-up", className)}>
       {back && (
         <div className="no-print mb-1 flex items-center justify-between gap-2">
           {back.history ? <BackButton href={back.href}>{back.label}</BackButton> : <BackLink href={back.href}>{back.label}</BackLink>}
@@ -584,9 +596,9 @@ export function PageHeader({
 
 export function SectionTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="mb-2 flex min-h-10 items-center justify-between gap-3">
+    <div className="mb-3 flex min-h-10 items-center justify-between gap-3">
       {/* a short brand mark in front: sections are found by it when scrolling a long page */}
-      <h2 className="flex items-center gap-2.5 text-lg font-semibold text-ink before:h-[1.05em] before:w-1 before:shrink-0 before:rounded-full before:bg-brand-500">
+      <h2 className="t-heading flex items-center gap-2.5 text-ink">
         {children}
       </h2>
       {action}
@@ -604,8 +616,40 @@ export function TypingDots({ label = L("医伴正在想", "Yiban is thinking") }
   );
 }
 
+/** The one spinner: a ring of the brand colour with a bright arc going round. Sized with h-/w- like an icon. */
 export function Spinner({ className }: { className?: string }) {
-  return <Loader2 className={cn("h-6 w-6 animate-spin text-brand-600", className)} />;
+  return <span aria-hidden="true" className={cn("spinner-ring inline-block h-6 w-6 shrink-0", className)} />;
+}
+
+/** The shape of something still loading: a quiet shimmering bar. Give it a width and height. */
+export function Skeleton({ className }: { className?: string }) {
+  return <span aria-hidden="true" className={cn("skeleton block h-5 w-full", className)} />;
+}
+
+/** A measurement the way iOS Health shows one: the number big and tabular, the unit and label quiet beside it. */
+export function Stat({
+  value,
+  unit,
+  label,
+  tone = "ink",
+  className,
+}: {
+  value: React.ReactNode;
+  unit?: React.ReactNode;
+  label?: React.ReactNode;
+  tone?: "ink" | "brand" | "good" | "warn" | "danger";
+  className?: string;
+}) {
+  const tones = { ink: "text-ink", brand: "text-brand-700", good: "text-good", warn: "text-warn", danger: "text-danger" } as const;
+  return (
+    <span className={cn("inline-flex flex-col", className)}>
+      {label && <span className="mb-1 block text-base font-medium text-ink-2">{label}</span>}
+      <span className="flex items-baseline gap-1.5">
+        <span className={cn("t-number", tones[tone])}>{value}</span>
+        {unit && <span className="text-lg font-medium text-ink-2">{unit}</span>}
+      </span>
+    </span>
+  );
 }
 
 /** A page-level "nothing here" message with a way out. */
@@ -621,15 +665,15 @@ export function Notice({
   icon?: React.ReactNode;
 }) {
   return (
-    <Card className="px-6 py-8 text-center">
+    <Card tone="raised" className="animate-pop px-6 py-12 text-center">
       {icon && (
-        <IconTile size="lg" tone="neutral" className="mx-auto mb-4">
+        <IconTile size="xl" tone="brand" className="mx-auto mb-5 animate-breathe">
           {icon}
         </IconTile>
       )}
-      <h2 className="text-xl font-semibold text-ink">{title}</h2>
-      {children && <p className="mt-2 text-base leading-relaxed text-ink-2">{children}</p>}
-      {action && <div className="mt-5 flex justify-center">{action}</div>}
+      <h2 className="t-heading text-ink">{title}</h2>
+      {children && <p className="t-body mx-auto mt-2 max-w-sm text-ink-2">{children}</p>}
+      {action && <div className="mt-6 flex justify-center">{action}</div>}
     </Card>
   );
 }

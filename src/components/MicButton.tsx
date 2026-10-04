@@ -104,6 +104,11 @@ export function MicButton({
   };
 
   if (big) {
+    /*
+     * The one memorable thing on the screen: a round brand mic with a soft glow, breathing on a
+     * quiet white sheet. Listening, it turns red and rings spread from it with the seconds counting
+     * beside; writing down, a brand ring turns around it.
+     */
     return (
       <button
         type="button"
@@ -111,33 +116,41 @@ export function MicButton({
         disabled={disabled || phase === "working"}
         aria-label={phase === "recording" ? L("说完了，停止录音", "Done speaking, stop recording") : label}
         className={cn(
-          "flex min-h-28 w-full flex-col items-center justify-center gap-2 rounded-card border-2 px-4 py-5 text-center transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:scale-[0.99] disabled:opacity-60",
-          phase === "recording"
-            ? "border-danger bg-danger-bg text-danger"
-            : "border-brand-300 bg-brand-50 text-brand-800 hover:border-brand-500 hover:bg-brand-100",
+          "press relative flex min-h-28 w-full flex-col items-center justify-center gap-2.5 overflow-hidden rounded-[28px] border px-4 py-4 text-center transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+          phase === "recording" ? "border-danger/20 bg-danger-bg" : "material border-line/70 bg-surface hover:border-brand-200",
+          phase !== "working" && "disabled:opacity-60",
           className,
         )}
       >
         {phase === "working" ? (
           <>
-            <Loader2 className="h-9 w-9 animate-spin" />
-            <span className="text-xl font-semibold">{L("正在听写", "Writing it down")}</span>
+            <span aria-hidden="true" className="relative flex h-16 w-16 items-center justify-center">
+              <span className="spinner-ring absolute inset-0 border-[3px]" />
+              <Mic className="h-7 w-7 text-brand-700" />
+            </span>
+            <span className="t-heading text-brand-800">{L("正在听写", "Writing it down")}</span>
           </>
         ) : phase === "recording" ? (
           <>
-            <span className="relative flex h-10 w-10 items-center justify-center">
-              <span className="absolute inset-0 animate-ping rounded-full bg-danger/30" />
-              <Square className="relative h-7 w-7 fill-current" />
+            <span aria-hidden="true" className="relative flex h-16 w-16 items-center justify-center">
+              <span className="absolute -inset-3 animate-ping rounded-full bg-danger/15 [animation-duration:1.8s]" />
+              <span className="absolute -inset-1 animate-ping rounded-full bg-danger/20 [animation-duration:1.8s] [animation-delay:0.4s]" />
+              <span className="tile-danger relative flex h-16 w-16 items-center justify-center rounded-full text-white">
+                <Square className="h-6 w-6 fill-current" />
+              </span>
             </span>
-            <span className="text-xl font-semibold tabular-nums">{L(`正在听 ${clock(seconds)}`, `Listening ${clock(seconds)}`)}</span>
-            <span className="text-base text-ink">{L("说完了点这里", "Tap here when done")}</span>
+            <span className="t-heading tabular text-danger">{L(`正在听 ${clock(seconds)}`, `Listening ${clock(seconds)}`)}</span>
+            <span className="-mt-1 text-base text-ink-2">{L("说完了点这里", "Tap here when done")}</span>
           </>
         ) : (
           <>
-            <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-full bg-surface text-brand-700 shadow-pill">
-              <Mic className="h-7 w-7" />
+            <span aria-hidden="true" className="relative flex h-16 w-16 items-center justify-center">
+              <span className="absolute -inset-2.5 animate-breathe rounded-full bg-brand-400/15" />
+              <span className="tile-brand relative flex h-16 w-16 items-center justify-center rounded-full text-white">
+                <Mic className="h-8 w-8" />
+              </span>
             </span>
-            <span className="text-xl font-semibold">{label}</span>
+            <span className="t-heading text-brand-800">{label}</span>
           </>
         )}
       </button>
@@ -158,8 +171,8 @@ export function MicButton({
       }
       title={phase === "recording" ? L("说完了点这里", "Tap here when done") : L("用说的", "Speak")}
       className={cn(
-        "relative flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:opacity-60",
-        phase === "recording" ? "bg-danger px-3.5 text-white" : "w-12 bg-brand-50 text-brand-700 hover:bg-brand-100",
+        "press relative flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-full transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:opacity-60",
+        phase === "recording" ? "tile-danger px-4 text-white" : "w-12 bg-brand-50 text-brand-700 hover:bg-brand-100",
         className,
       )}
     >

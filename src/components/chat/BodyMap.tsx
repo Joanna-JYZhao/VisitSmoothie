@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { IconTile } from "@/components/ui";
 
 /*
  * 疼痛定位：点一下身体图告诉医伴哪里疼。正面、背面各一张，点膝、肩、腹部、腰背时再放大成细分图。
  * 点完调用 onPick("右膝内侧") 这样的规范名称。左右都按患者自己的身体说：正面图上，患者的右边在画面左边。
  */
-
-const BRAND = "#017a9e";
-const LIGHT = "#eff9fd";
-const LINE = "#9ccfe0";
 
 type Side = "右" | "左";
 type Detail = { kind: "knee" | "shoulder"; side: Side } | { kind: "belly" } | { kind: "back" };
@@ -113,16 +112,27 @@ function detailOf(d: Detail): { title: string; cols: number; zones: (string | nu
   }
 }
 
+/* the figure: soft brand-tinted blocks, lit from above like the tiles of an app icon; a block fills in under the finger */
 function Figure({ zones, onZone }: { zones: Zone[]; onZone: (z: Zone) => void }) {
+  const id = useId();
   return (
     <svg viewBox="0 0 200 400" className="mx-auto block h-auto w-full max-w-[280px]" role="group" aria-label="身体图">
+      <defs>
+        <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#f4f9fb" />
+          <stop offset="1" stopColor="#dbedf3" />
+        </linearGradient>
+        <filter id={`${id}-shadow`} x="-20%" y="-20%" width="140%" height="150%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodColor="#14262f" floodOpacity="0.12" />
+        </filter>
+      </defs>
       {zones.map((z) => (
         <g
           key={z.name + z.x}
           role="button"
           tabIndex={0}
           aria-label={z.name}
-          className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-[3] [&:hover>rect]:fill-[#d6f0f8]"
+          className="cursor-pointer outline-none [&:focus-visible>rect]:stroke-brand-600 [&:focus-visible>rect]:stroke-[2.5] [&:hover>rect]:fill-brand-200 [&:hover>rect]:stroke-brand-500 [&:active>rect]:fill-brand-300"
           onClick={() => onZone(z)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -131,13 +141,28 @@ function Figure({ zones, onZone }: { zones: Zone[]; onZone: (z: Zone) => void })
             }
           }}
         >
-          <rect x={z.x + 1} y={z.y + 1} width={z.w - 2} height={z.h - 2} rx={z.r ?? 6} fill={LIGHT} stroke={BRAND} strokeWidth={1.2} />
+          <rect
+            x={z.x + 1}
+            y={z.y + 1}
+            width={z.w - 2}
+            height={z.h - 2}
+            rx={z.r ?? 6}
+            fill={`url(#${id}-fill)`}
+            filter={`url(#${id}-shadow)`}
+            className="stroke-brand-300/80 transition-[fill,stroke] duration-200"
+            strokeWidth={1}
+          />
           <title>{z.name}</title>
         </g>
       ))}
     </svg>
   );
 }
+
+const panel = "material rounded-card border border-line/80 bg-surface p-5";
+/** one block of the close-up grid, and the two ways out under it */
+const tile =
+  "press material min-h-16 rounded-2xl border border-line/70 px-2 py-2 text-lg leading-snug font-medium text-brand-800 transition duration-200 hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
 
 export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
   const [view, setView] = useState<"front" | "back">("front");
@@ -153,8 +178,13 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
 
   if (picked) {
     return (
-      <div className="rounded-2xl border border-[#9ccfe0] bg-white p-4 text-lg text-ink">
-        你点的是：<span className="font-semibold" style={{ color: BRAND }}>{picked}</span>
+      <div className={cn(panel, "flex animate-pop items-center gap-3 text-lg text-ink")}>
+        <IconTile tone="good">
+          <Check />
+        </IconTile>
+        <span>
+          你点的是：<span className="font-semibold text-brand-700">{picked}</span>
+        </span>
       </div>
     );
   }
@@ -162,17 +192,16 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
   if (detail) {
     const d = detailOf(detail);
     return (
-      <div className="rounded-2xl border bg-white p-4" style={{ borderColor: LINE }}>
-        <p className="text-lg font-semibold text-ink">{d.title}：具体是哪一块？</p>
-        <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${d.cols}, minmax(0, 1fr))` }}>
+      <div className={panel}>
+        <p className="t-heading text-ink">{d.title}：具体是哪一块？</p>
+        <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: `repeat(${d.cols}, minmax(0, 1fr))` }}>
           {d.zones.map((name, i) =>
             name ? (
               <button
                 key={name}
                 type="button"
                 onClick={() => pick(name)}
-                className="min-h-16 rounded-2xl border-2 px-2 py-2 text-lg leading-snug text-ink transition hover:bg-[#d6f0f8] focus-visible:ring-4 focus-visible:ring-[#9ccfe0] focus-visible:outline-none"
-                style={{ borderColor: BRAND, background: LIGHT }}
+                className={tile}
               >
                 {name.replace(/^(右膝|左膝|右肩|左肩)/, "")}
               </button>
@@ -181,16 +210,19 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
             ),
           )}
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-5 grid grid-cols-2 gap-2 border-t border-line pt-4">
           <button
             type="button"
             onClick={() => pick(d.whole)}
-            className="min-h-12 rounded-xl border-2 bg-white px-3 text-lg font-medium"
-            style={{ borderColor: BRAND, color: BRAND }}
+            className="press min-h-13 rounded-full border-[1.5px] border-brand-600 bg-surface px-3 text-lg font-medium text-brand-800 shadow-edge transition duration-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
           >
             说不清，就是{d.whole}
           </button>
-          <button type="button" onClick={() => setDetail(null)} className="min-h-12 rounded-xl border-2 border-line bg-white px-3 text-lg text-ink">
+          <button
+            type="button"
+            onClick={() => setDetail(null)}
+            className="press min-h-13 rounded-full px-3 text-lg font-medium text-ink-2 transition duration-200 hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+          >
             返回全身图
           </button>
         </div>
@@ -199,8 +231,8 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
   }
 
   return (
-    <div className="rounded-2xl border bg-white p-4" style={{ borderColor: LINE }}>
-      <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="正面或背面">
+    <div className={panel}>
+      <div className="grid grid-cols-2 gap-1 rounded-[18px] bg-surface-3/80 p-1" role="tablist" aria-label="正面或背面">
         {(["front", "back"] as const).map((v) => (
           <button
             key={v}
@@ -208,16 +240,18 @@ export function BodyMap({ onPick }: { onPick: (area: string) => void }) {
             role="tab"
             aria-selected={view === v}
             onClick={() => setView(v)}
-            className="min-h-12 rounded-xl border-2 text-lg font-medium transition"
-            style={view === v ? { borderColor: BRAND, background: BRAND, color: "#fff" } : { borderColor: LINE, background: "#fff", color: BRAND }}
+            className={cn(
+              "min-h-12 rounded-[14px] px-4 text-lg font-medium whitespace-nowrap transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200",
+              view === v ? "bg-surface text-ink shadow-pill" : "text-ink-2 hover:text-ink",
+            )}
           >
             {v === "front" ? "正面" : "背面"}
           </button>
         ))}
       </div>
-      <p className="mt-3 text-center text-lg text-ink">点一下疼的地方</p>
-      <div className="relative mt-1">
-        <div className="pointer-events-none absolute inset-x-0 top-1/3 flex justify-between px-1 text-lg font-semibold" style={{ color: BRAND }} aria-hidden>
+      <p className="t-heading mt-5 text-center text-ink">点一下疼的地方</p>
+      <div className="relative mt-3">
+        <div className="pointer-events-none absolute inset-x-0 top-1/3 flex justify-between px-1 text-lg font-semibold text-ink-3" aria-hidden>
           <span>{view === "front" ? "右" : "左"}</span>
           <span>{view === "front" ? "左" : "右"}</span>
         </div>

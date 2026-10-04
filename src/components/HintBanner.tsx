@@ -5,10 +5,18 @@ import type { Hint } from "@/lib/types";
 import { L } from "@/lib/lang";
 import { cn } from "@/lib/utils";
 
+/*
+ * A tinted sheet with an icon tile in front, the way Health flags something worth a look.
+ * The urgent one is a solid red block in large type with a glossy edge: read before anything else.
+ */
 const STYLES = {
-  info: { cls: "border-info/20 bg-info-bg text-ink", icon: "text-info", Icon: Info },
-  warn: { cls: "border-warn/30 bg-warn-bg text-ink", icon: "text-warn", Icon: TriangleAlert },
-  urgent: { cls: "border-danger bg-danger text-white", icon: "text-white", Icon: Siren },
+  info: { cls: "border border-info/15 bg-info-bg text-ink shadow-card", tile: "bg-info/10 text-info", Icon: Info },
+  warn: { cls: "border border-warn/20 bg-warn-bg text-ink shadow-card", tile: "bg-warn/12 text-warn", Icon: TriangleAlert },
+  urgent: {
+    cls: "border border-danger/40 bg-[linear-gradient(180deg,#d4454c_0%,#b52f36_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_24px_48px_-20px_rgba(200,55,62,0.6)]",
+    tile: "bg-white/18 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]",
+    Icon: Siren,
+  },
 } as const;
 
 /**
@@ -16,27 +24,25 @@ const STYLES = {
  * it has to be read before anything else on the screen.
  */
 export function HintBanner({ hint, className, children }: { hint: Hint; className?: string; children?: React.ReactNode }) {
-  const { cls, icon, Icon } = STYLES[hint.level] ?? STYLES.info;
+  const { cls, tile, Icon } = STYLES[hint.level] ?? STYLES.info;
   const urgent = hint.level === "urgent";
   return (
     <div
       role={urgent ? "alert" : "status"}
-      className={cn("flex items-start gap-3 rounded-2xl border px-4 py-3.5", cls, urgent && "px-5 py-4 shadow-float", className)}
+      className={cn("flex items-start gap-3.5 rounded-card px-5 py-4", cls, urgent && "animate-pop px-6 py-5", className)}
     >
-      <Icon className={cn("mt-0.5 shrink-0", urgent ? "h-7 w-7" : "h-6 w-6", icon)} />
-      <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "leading-relaxed",
-            urgent ? "text-xl font-semibold" : hint.level === "warn" ? "text-[1.2rem] font-medium" : "text-base",
-          )}
-        >
-          {hint.text}
-        </p>
+      <span
+        aria-hidden="true"
+        className={cn("flex shrink-0 items-center justify-center", urgent ? "h-12 w-12 rounded-[15px] animate-breathe" : "h-10 w-10 rounded-[12px]", tile)}
+      >
+        <Icon className={urgent ? "h-6 w-6" : "h-5 w-5"} />
+      </span>
+      <div className="min-w-0 flex-1 self-center">
+        <p className={cn(urgent ? "t-heading" : hint.level === "warn" ? "t-lead font-medium" : "t-body")}>{hint.text}</p>
         {urgent && /120/.test(hint.text) && (
           <a
             href="tel:120"
-            className="mt-3 mr-2 inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 text-lg font-semibold text-danger transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60"
+            className="press mt-4 mr-2 inline-flex min-h-13 items-center gap-2.5 rounded-full bg-white px-7 text-lg font-semibold text-danger shadow-[0_1px_2px_rgba(0,0,0,0.12),0_8px_20px_-8px_rgba(0,0,0,0.35)] transition hover:bg-white/95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60"
           >
             <Phone className="h-5 w-5" />
             {L("拨打 120", "Call 120")}

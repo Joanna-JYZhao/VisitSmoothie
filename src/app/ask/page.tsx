@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, MessageCircleQuestion } from "lucide-react";
 import type { AskTurn } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { L } from "@/lib/lang";
@@ -11,7 +11,7 @@ import { HintBanner } from "@/components/HintBanner";
 import { LogoMark } from "@/components/Logo";
 import { SpeakInput } from "@/components/SpeakInput";
 import { useToast } from "@/components/Toast";
-import { BackLink, LinkButton, TextButton, TextLink, TypingDots } from "@/components/ui";
+import { BackLink, Card, IconTile, LinkButton, TextButton, TextLink, TypingDots } from "@/components/ui";
 
 const toBottom = () => window.scrollTo(0, document.documentElement.scrollHeight);
 
@@ -88,15 +88,15 @@ export default function AskPage() {
           </TextButton>
         )}
       </div>
-      <h1 className="mt-1 text-[1.65rem] leading-tight font-semibold tracking-tight text-ink">{L("问医伴", "Ask Yiban")}</h1>
-      <p className="mt-1.5 text-lg leading-relaxed text-ink-2">
+      <h1 className="t-display mt-1 animate-fade-up text-balance text-ink">{L("问医伴", "Ask Yiban")}</h1>
+      <p className="t-lead mt-3 animate-fade-up text-ink-2">
         {L(
           "关于你自己的健康，记不清的都可以问我。我按你的档案和看病记录回答，不做诊断。",
           "Ask me what you can't quite remember about your own health. I answer from your records and your doctor visits. I do not diagnose.",
         )}
       </p>
 
-      <div className="mt-5 space-y-4" aria-live="polite">
+      <div className="mt-8 space-y-6" aria-live="polite">
         {turns.map((t) => (
           <Turn key={t.id} turn={t} />
         ))}
@@ -105,9 +105,9 @@ export default function AskPage() {
             <Question text={pending.question} />
             {/* raised by rule the moment the question is sent: a warning never waits for an answer */}
             {pending.hint?.level === "urgent" && <HintBanner hint={pending.hint} />}
-            <div className="flex items-start gap-2.5">
-              <LogoMark className="mt-1 h-8 w-8" />
-              <div className="flex items-center gap-3 rounded-3xl rounded-tl-lg border border-line bg-surface px-5 py-4 text-lg text-ink-2 shadow-card">
+            <div className="flex items-start gap-3">
+              <LogoMark className="mt-1 h-9 w-9 shadow-glow" />
+              <div className="material flex animate-fade-up items-center gap-3 rounded-[22px] rounded-tl-md border border-line/80 px-5 py-4 text-lg text-ink-2">
                 <span>{L("正在查你的记录", "Checking your records")}</span>
                 <TypingDots label={L("医伴正在查记录", "Yiban is checking your records")} />
               </div>
@@ -117,15 +117,15 @@ export default function AskPage() {
       </div>
 
       {!busy && suggestions.length > 0 && (
-        <section className="mt-6" aria-label={L("可以这样问", "You can ask")}>
+        <section className="mt-8 animate-fade-up" aria-label={L("可以这样问", "You can ask")}>
           <p className="text-base font-medium text-ink-2">{turns.length ? L("还可以问", "You can also ask") : L("可以这样问", "You can ask")}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {suggestions.map((q) => (
+          <div className="mt-3 flex flex-wrap gap-2.5">
+            {suggestions.map((q, i) => (
               <button
                 key={q}
                 type="button"
                 onClick={() => send(q)}
-                className="min-h-12 rounded-full border-2 border-line-strong bg-surface px-5 text-left text-lg text-ink transition hover:border-brand-400 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                className={`press material rise-${Math.min(i + 1, 4)} min-h-12 rounded-full border border-line/80 px-5 py-2 text-left text-lg leading-snug text-ink transition duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200`}
               >
                 {q}
               </button>
@@ -136,25 +136,30 @@ export default function AskPage() {
 
       {/* Nothing on file yet: say what would make this page useful, instead of an empty screen. */}
       {!busy && !turns.length && !suggestions.length && (
-        <section className="mt-6 rounded-card border border-line bg-surface p-5 shadow-card">
-          <p className="text-lg leading-relaxed text-ink">
+        <Card tone="raised" className="mt-8 animate-pop px-6 py-10 text-center sm:px-10">
+          <IconTile size="xl" tone="brand" className="mx-auto mb-5 animate-breathe">
+            <MessageCircleQuestion />
+          </IconTile>
+          <p className="t-lead mx-auto max-w-md text-ink">
             {L(
               "现在还没有看病记录。看完医生后存一下，以后就能问我「上次医生说了什么」「这个药怎么吃」。",
               "There are no doctor visits on file yet. Save one after you see a doctor. Then you can ask me what the doctor said, or how to take a medicine.",
             )}
           </p>
-          <LinkButton href="/after" variant="secondary" className="mt-3">
-            {L("看完医生了", "I've seen the doctor")}
-          </LinkButton>
-          <p className="mt-3 text-lg leading-relaxed text-ink-2">
+          <div className="mt-6 flex justify-center">
+            <LinkButton href="/after" variant="secondary" className="press">
+              {L("看完医生了", "I've seen the doctor")}
+            </LinkButton>
+          </div>
+          <p className="t-body mx-auto mt-6 max-w-md text-ink-2">
             {L("一般的问题现在也可以问，比如某个药饭前吃还是饭后吃。", "You can ask general questions now too, such as whether a medicine is taken before or after meals.")}
           </p>
-        </section>
+        </Card>
       )}
 
       <div ref={spacer} className="h-36" aria-hidden="true" />
-      <div ref={bar} className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-line bg-canvas/95 backdrop-blur">
-        <div className="mx-auto w-full max-w-[36rem] px-4 pt-3 pb-3">
+      <div ref={bar} className="glass no-print fixed inset-x-0 bottom-0 z-20 border-t border-line/80">
+        <div className="mx-auto w-full max-w-[36rem] px-4 pt-3.5 pb-3.5">
           <SpeakInput
             placeholder={L("说一句或打一句，比如：上次医生说了什么", "Ask a question")}
             ariaLabel={L("问医伴", "Ask Yiban")}
@@ -172,7 +177,7 @@ export default function AskPage() {
 function Question({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <div className="max-w-[86%] rounded-3xl rounded-br-lg bg-brand-600 px-4 py-3 text-lg leading-relaxed whitespace-pre-wrap text-white">{text}</div>
+      <div className="max-w-[86%] animate-fade-up rounded-[22px] rounded-br-md bg-linear-to-b from-brand-600 to-brand-650 px-5 py-3 text-lg leading-relaxed whitespace-pre-wrap text-white shadow-btn">{text}</div>
     </div>
   );
 }
@@ -195,7 +200,7 @@ function recordLines(text: string): string[] {
 }
 
 const chipCls =
-  "inline-flex min-h-11 items-center gap-1.5 rounded-full bg-brand-50 px-3.5 text-left text-base font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
+  "press inline-flex min-h-11 items-center gap-1.5 rounded-full bg-brand-50 px-3.5 text-left text-base font-medium text-brand-800 transition hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
 
 function Turn({ turn: t }: { turn: AskTurn }) {
   // which of the records under the answer is open
@@ -205,12 +210,12 @@ function Turn({ turn: t }: { turn: AskTurn }) {
     <div className="space-y-3">
       <Question text={t.question} />
       {t.hint && t.hint.level === "urgent" && <HintBanner hint={t.hint} />}
-      <div className="flex items-start gap-2.5">
-        <LogoMark className="mt-1 h-8 w-8" />
-        <div className="min-w-0 flex-1 rounded-3xl rounded-tl-lg border border-line bg-surface px-4 py-3 shadow-card">
-          <p className="text-lg leading-relaxed whitespace-pre-wrap text-ink">{t.answer}</p>
+      <div className="flex items-start gap-3">
+        <LogoMark className="mt-1 h-9 w-9 shadow-glow" />
+        <div className="material min-w-0 flex-1 animate-fade-up rounded-[22px] rounded-tl-md border border-line/80 px-5 py-4">
+          <p className="t-body whitespace-pre-wrap text-ink">{t.answer}</p>
           {t.sources.length > 0 && (
-            <div className="mt-2.5 border-t border-line pt-2.5">
+            <div className="mt-3.5 border-t border-line pt-3">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-base text-ink-2">{L("我查的是", "I checked")}</span>
                 {t.sources.map((s, i) =>
@@ -231,7 +236,7 @@ function Turn({ turn: t }: { turn: AskTurn }) {
                 )}
               </div>
               {shown?.text && (
-                <div className="mt-2.5 rounded-2xl bg-surface-2 px-4 pt-3 pb-1">
+                <div className="mt-3 animate-fade-up rounded-2xl border border-line/80 bg-surface-2 px-4 pt-3.5 pb-1">
                   <ul className="space-y-1.5 text-base leading-relaxed text-ink">
                     {recordLines(shown.text).map((line, i) => (
                       <li key={i}>{line}</li>

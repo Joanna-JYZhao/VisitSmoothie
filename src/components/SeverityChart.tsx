@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChartLine, Table2 } from "lucide-react";
 import type { Entry } from "@/lib/types";
 import { cn, feelWord, fmtDate, severitySeries } from "@/lib/utils";
+import { segmentCls } from "./ui";
 
-const PAD = { l: 14, r: 16, t: 16, b: 32 };
-const H = 210;
+/* one hue on the plot, thin marks, quiet hairline guides; every label 17px */
+const PAD = { l: 14, r: 16, t: 20, b: 40 };
+const H = 224;
 
 export function SeverityChart({ entries, className }: { entries: Entry[]; className?: string }) {
   const points = useMemo(
@@ -24,6 +26,7 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
   const [width, setWidth] = useState(0);
   const [active, setActive] = useState<number | null>(null);
   const [view, setView] = useState<"chart" | "table">("chart");
+  const fillId = `sev-fill-${useId().replace(/:/g, "")}`;
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -106,9 +109,9 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
 
   return (
     <div className={className}>
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-5 flex items-center justify-between gap-3">
         <p className="text-base text-ink-2">线越高越难受</p>
-        <div className="inline-flex rounded-xl bg-surface-2 p-1" role="radiogroup" aria-label="显示方式">
+        <div className="inline-flex gap-1 rounded-[18px] bg-surface-3/80 p-1" role="radiogroup" aria-label="显示方式">
           {(
             [
               { v: "chart", label: "图", Icon: ChartLine },
@@ -121,10 +124,7 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
               role="radio"
               aria-checked={view === v}
               onClick={() => setView(v)}
-              className={cn(
-                "inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3.5 text-base font-medium transition",
-                view === v ? "bg-surface text-ink shadow-card" : "text-ink-2 hover:text-ink",
-              )}
+              className={cn(segmentCls(view === v), "inline-flex items-center gap-1.5")}
             >
               <Icon className="h-5 w-5" />
               {label}
@@ -134,23 +134,23 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
       </div>
 
       {!points.length ? (
-        <p className="py-6 text-lg text-ink-2">还没有可以画成线的记录。</p>
+        <p className="t-body rounded-2xl bg-surface-2/70 px-5 py-8 text-center text-ink-2">还没有可以画成线的记录。</p>
       ) : view === "table" ? (
         <div className="overflow-x-auto">
           <table className="w-full text-base">
             <thead>
-              <tr className="border-b border-line text-left text-ink-2">
-                <th className="py-2 pr-3 font-medium">时间</th>
-                <th className="py-2 pr-3 font-medium">多难受</th>
-                <th className="py-2 font-medium">记录</th>
+              <tr className="border-b border-line-strong text-left text-ink-2">
+                <th className="pt-1 pb-3 pr-4 font-medium">时间</th>
+                <th className="pt-1 pb-3 pr-4 font-medium">多难受</th>
+                <th className="pt-1 pb-3 font-medium">记录</th>
               </tr>
             </thead>
             <tbody>
               {[...points].reverse().map((p) => (
-                <tr key={p.id} className="border-b border-line/70 align-top last:border-0">
-                  <td className="py-2.5 pr-3 whitespace-nowrap text-ink-2 tabular-nums">{fmtDate(p.at, { time: true })}</td>
-                  <td className="py-2.5 pr-3 font-medium whitespace-nowrap text-ink">{feelWord(p.v)}</td>
-                  <td className="py-2.5 text-ink">{p.note}</td>
+                <tr key={p.id} className="border-b border-line align-top last:border-0">
+                  <td className="py-3.5 pr-4 whitespace-nowrap text-ink-2 tabular">{fmtDate(p.at, { time: true })}</td>
+                  <td className="py-3.5 pr-4 font-semibold whitespace-nowrap text-ink">{feelWord(p.v)}</td>
+                  <td className="py-3.5 leading-relaxed text-ink">{p.note}</td>
                 </tr>
               ))}
             </tbody>
@@ -159,7 +159,7 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
       ) : (
         <div
           ref={wrapRef}
-          className="relative outline-none focus-visible:ring-4 focus-visible:ring-brand-100 rounded-lg"
+          className="relative rounded-2xl outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
           tabIndex={0}
           onKeyDown={onKey}
           onBlur={() => setActive(null)}
@@ -167,15 +167,39 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
         >
           {width > 0 && (
             <svg width={width} height={H} role="img" aria-label={`共 ${points.length} 条记录，最近一次：${feelWord(last.v)}`}>
+              <defs>
+                <linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="var(--color-brand-600)" stopOpacity={0.14} />
+                  <stop offset="100%" stopColor="var(--color-brand-600)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               {[0, 5, 10].map((v) => (
-                <line key={v} x1={PAD.l} x2={width - PAD.r} y1={y(v)} y2={y(v)} stroke="var(--color-line)" strokeWidth={1} />
+                <line
+                  key={v}
+                  x1={PAD.l}
+                  x2={width - PAD.r}
+                  y1={y(v)}
+                  y2={y(v)}
+                  stroke={v === 0 ? "var(--color-line-strong)" : "var(--color-line)"}
+                  strokeWidth={1}
+                  strokeDasharray={v === 0 ? undefined : "3 4"}
+                  shapeRendering="crispEdges"
+                />
               ))}
               {xLabels.map(({ i, anchor }) => (
-                <text key={i} x={x(points[i].t)} y={H - 8} textAnchor={anchor} fontSize={14} fill="var(--color-ink-2)">
+                <text
+                  key={i}
+                  x={x(points[i].t)}
+                  y={H - 10}
+                  textAnchor={anchor}
+                  fontSize={17}
+                  fill="var(--color-ink-2)"
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
                   {fmtDate(points[i].at, { time: true })}
                 </text>
               ))}
-              {areaPath && <path d={areaPath} fill="var(--color-brand-600)" opacity={0.1} />}
+              {areaPath && <path d={areaPath} fill={`url(#${fillId})`} />}
               {points.length > 1 && (
                 <path
                   d={linePath}
@@ -187,19 +211,25 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
                 />
               )}
               {act && (
-                <line x1={x(act.t)} x2={x(act.t)} y1={PAD.t} y2={H - PAD.b} stroke="var(--color-ink-3)" strokeWidth={1} />
+                <line x1={x(act.t)} x2={x(act.t)} y1={PAD.t} y2={H - PAD.b} stroke="var(--color-line-strong)" strokeWidth={1} strokeDasharray="2 3" />
               )}
-              {points.map((p, i) => (
-                <circle
-                  key={p.id}
-                  cx={x(p.t)}
-                  cy={y(p.v)}
-                  r={active === i ? 5.5 : 4}
-                  fill="var(--color-brand-600)"
-                  stroke="var(--color-surface)"
-                  strokeWidth={2}
-                />
-              ))}
+              {/* markers: 8px, white-filled, a halo on the one under the finger */}
+              {points.map((p, i) => {
+                const on = active === i;
+                return (
+                  <g key={p.id}>
+                    {on && <circle cx={x(p.t)} cy={y(p.v)} r={11} fill="var(--color-brand-600)" fillOpacity={0.14} />}
+                    <circle
+                      cx={x(p.t)}
+                      cy={y(p.v)}
+                      r={on ? 5.5 : 4}
+                      fill={on ? "var(--color-brand-600)" : "var(--color-surface)"}
+                      stroke="var(--color-brand-600)"
+                      strokeWidth={2}
+                    />
+                  </g>
+                );
+              })}
               <rect
                 x={PAD.l}
                 y={PAD.t}
@@ -213,15 +243,15 @@ export function SeverityChart({ entries, className }: { entries: Entry[]; classN
           )}
           {act && (
             <div
-              className="pointer-events-none absolute z-10 w-52 rounded-xl border border-line bg-surface p-3 shadow-float"
+              className="glass pointer-events-none absolute z-10 w-60 animate-pop rounded-2xl border border-white/70 px-4 py-3 shadow-float"
               style={{
-                left: Math.min(Math.max(x(act.t) - 110, 0), Math.max(width - 221, 0)),
-                top: Math.max(y(act.v) - 100, 0),
+                left: Math.min(Math.max(x(act.t) - 128, 0), Math.max(width - 255, 0)),
+                top: Math.max(y(act.v) - 120, 0),
               }}
             >
               <div className="text-lg font-semibold text-ink">{feelWord(act.v)}</div>
-              <div className="mt-0.5 text-[15px] text-ink-2">{fmtDate(act.at, { time: true })}</div>
-              <div className="mt-1 line-clamp-3 text-[15px] text-ink">{act.note}</div>
+              <div className="mt-0.5 text-base text-ink-2 tabular">{fmtDate(act.at, { time: true })}</div>
+              <div className="mt-1 line-clamp-3 text-base leading-snug text-ink">{act.note}</div>
             </div>
           )}
         </div>

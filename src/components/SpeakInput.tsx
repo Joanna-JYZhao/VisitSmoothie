@@ -46,7 +46,7 @@ export function SpeakInput({
   return (
     <div
       className={cn(
-        "flex items-end gap-2 rounded-card border-2 border-line-strong bg-surface p-2 shadow-card transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-100",
+        "material flex items-end gap-2 rounded-[30px] border border-line/80 bg-surface p-2 transition duration-200 focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100",
         className,
       )}
     >
@@ -65,7 +65,7 @@ export function SpeakInput({
         }}
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
-        className="min-h-12 flex-1 resize-none bg-transparent px-2.5 py-2.5 text-lg leading-relaxed text-ink outline-none placeholder:text-ink-3"
+        className="min-h-12 flex-1 resize-none bg-transparent px-3 py-2.5 text-lg leading-relaxed text-ink outline-none placeholder:text-ink-3"
       />
       <MicButton onText={(t) => setText((x) => (x ? `${x}${t}` : t))} disabled={disabled} />
       <button
@@ -73,9 +73,9 @@ export function SpeakInput({
         onClick={submit}
         disabled={disabled || !text.trim()}
         aria-label={L("发送", "Send")}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-b from-brand-600 to-brand-650 text-white shadow-btn transition hover:from-brand-700 hover:to-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:scale-[0.96] disabled:bg-line-strong disabled:bg-none disabled:shadow-none"
+        className="press flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-linear-to-b from-brand-600 to-brand-650 text-white shadow-btn transition duration-200 hover:from-brand-650 hover:to-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 disabled:bg-line-strong disabled:bg-none disabled:shadow-none"
       >
-        <ArrowUp className="h-6 w-6" />
+        <ArrowUp className="h-6 w-6" strokeWidth={2.4} />
       </button>
     </div>
   );

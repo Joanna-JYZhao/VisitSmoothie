@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { AlertTriangle, CalendarDays, Check, ClipboardCheck, Pill, Sparkles } from "lucide-react";
+import { IconTile, type IconTone } from "@/components/ui";
 import { storeActions, useStore } from "@/lib/store";
 import { homeTodos, type HomeTodo } from "@/lib/reminders";
 import { cn, fmtISODate } from "@/lib/utils";
@@ -10,6 +11,13 @@ import { cn, fmtISODate } from "@/lib/utils";
 
 const DONE_KEY = "yiban.doneToday";
 const KIND: Record<HomeTodo["kind"], string> = { medicine: "吃药", care: "要做的", followup: "下次复诊", caution: "注意" };
+/* each kind has its own icon and tint, so a row is told at a glance, the way iOS Health does it */
+const KIND_ICON: Record<HomeTodo["kind"], { Icon: typeof Pill; tone: IconTone }> = {
+  medicine: { Icon: Pill, tone: "brand" },
+  care: { Icon: ClipboardCheck, tone: "info" },
+  followup: { Icon: CalendarDays, tone: "good" },
+  caution: { Icon: AlertTriangle, tone: "warn" },
+};
 
 /** What was ticked today. Kept in this browser only and forgotten the next day. */
 function readDone(today: string): string[] {
@@ -42,33 +50,45 @@ export function TodoList({ now }: { now: number }) {
   };
 
   if (!todos.length) {
-    return <p className="mt-2 text-lg text-ink">看完医生，在 post 里录音或上传，吃药和复诊会自动放到这里。</p>;
+    return (
+      <div className="mt-5 flex animate-fade-up items-center gap-4 rounded-[22px] border border-line/80 bg-surface-2/50 px-5 py-5">
+        <IconTile tone="brand" size="lg" className="animate-breathe">
+          <Sparkles />
+        </IconTile>
+        <p className="t-body text-ink">看完医生，在 post 里录音或上传，吃药和复诊会自动放到这里。</p>
+      </div>
+    );
   }
   return (
-    <ul className="mt-3 divide-y divide-line">
+    <ul className="mt-5 overflow-hidden rounded-[22px] border border-line/80 bg-surface-2/50 divide-y divide-line">
       {todos.map((t) => {
         const ticked = keys.includes(t.key);
         const r = t.reminder;
+        const k = KIND_ICON[t.kind];
         return (
-          <li key={t.key} className="flex items-center gap-3 py-2">
+          <li key={t.key} className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-3.5 transition-colors duration-300 sm:px-4", !ticked && "bg-surface")}>
             <button
               type="button"
               role="checkbox"
               aria-checked={ticked}
               aria-label={`今天做了：${t.title}`}
               onClick={() => tick(t.key)}
-              className="flex min-h-12 min-w-12 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+              className="press flex min-h-12 min-w-12 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
             >
-              <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg border-2", ticked ? "border-brand-600 bg-brand-600 text-white" : "border-line-strong bg-surface")}>
-                {ticked && <Check className="h-5 w-5" />}
+              <span className={cn("flex h-8 w-8 items-center justify-center rounded-full border-[1.5px] transition-all duration-300", ticked ? "tile-brand scale-105 border-transparent text-white" : "border-line-strong bg-surface")}>
+                {ticked && <Check className="h-5 w-5 animate-pop" strokeWidth={2.5} />}
               </span>
             </button>
-            <div className={cn("min-w-0 flex-1", ticked && "opacity-60")}>
-              <p className={cn("text-lg leading-snug text-ink", ticked && "line-through")}>
-                <span className="mr-2 font-semibold text-brand-800">{KIND[t.kind]}</span>
+            <IconTile tone={ticked ? "neutral" : k.tone} size="md" className="transition duration-300 max-sm:hidden">
+              <k.Icon />
+            </IconTile>
+            {/* on a phone the text gets the whole width; the switch wraps under it */}
+            <div className="min-w-0 flex-1 transition duration-300 max-sm:basis-[calc(100%-3.75rem)]">
+              <p className={cn("text-lg leading-snug font-medium", ticked ? "text-ink-3 line-through decoration-ink-3" : "text-ink")}>
+                <span className={cn("mr-2 font-semibold", ticked ? "text-ink-3" : "text-brand-700")}>{KIND[t.kind]}</span>
                 {t.title}
               </p>
-              {t.detail && <p className="text-lg leading-snug text-ink">{t.detail}</p>}
+              {t.detail && <p className={cn("t-body mt-0.5", ticked ? "text-ink-3" : "text-ink-2")}>{t.detail}</p>}
             </div>
             {r && (
               <button
@@ -77,11 +97,11 @@ export function TodoList({ now }: { now: number }) {
                 aria-checked={r.enabled}
                 aria-label={`提醒：${t.title}`}
                 onClick={() => storeActions.updateReminder(r.id, (x) => ({ ...x, enabled: !x.enabled }))}
-                className="flex min-h-12 shrink-0 items-center gap-2 rounded-xl px-1 text-base font-medium text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
+                className="press flex min-h-12 shrink-0 items-center gap-2 rounded-xl px-1 text-base font-medium text-ink-2 max-sm:ml-[3.75rem] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
                 {r.enabled ? "提醒开" : "提醒关"}
-                <span className={cn("relative h-8 w-14 rounded-full transition-colors", r.enabled ? "bg-brand-600" : "bg-line-strong")}>
-                  <span className={cn("absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all", r.enabled ? "left-7" : "left-1")} />
+                <span className={cn("relative h-8 w-14 rounded-full transition-colors duration-300", r.enabled ? "bg-brand-600" : "bg-line-strong")}>
+                  <span className={cn("absolute top-0.5 h-7 w-7 rounded-full bg-white shadow-[0_2px_6px_rgba(20,38,47,0.25),0_0_0_0.5px_rgba(20,38,47,0.06)] transition-all duration-300", r.enabled ? "left-[26px]" : "left-0.5")} />
                 </span>
               </button>
             )}

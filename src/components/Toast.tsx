@@ -39,20 +39,26 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastCtx.Provider value={value}>
       {children}
-      {/* Under the top bar, not at the bottom: the bottom of the screen belongs to the bar you speak and type into. */}
+      {/* Under the top bar, not at the bottom: the bottom of the screen belongs to the bar you speak and type into.
+          A frosted capsule that drops in, the way a system banner does. */}
       <div className="no-print pointer-events-none fixed inset-x-0 top-[4.25rem] z-[60] flex flex-col items-center gap-2 px-4">
         {items.map((i) => (
           <div
             key={i.id}
             role="status"
-            className={cn(
-              "pointer-events-auto flex max-w-full animate-fade-up items-center gap-2.5 rounded-2xl py-1.5 pr-2 pl-4 text-base font-medium shadow-float",
-              i.tone === "good" ? "bg-good text-white" : i.tone === "danger" ? "bg-danger text-white" : "bg-ink text-white",
-            )}
+            className="glass pointer-events-auto flex max-w-full animate-pop items-center gap-3 rounded-full border border-white/70 py-1.5 pr-2 pl-2 text-base font-medium text-ink shadow-float"
           >
-            {i.tone === "good" && <CircleCheck className="h-5 w-5 shrink-0" aria-hidden="true" />}
-            {i.tone === "danger" && <CircleAlert className="h-5 w-5 shrink-0" aria-hidden="true" />}
-            <span className="min-w-0 py-2 pr-2">{i.msg}</span>
+            {i.tone === "good" && (
+              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-good-bg text-good">
+                <CircleCheck className="h-5 w-5" />
+              </span>
+            )}
+            {i.tone === "danger" && (
+              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-danger-bg text-danger">
+                <CircleAlert className="h-5 w-5" />
+              </span>
+            )}
+            <span className={cn("min-w-0 py-2 pr-2", i.tone === "neutral" && "pl-2", i.tone === "danger" && "text-danger")}>{i.msg}</span>
             {i.action && (
               <button
                 type="button"
@@ -60,7 +66,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   i.action?.onClick();
                   dismiss(i.id);
                 }}
-                className="min-h-11 shrink-0 rounded-xl bg-white/20 px-4 font-semibold transition hover:bg-white/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60"
+                className="press min-h-11 shrink-0 rounded-full bg-linear-to-b from-brand-600 to-brand-650 px-5 font-semibold text-white shadow-btn transition hover:from-brand-650 hover:to-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
                 {i.action.label}
               </button>

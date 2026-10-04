@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   // the colour at the very top of every page, so the browser's own bar blends into it
-  themeColor: "#e6f2f8",
+  themeColor: "#edf4f7",
   width: "device-width",
   initialScale: 1,
 };
@@ -24,9 +24,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full">
         <StoreProvider>
           <ToastProvider>
+            <div className="px-3 pt-2 md:contents">
+              <DevSwitch />
+            </div>
             <AppShell>{children}</AppShell>
             <CheckInScheduler />
-            <DevSwitch />
           </ToastProvider>
         </StoreProvider>
       </body>

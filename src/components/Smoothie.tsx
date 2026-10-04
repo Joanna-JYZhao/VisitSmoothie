@@ -29,3 +29,12 @@ export function SmoothieFooter() {
     </footer>
   );
 }
+
+/** The wordmark's mark on its own, as an app icon above the login card. */
+export function SmoothieAppMark() {
+  return (
+    <span className="login-mark" aria-hidden="true">
+      v<span>●</span>
+    </span>
+  );
+}

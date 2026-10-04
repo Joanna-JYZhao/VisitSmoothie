@@ -10,11 +10,12 @@ export function LogoMark({ className }: { className?: string }) {
     <svg viewBox="0 0 40 40" className={cn("shrink-0", !sized && "h-9 w-9", className)} aria-hidden="true">
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="40" y2="40">
-          <stop stopColor="#3FA5CD" />
-          <stop offset="1" stopColor="#00617F" />
+          <stop stopColor="#4BA2BF" />
+          <stop offset="1" stopColor="#105C76" />
         </linearGradient>
       </defs>
       <rect width="40" height="40" rx="11" fill={`url(#${id})`} />
+      <rect x="0.5" y="0.5" width="39" height="39" rx="10.5" fill="none" stroke="rgba(255,255,255,0.28)" />
       <path
         d="M8 21h6l3-7 5 13 3-8 2 2h5"
         fill="none"

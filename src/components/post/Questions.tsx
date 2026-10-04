@@ -6,8 +6,10 @@ import type { AfterResult } from "@/lib/types";
 import { getState } from "@/lib/store";
 import { explainParts } from "@/lib/reminders";
 import { ask } from "@/lib/ask";
+import { Check, MessageCircleQuestion, Sparkles } from "lucide-react";
 import { HintBanner } from "@/components/HintBanner";
-import { Button, Card, Spinner, Textarea } from "@/components/ui";
+import { Button, Card, IconTile, Spinner, Textarea } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 /** The extra choice besides the parts of the orders: the visit as a whole. */
 export const VISIT_PART = "就诊内容";
@@ -70,76 +72,109 @@ export function Questions({ result }: { result: AfterResult }) {
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="p-5">
-        <p className="text-xl font-semibold text-ink">对这次就诊还有没有问题？</p>
+    <div className="space-y-6">
+      <Card className="animate-fade-up p-6">
+        <div className="flex items-center gap-4">
+          <IconTile tone="brand" size="lg">
+            <MessageCircleQuestion />
+          </IconTile>
+          <p className="t-heading text-ink">对这次就诊还有没有问题？</p>
+        </div>
         {phase === "ask" && (
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button variant="secondary" size="lg" onClick={() => router.push("/")}>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <Button variant="secondary" size="lg" className="press" onClick={() => router.push("/")}>
               没有了
             </Button>
-            <Button size="lg" onClick={() => setPhase("pick")}>
+            <Button size="lg" className="press" onClick={() => setPhase("pick")}>
               有
             </Button>
           </div>
         )}
         {phase === "pick" && (
           <>
-            <p className="mt-1 text-lg text-ink-2">勾选想问的，可以选好几项。</p>
-            <div className="mt-3 space-y-2">
+            <p className="t-body mt-3 text-ink-2">勾选想问的，可以选好几项。</p>
+            {/* the choices as one hairline list, a check circle at the end of each row the way iOS does it */}
+            <div className="mt-5 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface shadow-edge">
               {choices.map((c) => {
                 const on = picked.includes(c);
                 return (
                   <label
                     key={c}
-                    className={`flex min-h-13 cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-2 text-lg ${on ? "border-brand-500 bg-brand-50 text-brand-800" : "border-line-strong text-ink"}`}
+                    className={cn(
+                      "press flex min-h-16 cursor-pointer items-center gap-4 px-5 py-3 text-lg leading-snug transition-colors duration-200 select-none has-[:focus-visible]:bg-brand-50 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-brand-200",
+                      on ? "bg-brand-50 font-medium text-brand-800" : "text-ink hover:bg-surface-2/70",
+                    )}
                   >
                     <input
                       type="checkbox"
-                      className="h-6 w-6 shrink-0 accent-brand-600"
+                      className="sr-only"
                       checked={on}
                       onChange={() => setPicked((p) => (on ? p.filter((x) => x !== c) : [...p, c]))}
                     />
-                    {c}
+                    <span className="min-w-0 flex-1">{c}</span>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all duration-200",
+                        on ? "tile-brand text-white" : "border-[1.5px] border-line-strong bg-surface",
+                      )}
+                    >
+                      {on && <Check className="h-4.5 w-4.5" strokeWidth={3} />}
+                    </span>
                   </label>
                 );
               })}
             </div>
-            <Button size="lg" className="mt-4 w-full" disabled={!picked.length} onClick={() => void answerPicked()}>
+            <Button size="lg" className="press mt-6 w-full" disabled={!picked.length} onClick={() => void answerPicked()}>
               问这些
             </Button>
           </>
         )}
-        {phase !== "ask" && phase !== "pick" && picked.length > 0 && <p className="mt-1 text-lg text-ink-2">你问的：{picked.join("、")}</p>}
+        {phase !== "ask" && phase !== "pick" && picked.length > 0 && <p className="t-body mt-3 text-ink-2">你问的：{picked.join("、")}</p>}
       </Card>
 
       {answers.map((x, i) => (
-        <Card key={i} className="p-5">
-          <p className="text-lg font-semibold text-brand-800">{x.q}</p>
-          {x.hint && (
-            <div className="mt-2">
-              <HintBanner hint={x.hint} />
-            </div>
-          )}
-          <p className="mt-2 text-lg leading-relaxed whitespace-pre-line text-ink">{x.a}</p>
+        <Card key={i} className="animate-rise overflow-hidden">
+          <div className="flex items-start gap-3.5 border-b border-line bg-brand-50/50 px-6 py-4">
+            <IconTile tone="brand" size="sm" className="mt-0.5">
+              <MessageCircleQuestion className="h-5 w-5" />
+            </IconTile>
+            <p className="min-w-0 flex-1 pt-1 text-lg leading-snug font-semibold text-brand-800">{x.q}</p>
+          </div>
+          <div className="px-6 py-5">
+            {x.hint && (
+              <div className="mb-4">
+                <HintBanner hint={x.hint} />
+              </div>
+            )}
+            <p className="t-body whitespace-pre-line text-ink">{x.a}</p>
+          </div>
         </Card>
       ))}
 
       {phase === "answering" && (
-        <p role="status" className="flex items-center gap-2 text-lg text-ink-2">
-          <Spinner className="h-5 w-5" /> 正在回答第 {Math.min(answers.length + 1, picked.length)} 项，共 {picked.length} 项
+        <p role="status" className="flex animate-fade-up items-center gap-3.5 rounded-card border border-line/80 bg-surface px-5 py-4 text-lg text-ink-2 shadow-card">
+          <Spinner className="h-6 w-6" />
+          <span className="tabular-nums">
+            正在回答第 {Math.min(answers.length + 1, picked.length)} 项，共 {picked.length} 项
+          </span>
         </p>
       )}
 
       {phase === "chat" && (
-        <Card className="p-5">
-          <p className="mb-2 text-lg font-semibold text-ink">还有别的问题？直接问</p>
+        <Card className="animate-fade-up p-6">
+          <div className="mb-4 flex items-center gap-3.5">
+            <IconTile tone="brand" size="md">
+              <Sparkles className="h-5 w-5" />
+            </IconTile>
+            <p className="t-heading text-ink">还有别的问题？直接问</p>
+          </div>
           <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="比如：这个药饭前吃还是饭后吃？" className="min-h-24" aria-label="还有别的问题" />
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Button variant="secondary" size="lg" onClick={() => router.push("/")}>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Button variant="secondary" size="lg" className="press" onClick={() => router.push("/")}>
               回主页
             </Button>
-            <Button size="lg" disabled={!text.trim() || busy} onClick={() => void send()}>
+            <Button size="lg" className="press" disabled={!text.trim() || busy} onClick={() => void send()}>
               {busy ? "正在想…" : "问"}
             </Button>
           </div>

@@ -1,17 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { Camera, MessageCircle } from "lucide-react";
+import { AlertCircle, AlertTriangle, ArrowRight, Camera, ChevronRight, ListChecks, MessageCircle } from "lucide-react";
 import { useNow, useStore } from "@/lib/store";
 import { checkInQuestion, currentHint, isCheckInDue } from "@/lib/checkin";
 import { TodoList } from "@/components/home/TodoList";
 import { AskBox } from "@/components/home/AskBox";
+import { IconTile, focusRing } from "@/components/ui";
 import { unsavedCards } from "@/lib/drafts";
+import { cn } from "@/lib/utils";
 
-/**
- * VisitSmoothie, after the wireframe the person drew: two big boxes (pre, post) and a wide
- * "to do & tips" area. Profile and report sit in the bar on the right (see AppShell).
+/*
+ * One door: a sheet of white lit from the corner, an app-icon tile resting on it, the word in display
+ * type, one sentence. It lifts to the hand and gives under the finger; an arrow in the corner says it opens.
  */
+const doorCls =
+  "lift press group relative flex min-h-64 flex-col items-center justify-center overflow-hidden rounded-[32px] border border-line/70 px-8 py-12 text-center material-raised sm:min-h-80 hover:border-brand-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200";
+const iconCls = "relative flex h-24 w-24 items-center justify-center rounded-[28px] text-white transition-transform duration-500 ease-[cubic-bezier(0.34,1.3,0.64,1)] group-hover:scale-105 group-hover:-translate-y-1";
+
+const ITEM_TONE = {
+  red: { row: "bg-danger-bg", tile: "solidDanger" as const, Icon: AlertTriangle },
+  warn: { row: "bg-warn-bg", tile: "warn" as const, Icon: AlertCircle },
+  plain: { row: "bg-surface-2", tile: "brand" as const, Icon: MessageCircle },
+};
+
 export default function HomePage() {
   const { state } = useStore();
   const now = useNow(60_000);
@@ -38,34 +50,67 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
-        <Link href="/pre" className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-surface p-6 text-center hover:bg-brand-50">
-          <MessageCircle className="h-10 w-10 text-brand-700" />
-          <span className="text-3xl font-semibold text-ink">pre</span>
-          <span className="text-base text-ink-2">看医生之前：哪里不舒服，跟我说</span>
+    <div className="space-y-6 sm:space-y-8">
+      {/* the two doors: big, calm, and the first things to move when the page opens */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+        <Link href="/pre" className={cn(doorCls, "rise-1")}>
+          {/* the stage: a pool of light behind the tile, as on the welcome screen */}
+          <span aria-hidden="true" className="pool -top-24 left-1/2 h-72 w-72 -translate-x-1/2" />
+          <span className={cn(iconCls, "tile-brand")}>
+            <MessageCircle className="h-12 w-12" strokeWidth={2} />
+          </span>
+          <span className="relative mt-7 text-[3.25rem] leading-none font-bold tracking-[-0.045em] text-ink sm:text-[3.75rem]">pre</span>
+          <span className="t-lead relative mt-3 text-ink-2">看医生之前：哪里不舒服，跟我说</span>
+          <ArrowRight className="absolute right-6 bottom-6 hidden h-6 w-6 text-brand-400 transition-transform duration-300 group-hover:translate-x-1 sm:block" aria-hidden="true" />
         </Link>
-        <Link href="/post" className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-brand-600 bg-surface p-6 text-center hover:bg-brand-50">
-          <Camera className="h-10 w-10 text-brand-700" />
-          <span className="text-3xl font-semibold text-ink">post</span>
-          <span className="text-base text-ink-2">看完医生：把医嘱拍给我</span>
+        <Link href="/post" className={cn(doorCls, "rise-2")}>
+          {/* the stage: a pool of light behind the tile, as on the welcome screen */}
+          <span aria-hidden="true" className="pool -top-24 left-1/2 h-72 w-72 -translate-x-1/2" />
+          <span className={cn(iconCls, "tile-ink")}>
+            <Camera className="h-12 w-12" strokeWidth={2} />
+          </span>
+          <span className="relative mt-7 text-[3.25rem] leading-none font-bold tracking-[-0.045em] text-ink sm:text-[3.75rem]">post</span>
+          <span className="t-lead relative mt-3 text-ink-2">看完医生：把医嘱拍给我</span>
+          <ArrowRight className="absolute right-6 bottom-6 hidden h-6 w-6 text-brand-400 transition-transform duration-300 group-hover:translate-x-1 sm:block" aria-hidden="true" />
         </Link>
       </div>
 
-      <section className="min-h-48 rounded-2xl border-2 border-brand-600 bg-surface p-6">
-        <h2 className="text-2xl font-semibold text-ink">to do &amp; tips</h2>
+      <section className="rise-3 material-raised min-h-48 rounded-[32px] border border-line/70 p-5 sm:p-8">
+        <div className="flex items-center gap-3.5">
+          <IconTile tone="solid" size="lg">
+            <ListChecks />
+          </IconTile>
+          <h2 className="t-title text-ink">to do &amp; tips</h2>
+        </div>
         <TodoList now={now} />
         {items.length > 0 && (
-          <ul className="mt-4 space-y-2">
-            {items.map((it) => {
-              const cls =
-                it.tone === "red" ? "bg-danger-bg text-danger" : it.tone === "warn" ? "bg-warn-bg text-ink" : "bg-surface-2 text-ink";
-              const body = <span className={`block rounded-xl px-4 py-3 text-lg leading-relaxed ${cls}`}>{it.text}</span>;
-              return <li key={it.key}>{it.href ? <Link href={it.href} className="block hover:opacity-80">{body}</Link> : body}</li>;
+          <ul className="mt-5 space-y-2.5">
+            {items.map((it, i) => {
+              const t = ITEM_TONE[it.tone ?? "plain"];
+              const body = (
+                <span className={cn("flex items-start gap-3.5 rounded-2xl px-4 py-3.5", t.row)}>
+                  <IconTile tone={t.tile} size="md" className="mt-0.5">
+                    <t.Icon />
+                  </IconTile>
+                  <span className={cn("t-body min-w-0 flex-1 pt-1.5", it.tone === "red" ? "font-semibold text-danger" : "text-ink")}>{it.text}</span>
+                  {it.href && <ChevronRight className="mt-2.5 h-5 w-5 shrink-0 text-ink-3" aria-hidden="true" />}
+                </span>
+              );
+              return (
+                <li key={it.key} className="animate-fade-up" style={{ animationDelay: `${i * 60}ms` }}>
+                  {it.href ? (
+                    <Link href={it.href} className={cn("lift press block rounded-2xl", focusRing)}>
+                      {body}
+                    </Link>
+                  ) : (
+                    body
+                  )}
+                </li>
+              );
             })}
           </ul>
         )}
-        <div className="mt-5 border-t border-line pt-5">
+        <div className="mt-7 border-t border-line pt-7">
           <AskBox now={now} />
         </div>
       </section>

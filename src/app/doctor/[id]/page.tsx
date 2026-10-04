@@ -24,9 +24,10 @@ import {
   SheetList,
   SheetPairs,
   SheetSection,
+  SheetSkeleton,
 } from "@/components/DoctorSheet";
-import { BackButton, Button, Card, LinkButton, Notice } from "@/components/ui";
-import { FileDown } from "lucide-react";
+import { BackButton, Button, Card, IconTile, LinkButton, Notice, Skeleton } from "@/components/ui";
+import { FileDown, FileSearch, MessageSquarePlus } from "lucide-react";
 import { L } from "@/lib/lang";
 
 export default function DoctorEpisodePage() {
@@ -35,7 +36,11 @@ export default function DoctorEpisodePage() {
   const episode = state.episodes.find((e) => e.id === id);
   if (!episode) {
     return (
-      <Notice title={L("找不到这条记录", "This record cannot be found")} action={<LinkButton href="/">{L("回到今天", "Back to today")}</LinkButton>}>
+      <Notice
+        icon={<FileSearch className="h-6 w-6" />}
+        title={L("找不到这条记录", "This record cannot be found")}
+        action={<LinkButton href="/">{L("回到今天", "Back to today")}</LinkButton>}
+      >
         {L("它可能已经被删除了。", "It may have been deleted.")}
       </Notice>
     );
@@ -62,30 +67,31 @@ function EpisodeSheet({ episode: e }: { episode: Episode }) {
   const view: DoctorSummary | null =
     !stale && e.summary ? e.summary : instant ? { ...instant, generatedAt: nowISO(), mode: "fallback" } : null;
   const profile = state.profile;
-  if (!profile || !view) return null;
+  if (!profile || !view) return <SheetSkeleton />;
 
   const chronic = state.settings.longTerm && hasYearOfData(state);
   // a danger signal in what was said is for the patient, now; it is not part of the sheet
   const alarm = currentHint(e, now);
+  const working = busy || stale || reading;
 
   return (
-    <div className="space-y-4">
-      <div className="no-print">
+    <div className="space-y-5">
+      <div className="no-print -mb-2">
         <BackButton href={e.status === "active" ? "/" : `/episodes/${e.id}/detail`} />
       </div>
       {alarm?.level === "urgent" && <HintBanner hint={alarm} className="no-print" />}
       <DoctorTabs current="episode" episodeHref={`/doctor/${e.id}`} yearHref={chronic ? "/doctor/year" : null} />
 
-      <GlanceSheet profile={profile} subject={e.title} lines={view.glance} generatedAt={view.generatedAt} busy={busy || stale || reading} />
+      <GlanceSheet profile={profile} subject={e.title} lines={view.glance} generatedAt={view.generatedAt} busy={working} />
 
       {/* 导出 PDF: the browser's own print window saves the sheet as a PDF */}
-      <div className="no-print flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Button size="lg" onClick={() => window.print()}>
+      <Card className="no-print flex animate-fade-up flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 sm:px-5">
+        <Button size="lg" className="press w-full sm:w-auto" onClick={() => window.print()}>
           <FileDown className="h-6 w-6" />
           {L("导出 PDF", "Export PDF")}
         </Button>
-        <span className="text-base text-ink">{L("在打印窗口里选「存储为 PDF」", "In the print window, choose “Save as PDF”")}</span>
-      </div>
+        <span className="text-center text-base leading-snug text-ink-2 sm:text-left">{L("在打印窗口里选「存储为 PDF」", "In the print window, choose “Save as PDF”")}</span>
+      </Card>
 
       {e.status === "active" && <AddMore episode={e} />}
 
@@ -116,10 +122,30 @@ function EpisodeSheet({ episode: e }: { episode: Episode }) {
       </SheetDetails>
 
       {/* shown once the considered version is in, so the list does not change under the reader */}
-      {!(busy || stale || reading) && <QuestionsCard questions={view.questionsForDoctor} />}
+      {working ? <QuestionsSkeleton /> : <QuestionsCard questions={view.questionsForDoctor} />}
       <SheetActions text={() => summaryToText(view, profile, e)} onRefresh={() => void refreshSummary(e.id)} busy={busy} />
       <SheetFootnote />
     </div>
+  );
+}
+
+/** The space the questions will take, shimmering, so the page does not jump when they arrive. */
+function QuestionsSkeleton() {
+  return (
+    <Card className="no-print px-5 pt-6 pb-2 sm:px-6" aria-hidden="true">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-10 w-10 rounded-[12px]" />
+        <Skeleton className="h-6 w-44" />
+      </div>
+      <div className="mt-3 divide-y divide-line">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex gap-4 py-4">
+            <Skeleton className="h-5 w-6" />
+            <Skeleton className={i === 1 ? "h-5 w-2/3" : "h-5 w-11/12"} />
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
 
@@ -145,18 +171,25 @@ function AddMore({ episode: e }: { episode: Episode }) {
   };
 
   return (
-    <Card className="no-print p-5">
-      <h2 className="text-lg font-semibold text-ink">{L("还想补充？", "Anything to add?")}</h2>
-      {missing.length > 0 && (
-        <p className="mt-1 text-lg leading-relaxed text-ink-2">
-          {L(
-            `医生多半会问：${missing.map((m) => m.ask).join("")}想好了可以补一句。`,
-            `The doctor will probably ask: ${missing.map((m) => m.ask).join(" ")} Add a line when you are ready.`,
+    <Card className="no-print animate-fade-up p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        <IconTile tone="brand">
+          <MessageSquarePlus />
+        </IconTile>
+        <div className="min-w-0 flex-1 pt-1">
+          <h2 className="t-heading text-ink">{L("还想补充？", "Anything to add?")}</h2>
+          {missing.length > 0 && (
+            <p className="t-body mt-1.5 text-ink-2">
+              {L(
+                `医生多半会问：${missing.map((m) => m.ask).join("")}想好了可以补一句。`,
+                `The doctor will probably ask: ${missing.map((m) => m.ask).join(" ")} Add a line when you are ready.`,
+              )}
+            </p>
           )}
-        </p>
-      )}
+        </div>
+      </div>
       <SpeakInput
-        className="mt-3"
+        className="mt-4"
         placeholder={L("说一句或打一句，我加进去", "Say or type a line and I will add it")}
         ariaLabel={L("补充一句", "Add a line")}
         onSubmit={(t) => void add(t)}
