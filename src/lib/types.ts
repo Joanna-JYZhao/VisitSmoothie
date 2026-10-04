@@ -574,6 +574,8 @@ export interface Todo {
   times?: string[];
   /** ISO time, for once (a follow-up visit) */
   at?: string | null;
+  /** what the assistant explained about it when the patient said it was unclear: what it is for, why so */
+  explain?: string;
 }
 
 /** A reminder that has been set. Fired by the scheduler while the app is open, as a message and a notification. */
@@ -590,6 +592,8 @@ export interface Reminder {
   createdAt: string;
   /** the last time it went off, so it does not go off twice for the same slot */
   lastFiredAt?: string | null;
+  /** carried over from the to-do: shown on the home list, and a line of it when the reminder goes off */
+  explain?: string;
 }
 
 type OmitEach<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;

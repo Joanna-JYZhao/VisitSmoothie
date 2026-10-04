@@ -1,18 +1,19 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AudioLines, Camera, ChevronDown, CircleCheck, ImageUp, TriangleAlert, X } from "lucide-react";
-import type { AfterResult, AiMode, Episode } from "@/lib/types";
+import { useRouter } from "next/navigation";
+import { AudioLines, Camera, ChevronDown, ImageUp, TriangleAlert, X } from "lucide-react";
+import type { AfterResult, AiMode, Episode, Todo } from "@/lib/types";
 import { getState, useStore } from "@/lib/store";
 import { PhotoError, organizeVisit } from "@/lib/ai/client";
 import { saveAfter } from "@/lib/after";
-import { buildTodos, setReminders } from "@/lib/reminders";
+import { setReminders } from "@/lib/reminders";
 import { clipText, type LongTranscript } from "@/lib/audio";
 import { compressImage } from "@/lib/image";
 import { Recorder, bigTileCls } from "@/components/post/Recorder";
-import { VisitResult } from "@/components/post/VisitResult";
-import { Questions } from "@/components/post/Questions";
+import { ClinicalPlan } from "@/components/post/ClinicalPlan";
 import { filedLine } from "@/components/post/filed";
+import { useToast } from "@/components/Toast";
 import { Button, Card, IconTile, PageTitle, Skeleton, Spinner, TextButton, focusRing } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +25,8 @@ const PHOTO_SIDE = 2000;
 const latestActive = (episodes: Episode[]) =>
   [...episodes].filter((e) => e.status === "active").sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] ?? null;
 
-type Done = { result: AfterResult; mode: AiMode; line: string };
+/** What was read, held until the patient saves it from the Clinical Plan. */
+type Plan = { result: AfterResult; mode: AiMode; text: string; episodeId: string | null };
 
 /** A problem, in a quiet amber card with a tile in front, the same wherever one appears on this page. */
 function Problem({ children }: { children: React.ReactNode }) {
@@ -46,7 +48,10 @@ export default function PostPage() {
   const [recording, setRecording] = useState(false);
   const [working, setWorking] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const [done, setDone] = useState<Done | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [saving, setSaving] = useState(false);
+  const router = useRouter();
+  const toast = useToast();
   const cameraRef = useRef<HTMLInputElement>(null);
   const albumRef = useRef<HTMLInputElement>(null);
   if (!state.profile) return null;
@@ -78,9 +83,8 @@ export default function PostPage() {
         text: text || undefined,
         images: photos.length ? photos : undefined,
       });
-      saveAfter(res.result, about?.id ?? null, res.mode, text);
-      const set = setReminders(buildTodos(res.result), about?.id ?? null);
-      setDone({ result: res.result, mode: res.mode, line: filedLine(set) });
+      // nothing is stored yet: the patient looks it over in the Clinical Plan and saves from there
+      setPlan({ result: res.result, mode: res.mode, text, episodeId: about?.id ?? null });
       setPhotos([]);
       window.scrollTo({ top: 0 });
     } catch (err) {
@@ -97,22 +101,19 @@ export default function PostPage() {
     }
   };
 
-  if (done) {
+  if (plan) {
+    // 加入待办并保存: the visit goes on record, the lines ticked go on the to-do list (with what was explained), and back home
+    const save = (todos: Todo[]) => {
+      setSaving(true);
+      saveAfter(plan.result, plan.episodeId, plan.mode, plan.text);
+      const set = setReminders(todos, plan.episodeId, Date.now(), { all: true });
+      toast.show(filedLine(set), "good");
+      router.push("/");
+    };
     return (
       <div className="space-y-8">
-        <PageTitle sub="从录音和照片里整理出来的，已经存进就诊记录。">这次看医生的结果</PageTitle>
-        <div className="rise-1 flex items-center gap-4 rounded-card border border-good/15 bg-good-bg px-5 py-4">
-          <IconTile tone="good" size="lg" className="bg-surface shadow-edge">
-            <CircleCheck />
-          </IconTile>
-          <p className="min-w-0 flex-1 text-lg leading-relaxed font-medium text-ink">{done.line}</p>
-        </div>
-        <div className="rise-2">
-          <VisitResult result={done.result} />
-        </div>
-        <div className="rise-3">
-          <Questions result={done.result} />
-        </div>
+        <PageTitle sub="AI 从照片和录音里整理的。勾选要加入待办的，看不懂的可以让 AI 解释。">这次看医生的结果</PageTitle>
+        <ClinicalPlan result={plan.result} onSave={save} saving={saving} />
       </div>
     );
   }

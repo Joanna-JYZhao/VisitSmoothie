@@ -90,13 +90,15 @@ check("knee: no question twice", new Set(kneeRun.messages.filter((m) => m.role =
 const plain = runByRule("头晕", { title: "头晕" });
 check("dizziness: finishes and asks whether it happened before", plain.replies.at(-1)?.done === true && /以前也这样过/.test(plain.messages.map((m) => m.content).join()), plain.messages);
 const allSaid = fallbackChat(
-  req([{ role: "user", content: "右膝内侧胀痛三天了，比较难受，上下楼的时候更疼，没有肿也没有别的不舒服，贴了膏药，以前没这样过" }], { title: "膝盖疼" }),
+  req([{ role: "user", content: "右膝内侧胀痛三天了，比较难受，上下楼的时候更疼，休息一下会好一点，没有肿也没有别的不舒服，贴了膏药，以前没这样过" }], { title: "膝盖疼" }),
 );
 check("everything said at once: closes straight away", allSaid.done === true && !/[?？]/.test(allSaid.reply), allSaid);
-const allPlan = consultPlan(req([{ role: "user", content: "右膝内侧胀痛三天了，比较难受，上下楼的时候更疼，没有肿也没有别的不舒服，贴了膏药，以前没这样过" }], { title: "膝盖疼" }));
-check("everything said at once: all eight are known", allPlan.next === null && allPlan.missing.length === 0, allPlan);
+const allPlan = consultPlan(req([{ role: "user", content: "右膝内侧胀痛三天了，比较难受，上下楼的时候更疼，休息一下会好一点，没有肿也没有别的不舒服，贴了膏药，以前没这样过" }], { title: "膝盖疼" }));
+check("everything said at once: all nine are known", allPlan.next === null && allPlan.missing.length === 0, allPlan);
 const nothing = runByRule("不舒服", {}, () => "嗯");
-check("only 嗯 for answers: stops after four", nothing.questions === 4 && nothing.replies.at(-1)?.done === true, nothing.questions);
+check("only 嗯 for answers: every question is still asked once, then it closes", nothing.questions >= 7 && nothing.replies.at(-1)?.done === true && new Set(nothing.messages.filter((m) => m.role === "assistant").map((m) => m.content)).size === nothing.replies.length, nothing.questions);
+const stopped = runByRule("膝盖疼", { title: "膝盖疼" }, () => "就这些吧");
+check("就这些 closes the round at once", stopped.questions === 1 && stopped.replies.at(-1)?.done === true, stopped.messages);
 const unsure = runByRule("膝盖疼", { title: "膝盖疼" }, (r) => (r.widget === "bodymap" ? "说不太清" : "不清楚"));
 check("不清楚 counts as an answer: nothing is asked twice", unsure.replies.at(-1)?.done === true && unsure.questions <= MAX_QUESTIONS, unsure.messages);
 const forced = normalizeChat({ reply: "好了，我都记下了。", done: true }, req([{ role: "user", content: "膝盖疼，三天了，比较难受，没吃药" }], { title: "膝盖疼" }));
@@ -163,7 +165,10 @@ check("a confirmation is asked with the table's word", misnamed.reply.includes("
 
 const seven = [{ role: "user" as const, content: "头痛" }, ...Array.from({ length: 7 }, (_, i) => [{ role: "assistant" as const, content: `问题 ${i + 1}？` }, { role: "user" as const, content: "不清楚" }]).flat()];
 const salvaged = salvageChat("好的，以前有过类似头疼吗？", req(seven, { title: "头痛" }));
-check("a plain-text answer is held to seven questions too", salvaged.done === true && !/[?？]/.test(salvaged.reply), salvaged);
+check("seven questions are no limit: a plain-text question still goes through", salvaged.done === false && /[?？]/.test(salvaged.reply), salvaged);
+const enough = [...seven.slice(0, -1), { role: "user" as const, content: "就这些，不想说了" }];
+const closed = salvageChat("好的，以前有过类似头疼吗？", req(enough, { title: "头痛" }));
+check("就这些 closes a plain-text answer too", closed.done === true && !/[?？]/.test(closed.reply), closed);
 
 /* 答非所问：标签按实际说的那一类贴 */
 const kneeOpen = "膝盖疼，三天了，比较难受，没吃药";
@@ -184,5 +189,20 @@ check("the model's version gets the same label", modelOff.entry?.note === "其�
 const offEp: Episode = { ...ep, entries: [...ep.entries.slice(0, 2), { id: "x", at: at(3), severity: null, note: "其他不舒服：没有别的不舒服", source: "ai" }] };
 const offDesc = fallbackSummary({ profile: profile(), episode: offEp, related: [] }).summary;
 check("the first screen does not call it how it hurts", !JSON.stringify(offDesc).includes("疼法：没有别的"), offDesc.glance);
+
+/* 口语都要换成医生的说法：表里的规则确认，表外的模型自己确认 */
+check("咚咚的疼 is 搏动性疼痛", findColloquial("头咚咚的疼")[0]?.term === "搏动性疼痛");
+const earlier = consultPlan(
+  req([{ role: "user", content: "肚子拧着疼，心里发慌" }, { role: "assistant", content: confirmQuestion(findColloquial("拧着疼")[0]) }, { role: "user", content: "是" }], { title: "肚子痛" }),
+);
+check("a second everyday word said earlier is still confirmed", earlier.next?.key === "confirm" && /心悸/.test(earlier.next.question), earlier.next);
+const own = normalizeChat(
+  { reply: "记下了。是那种闷闷的、头里面像有东西在敲的疼吗？医生管这个叫『搏动性头痛』。", done: false },
+  req([{ role: "user", content: "头疼，今天开始" }, { role: "assistant", content: "好的。是怎么个疼法？" }, { role: "user", content: "就是一下一下敲着" }], { title: "头痛" }),
+);
+check("the model may confirm a word the table does not know", /『搏动性头痛』/.test(own.reply) && own.suggestedReplies.join() === "是,不是" && own.done === false, own);
+const spokenEp: Episode = { ...ep, entries: [...ep.entries, { id: "w", at: at(2), severity: null, note: "心悸（患者原话：心里发慌）", source: "ai" }, { id: "r", at: at(1), severity: null, note: "怎么会减轻：休息一下", source: "ai" }] };
+const spokenDesc = fallbackSummary({ profile: profile(), episode: spokenEp, related: [] }).summary.narrative ?? "";
+check("the description says it the patient's way, the doctor's word after it", spokenDesc.includes("酸酸的（酸痛）") && spokenDesc.includes("心里发慌（心悸）") && spokenDesc.includes("休息一下会减轻"), spokenDesc);
 
 finish("consult");

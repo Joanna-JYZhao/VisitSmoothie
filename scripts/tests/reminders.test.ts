@@ -1,5 +1,5 @@
 import type { AfterResult, Reminder } from "../../src/lib/types";
-import { adviceItems, buildTodos, dueReminders, dueSlot, explainParts, fireDue, homeTodos, medicineTimes, reminderMessage, suggestedTodoQuestions } from "../../src/lib/reminders";
+import { adviceItems, buildTodos, dueReminders, dueSlot, explainLine, explainParts, explainQuestion, fireDue, homeTodos, medicineTimes, reminderMessage, suggestedTodoQuestions } from "../../src/lib/reminders";
 import { check, finish } from "./_check";
 
 const base: AfterResult = {
@@ -127,5 +127,13 @@ check("主页：复诊写出日期", /10月10日/.test(list.find((t) => t.kind =
 check("主页：没有提醒的复诊日期也列出", homeTodos({ reminders: [], episodes: [], nextVisit: { at: new Date(at(10, 0, 10)).toISOString(), note: "复查" } }, at(8, 0, 5)).length === 1);
 check("主页：过去的复诊不列", homeTodos({ reminders: [visit], episodes: [], nextVisit: null }, at(9, 0, 12)).length === 0);
 check("建议问题按药和复诊生成", suggestedTodoQuestions(list).join("|") === "洛索洛芬钠片饭前还是饭后吃？|下次复诊要带什么？|洛索洛芬钠片漏吃了一次怎么办？", suggestedTodoQuestions(list));
+
+/* Clinical Plan：看不懂的那一条怎么问，解释跟着待办走 */
+check("药：问作用和为什么这样吃", explainQuestion({ kind: "medicine", text: "洛索洛芬钠片（每日三次，饭后）" }, { diagnosis: "膝关节炎" }) === "洛索洛芬钠片（每日三次，饭后）：这个药是干什么用的，为什么要这样吃");
+check("锻炼：问这个病为什么需要", explainQuestion({ kind: "care", text: "每天做直腿抬高锻炼" }, { diagnosis: "膝关节炎" }) === "医生让我「每天做直腿抬高锻炼」：为什么「膝关节炎」需要这样做，平时怎么做到");
+check("没写诊断也能问", /这次的病/.test(explainQuestion({ kind: "caution", text: "避免爬山" }, { diagnosis: null })));
+check("解释取第一句给提醒用", explainLine("消炎止痛的。饭后吃对胃好一些。") === "消炎止痛的。");
+check("提醒带上一句为什么", slot != null && reminderMessage({ ...r, explain: "说明书上一般会写它能消炎止痛。饭后吃对胃好。" }, slot) === "该吃洛索洛芬钠片了（午饭后）\n说明书上一般会写它能消炎止痛。");
+check("主页待办带着解释", homeTodos({ reminders: [{ ...r, explain: "为什么" }], episodes: [], nextVisit: null }, at(8, 0, 5))[0]?.explain === "为什么");
 
 finish("reminders");

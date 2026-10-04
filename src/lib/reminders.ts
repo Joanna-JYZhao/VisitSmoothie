@@ -142,9 +142,13 @@ function nextAt(hhmm: string, from: number): string {
   return d.toISOString();
 }
 
-/** Stores the to-dos that are to be reminded about. A list set again for the same visit replaces the old one. */
-export function setReminders(todos: Todo[], episodeId: string | null, now: number = Date.now()): Reminder[] {
-  const chosen = todos.filter((t) => t.remind && t.frequency !== "none");
+/**
+ * Stores the to-dos that are to be reminded about. A list set again for the same visit replaces the old one.
+ * `all`: every to-do given goes on the home list (they were picked one by one); the ones without a
+ * time are listed there without going off.
+ */
+export function setReminders(todos: Todo[], episodeId: string | null, now: number = Date.now(), opts: { all?: boolean } = {}): Reminder[] {
+  const chosen = opts.all ? todos : todos.filter((t) => t.remind && t.frequency !== "none");
   const texts = new Set(chosen.map((t) => t.text));
   // one visit, one reminder: a follow-up on a day that already has one replaces it, whichever record set it
   const visitDays = new Set(chosen.filter((t) => t.kind === "followup" && t.at).map((t) => fmtISODate(t.at as string)));
@@ -163,8 +167,36 @@ export function setReminders(todos: Todo[], episodeId: string | null, now: numbe
       at: t.frequency === "once" ? (t.at ?? nextAt(t.times?.[0] ?? "09:00", now)) : null,
       enabled: true,
       lastFiredAt: null,
+      ...(t.explain ? { explain: t.explain } : {}),
     })),
   );
+}
+
+/* ---------- Clinical Plan: what to ask the assistant about one line of it ---------- */
+
+/**
+ * The question behind "这条不清楚": for a medicine, what it is for and why it is taken this way; for
+ * something to do (锻炼), why this illness needs it; for a caution, why to watch out for it.
+ */
+export function explainQuestion(todo: Pick<Todo, "kind" | "text">, result: Pick<AfterResult, "diagnosis">): string {
+  const illness = result.diagnosis ? `「${result.diagnosis}」` : "这次的病";
+  switch (todo.kind) {
+    case "medicine":
+      return `${todo.text}：这个药是干什么用的，为什么要这样吃`;
+    case "care":
+      return `医生让我「${todo.text}」：为什么${illness}需要这样做，平时怎么做到`;
+    case "caution":
+      return `医生叮嘱「${todo.text}」：为什么${illness}要注意这个`;
+    case "followup":
+      return `「${todo.text.replace(/^复诊[：:]/, "")}」：为什么要复诊，去之前要准备什么`;
+  }
+}
+
+/** The first sentence of an explanation, short enough for a reminder. */
+export function explainLine(explain: string | undefined, max = 48): string {
+  if (!explain) return "";
+  const first = explain.split(/(?<=[。！!？?])/)[0]?.trim() ?? "";
+  return first.length > max ? `${first.slice(0, max - 1)}…` : first;
 }
 
 /** How long after its time a reminder may still go off (the app was closed at the time). */
@@ -245,6 +277,8 @@ export interface HomeTodo {
   detail: string;
   /** the reminder behind it, if there is one, to switch it on and off */
   reminder: Reminder | null;
+  /** what the assistant explained about it, if the patient asked */
+  explain?: string;
 }
 
 const MEAL = /饭前|饭后|餐前|餐后|空腹|睡前|随餐|嚼服|含服|外用/g;
@@ -263,17 +297,17 @@ export function homeTodos(state: Pick<AppState, "reminders" | "episodes" | "next
       const day = visitDay(r);
       if (!day || visits.has(day) || new Date(r.at as string).getTime() < now - DAY) continue;
       visits.add(day);
-      out.push({ key: r.id, kind: r.kind, title: whenText(r.at as string), detail: r.text.replace(/^复诊[：:]/, ""), reminder: r });
+      out.push({ key: r.id, kind: r.kind, title: whenText(r.at as string), detail: r.text.replace(/^复诊[：:]/, ""), reminder: r, explain: r.explain });
       continue;
     }
     if (r.kind === "medicine") {
       const { name, usage } = splitLine(r.text);
       const times = r.frequency === "once" && r.at ? [whenText(r.at)] : r.frequency === "daily" ? (r.times ?? []).slice(0, 1) : (r.times ?? []);
       const meal = [...new Set(usage.match(MEAL) ?? [])].join("、");
-      out.push({ key: r.id, kind: r.kind, title: name, detail: [times.join(" "), meal].filter(Boolean).join(" · "), reminder: r });
+      out.push({ key: r.id, kind: r.kind, title: name, detail: [times.join(" "), meal].filter(Boolean).join(" · "), reminder: r, explain: r.explain });
       continue;
     }
-    out.push({ key: r.id, kind: r.kind, title: r.text, detail: scheduleText(r), reminder: r });
+    out.push({ key: r.id, kind: r.kind, title: r.text, detail: scheduleText(r), reminder: r, explain: r.explain });
   }
   // follow-up dates kept with the records, when no reminder covers that day
   const dated = [
@@ -305,8 +339,14 @@ function splitLine(text: string): { name: string; usage: string } {
   return m ? { name: m[1], usage: m[2] } : { name: text, usage: "" };
 }
 
-/** What the reminder says when it goes off: "该吃洛索洛芬钠片了（午饭后）". */
+/** What the reminder says when it goes off: "该吃洛索洛芬钠片了（午饭后）", and a line of why, when it was explained. */
 export function reminderMessage(r: Reminder, slot: Slot): string {
+  const why = explainLine(r.explain);
+  const text = reminderText(r, slot);
+  return why ? `${text}\n${why}` : text;
+}
+
+function reminderText(r: Reminder, slot: Slot): string {
   if (r.kind === "medicine") {
     const { name, usage } = splitLine(r.text);
     const h = new Date(slot.at).getHours();

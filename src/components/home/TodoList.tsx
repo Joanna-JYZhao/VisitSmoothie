@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, CalendarDays, Check, ClipboardCheck, Pill, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarDays, Check, ChevronDown, ClipboardCheck, Lightbulb, Pill, Sparkles } from "lucide-react";
 import { IconTile, type IconTone } from "@/components/ui";
 import { storeActions, useStore } from "@/lib/store";
 import { homeTodos, type HomeTodo } from "@/lib/reminders";
@@ -89,6 +89,17 @@ export function TodoList({ now }: { now: number }) {
                 {t.title}
               </p>
               {t.detail && <p className={cn("t-body mt-0.5", ticked ? "text-ink-3" : "text-ink-2")}>{t.detail}</p>}
+              {/* what the assistant explained about it after the visit, one tap away */}
+              {t.explain && (
+                <details className="group mt-1">
+                  <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-lg text-base font-medium text-brand-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 [&::-webkit-details-marker]:hidden">
+                    <Lightbulb aria-hidden="true" className="h-4.5 w-4.5" />
+                    为什么要这样
+                    <ChevronDown aria-hidden="true" className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
+                  </summary>
+                  <p className="t-body mt-1 mb-2 rounded-xl bg-brand-50/70 px-3.5 py-2.5 whitespace-pre-line text-ink">{t.explain}</p>
+                </details>
+              )}
             </div>
             {r && (
               <button
