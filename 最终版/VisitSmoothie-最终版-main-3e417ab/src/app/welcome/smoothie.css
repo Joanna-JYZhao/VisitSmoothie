@@ -1,0 +1,187 @@
+/*
+ * VisitSmoothie: the logged-out screens (welcome, login, registration), in the round-2 redesign
+ * look (a keynote title on a lit stage, the pill button, the hand-written note, the raised login
+ * card), set for the phone column and coloured with today's celadon tokens.
+ * One column only and no viewport media queries: on a desktop the column is still phone-wide
+ * (.phone-col), so a viewport breakpoint would fire inside it and break the layout.
+ * Sizes: nothing a patient reads is under 17px, nothing tappable is under 48px.
+ */
+.onboarding-shell, .smoothie-scope {
+  --onboarding-ink: var(--color-brand-ink);
+  --onboarding-jade: var(--color-brand-600);
+  --onboarding-jade-deep: var(--color-brand-700);
+  --onboarding-jade-light: var(--color-brand-500);
+  --onboarding-muted: var(--color-ink-2);
+  --onboarding-quiet: var(--color-ink-3);
+  --onboarding-line: var(--color-line);
+  --onboarding-line-soft: rgba(226, 226, 231, 0.7);
+  --onboarding-line-strong: #cfd6d4;
+  --onboarding-mist: var(--color-brand-50);
+  --onboarding-ring: var(--color-brand-200);
+  --onboarding-ring-soft: var(--color-brand-100);
+  --onboarding-danger: var(--color-danger);
+  --onboarding-card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 1px rgba(13, 59, 64, 0.03), 0 2px 6px -1px rgba(13, 59, 64, 0.05), 0 16px 40px -20px rgba(13, 59, 64, 0.12);
+  --onboarding-raised-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 1px rgba(13, 59, 64, 0.04), 0 8px 24px -8px rgba(13, 59, 64, 0.12), 0 32px 64px -32px rgba(0, 120, 102, 0.3);
+  --onboarding-edge: 0 1px 2px rgba(13, 59, 64, 0.06), 0 0 0 1px rgba(13, 59, 64, 0.04);
+  --onboarding-btn-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(2, 77, 67, 0.25), 0 10px 20px -10px rgba(0, 120, 102, 0.6);
+  --onboarding-btn-shadow-hover: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 4px rgba(2, 77, 67, 0.18), 0 18px 36px -16px rgba(0, 120, 102, 0.65);
+  --onboarding-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --onboarding-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
+  --onboarding-serif: Georgia, "Songti SC", "STSong", serif;
+  color: var(--onboarding-ink);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.6;
+}
+/* the ground: a faint celadon morning light at the top, fading into the app's canvas */
+.onboarding-shell { display: flex; flex-direction: column; min-height: 100dvh; background: linear-gradient(180deg, #eaf4f0 0, #f1f5f3 26rem, var(--color-canvas) 100%); }
+.onboarding-shell :is(button, input, select, textarea) { font-family: inherit; font-size: inherit; }
+/* the one focus style, the same halo as the rest of the app */
+.onboarding-shell :is(a, button):focus-visible { outline: none; box-shadow: 0 0 0 4px var(--onboarding-ring); }
+
+/* ---------- header and footer ---------- */
+.onboarding-header, .onboarding-footer { width: 100%; display: flex; align-items: center; }
+.onboarding-header { justify-content: space-between; gap: 10px; min-height: 72px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; }
+/* no entrance animation on the header: an animated box is its own layer, and the logo's white ground would stop multiplying into the page behind it */
+.onboarding-header-right { display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
+/* the user's own logo, the name always with it */
+.onboarding-header .brand-logo { width: 8.25rem; }
+.smoothie-brand { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; min-height: 48px; border-radius: 10px; text-decoration: none; }
+/* the desktop strap line: there is no room for it beside the logo in a phone-wide column */
+.onboarding-header-note { display: none; }
+.onboarding-language { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 14px; border: 0; border-radius: 999px; background: #fff; color: var(--onboarding-ink); font-size: 17px; font-weight: 600; line-height: 1.25; text-decoration: none; white-space: nowrap; box-shadow: var(--onboarding-edge); cursor: pointer; transition: background .2s, color .2s, transform .15s var(--onboarding-ease); }
+.onboarding-language:hover { background: var(--onboarding-mist); color: var(--onboarding-jade-deep); }
+.onboarding-language:active { transform: scale(.97); }
+.onboarding-footer { flex-direction: column; justify-content: center; gap: 2px; padding: 4px 20px calc(env(safe-area-inset-bottom, 0px) + 24px); color: var(--onboarding-muted); font-size: 17px; text-align: center; }
+.onboarding-footer > span:first-child { font-family: var(--onboarding-serif); font-style: italic; color: var(--onboarding-muted); }
+.onboarding-main { width: 100%; padding: 4px 16px 32px; flex: 1; display: flex; flex-direction: column; }
+.onboarding-main:focus { outline: none; }
+
+/* ---------- the welcome screen: a keynote title on a lit stage ---------- */
+.is-welcome { padding-top: 0; padding-bottom: 8px; }
+.welcome-stage { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 20px 0 0; text-align: center; }
+/* the soft light: two blurred pools of the brand colour, drifting very slowly behind the title */
+.welcome-light { position: absolute; inset: 0 -16px; z-index: 0; overflow: hidden; pointer-events: none; }
+.welcome-light::before, .welcome-light::after { content: ""; position: absolute; border-radius: 50%; filter: blur(60px); will-change: transform; }
+.welcome-light::before { left: 50%; top: 8%; width: 420px; height: 300px; margin-left: -210px; background: radial-gradient(closest-side, rgba(0, 120, 102, 0.18), rgba(0, 120, 102, 0)); animation: welcome-drift 14s ease-in-out infinite alternate; }
+.welcome-light::after { left: 50%; top: 42%; width: 300px; height: 220px; margin-left: -80px; background: radial-gradient(closest-side, rgba(127, 199, 183, 0.28), rgba(127, 199, 183, 0)); animation: welcome-drift 18s ease-in-out infinite alternate-reverse; }
+.welcome-intro { position: relative; z-index: 1; width: 100%; }
+.welcome-eyebrow { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 22px; color: var(--onboarding-jade-deep); font-size: 17px; font-weight: 500; letter-spacing: .08em; text-wrap: balance; animation: welcome-fade .8s var(--onboarding-ease) both; animation-delay: .1s; }
+.welcome-eyebrow > span { width: 8px; height: 8px; border-radius: 50%; background: var(--onboarding-jade); box-shadow: 0 0 0 4px rgba(0, 120, 102, 0.14); flex-shrink: 0; }
+/* the title: set like a keynote title, tight and huge, sharpening as it rises into place */
+.welcome-stage h1 { margin: 0 0 24px; font: 400 clamp(60px, 20vw, 80px)/0.92 var(--onboarding-serif); letter-spacing: -.05em; color: var(--onboarding-ink); animation: welcome-title 1.1s var(--onboarding-ease) both; animation-delay: .2s; }
+.welcome-stage h1 em { font-style: italic; font-weight: 400; color: var(--onboarding-jade); background: linear-gradient(100deg, #13917d 0%, #007866 45%, #024d43 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; padding-right: .05em; margin-right: -.05em; }
+.welcome-period { color: var(--onboarding-jade-deep); }
+.welcome-description { max-width: 21em; margin: 0 auto 30px; font-size: 19px; line-height: 1.65; letter-spacing: -.008em; color: var(--onboarding-muted); text-wrap: balance; animation: welcome-fade .8s var(--onboarding-ease) both; animation-delay: .5s; }
+.welcome-description br { display: none; }
+.welcome-intro > .smoothie-button { width: 100%; animation: welcome-pop .7s var(--onboarding-spring) both; animation-delay: .62s; }
+.welcome-login { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; margin: 18px 0 0; color: var(--onboarding-muted); font-size: 17px; animation: welcome-fade .8s var(--onboarding-ease) both; animation-delay: .75s; }
+
+/* the hand-written note: the one playful thing on the page, under the button; the arrow draws itself */
+.welcome-handnote { display: flex; justify-content: center; align-items: flex-end; gap: 6px; margin: 16px auto 0; color: var(--onboarding-jade); transform: rotate(-4deg); pointer-events: none; animation: welcome-fade .9s var(--onboarding-ease) both; animation-delay: 1s; }
+.journey-arrow { width: 104px; height: 68px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.journey-arrow path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: welcome-draw 1.2s var(--onboarding-ease) both; animation-delay: 1.1s; }
+.welcome-handnote > span { font-family: "Kaiti SC", "STKaiti", "KaiTi", Georgia, serif; font-style: italic; font-size: 19px; line-height: 1.5; padding-bottom: 4px; white-space: nowrap; text-align: left; }
+
+/* the first-time hint: a frosted strip at the foot of the stage */
+.welcome-footnote { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; margin: 32px 0 0; padding: 12px 18px 12px 12px; border-radius: 22px; background: rgba(255, 255, 255, 0.72); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 1px 3px rgba(13, 59, 64, 0.12), 0 0 0 0.5px rgba(13, 59, 64, 0.04); text-align: left; font-size: 17px; line-height: 1.5; color: var(--onboarding-muted); text-wrap: balance; animation: welcome-fade .8s var(--onboarding-ease) both; animation-delay: .9s; }
+.welcome-footnote svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--onboarding-jade-deep); }
+.welcome-footnote > span:first-child { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: var(--onboarding-mist); }
+
+/* ---------- the main button: the app's pill, with the brand gradient and its glow ---------- */
+.smoothie-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 56px; border: 0; border-radius: 999px; padding: 12px 28px; background: linear-gradient(180deg, #007866, #006d5d); color: #fff; font-size: 18px; font-weight: 600; letter-spacing: -.005em; line-height: 1.25; text-decoration: none; box-shadow: var(--onboarding-btn-shadow); cursor: pointer; transition: background .2s, box-shadow .2s, transform .2s var(--onboarding-ease); }
+.smoothie-button:hover { background: linear-gradient(180deg, #006d5d, #006355); box-shadow: var(--onboarding-btn-shadow-hover); }
+.smoothie-button:active { transform: scale(.97); }
+.smoothie-button:disabled { opacity: .45; pointer-events: none; }
+.smoothie-button > span:not(.spinner) { font-size: 20px; font-weight: 400; line-height: 1; }
+.smoothie-button-hero { min-height: 60px; padding: 14px 28px; font-size: 19px; }
+/* a quiet action that reads as a link but still fills a 48px tap target */
+.text-button { display: inline-flex; align-items: center; min-height: 48px; margin: -12px 0; padding: 0 8px; border: 0; border-radius: 12px; background: transparent; color: var(--onboarding-jade-deep); font-size: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.text-button:hover { color: var(--onboarding-ink); }
+
+/* ---------- the registration and login screens ---------- */
+.is-register { padding-top: 0; }
+.onboarding-back { align-self: flex-start; display: inline-flex; align-items: center; gap: 2px; min-height: 48px; margin: 0 0 8px -8px; padding: 0 10px 0 6px; border-radius: 12px; color: var(--onboarding-muted); font-size: 17px; font-weight: 500; text-decoration: none; transition: color .2s, background .2s; animation: onboarding-fade .6s var(--onboarding-ease) both; }
+.onboarding-back:hover { color: var(--onboarding-ink); background: rgba(255, 255, 255, 0.6); }
+.onboarding-back svg { width: 22px; height: 22px; }
+.registration-layout { display: flex; flex-direction: column; gap: 16px; }
+/* the short note above the card: the hint and the two ready-made ways in */
+.registration-guide { display: flex; flex-direction: column; gap: 6px; padding: 0 2px; animation: onboarding-fade .7s var(--onboarding-ease) both; animation-delay: .05s; }
+.registration-guide .registration-eyebrow { display: none; }
+.registration-eyebrow { margin: 0 0 8px; color: var(--onboarding-jade-deep); font-size: 17px; font-weight: 600; letter-spacing: .1em; }
+.guide-description, .guide-hint { margin: 0; font-size: 17px; line-height: 1.65; color: var(--onboarding-muted); }
+.guide-links { display: flex; flex-wrap: wrap; gap: 0 8px; margin: 0 0 0 -8px; }
+.guide-link { display: inline-flex; align-items: center; min-height: 48px; padding: 0 8px; border-radius: 12px; color: var(--onboarding-jade-deep); font-size: 17px; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.guide-link:hover { color: var(--onboarding-ink); }
+
+/* the form card: the one raised surface on the screen, lit from its corner */
+.registration-card { position: relative; border: 1px solid var(--onboarding-line-soft); border-radius: 24px; background: radial-gradient(120% 90% at 0% 0%, rgba(0, 120, 102, 0.07), transparent 55%), linear-gradient(180deg, #ffffff 0%, #f8fbfa 100%); padding: 28px 20px; box-shadow: var(--onboarding-raised-shadow); animation: onboarding-rise .7s var(--onboarding-ease) both; animation-delay: .1s; }
+.registration-card-header { display: grid; gap: 20px; margin-bottom: 24px; }
+.registration-card-header .registration-eyebrow { margin-bottom: 8px; }
+.registration-card h2 { margin: 0; font-family: inherit; font-size: 26px; font-weight: 650; line-height: 1.2; letter-spacing: -.025em; color: var(--onboarding-ink); }
+.guide-tile { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: linear-gradient(180deg, #13917d 0%, #006355 100%); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.08), 0 10px 30px -10px rgba(0, 120, 102, 0.55); }
+.guide-tile svg { width: 22px; height: 22px; }
+/* the shortcut: a row like one in iOS Settings, a glossy camera tile and a chevron */
+.report-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 72px; padding: 12px 14px 12px 12px; border: 1px solid rgba(226, 226, 231, 0.9); border-radius: 20px; background: linear-gradient(180deg, #ffffff 0%, #fbfcfc 100%); color: var(--onboarding-ink); font-size: 18px; font-weight: 600; line-height: 1.35; text-align: left; text-wrap: balance; box-shadow: var(--onboarding-card-shadow); cursor: pointer; transition: transform .3s var(--onboarding-ease), box-shadow .3s var(--onboarding-ease), border-color .2s; }
+@media (hover: hover) { .report-row:hover { transform: translateY(-2px); border-color: var(--onboarding-ring); } }
+.report-row:active { transform: scale(.985); }
+.report-row .guide-tile { width: 48px; height: 48px; border-radius: 15px; }
+.report-row .guide-tile svg { width: 24px; height: 24px; }
+.report-row > span:nth-child(2) { flex: 1; min-width: 0; }
+.report-row > svg:last-child { width: 20px; height: 20px; flex-shrink: 0; color: var(--onboarding-quiet); }
+.form-section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 18px; }
+.form-section-title h3 { margin: 0; font-size: 21px; font-weight: 600; line-height: 1.3; letter-spacing: -.015em; color: var(--onboarding-ink); }
+.form-section-title > span { font-size: 17px; color: var(--onboarding-muted); }
+.history-section { margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--onboarding-line); }
+/* the end of the form: the note, then the one full-width button */
+.registration-submit { display: flex; flex-direction: column; align-items: stretch; gap: 16px; margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--onboarding-line); }
+.registration-submit p { margin: 0; font-size: 17px; line-height: 1.6; color: var(--onboarding-muted); }
+.registration-submit .smoothie-button { width: 100%; white-space: nowrap; }
+
+/* ---------- fields (the login card, the password section; the profile form brings its own) ---------- */
+:is(.onboarding-shell, .smoothie-scope) .field { display: grid; gap: 8px; min-width: 0; }
+:is(.onboarding-shell, .smoothie-scope) .field label { font-size: 17px; font-weight: 600; line-height: 1.5; color: var(--onboarding-ink); }
+:is(.onboarding-shell, .smoothie-scope) .field :is(input, select, textarea) { width: 100%; min-width: 0; min-height: 3.25rem; padding: 10px 16px; border: 1.5px solid var(--onboarding-line-strong); border-radius: 16px; background: #fff; color: var(--onboarding-ink); font-size: 18px; line-height: 1.5; box-shadow: inset 0 1px 2px rgba(13, 59, 64, 0.04); outline: none; transition: border-color .2s, box-shadow .2s; }
+:is(.onboarding-shell, .smoothie-scope) .field :is(input, select, textarea)::placeholder { color: var(--color-ink-3); }
+:is(.onboarding-shell, .smoothie-scope) .field :is(input, select, textarea):focus { border-color: var(--onboarding-jade-light); box-shadow: inset 0 1px 2px rgba(13, 59, 64, 0.04), 0 0 0 4px var(--onboarding-ring-soft); }
+:is(.onboarding-shell, .smoothie-scope) .field small { font-size: 17px; line-height: 1.6; color: var(--onboarding-muted); }
+/* one field per line: two side by side are too narrow in a phone column for 17px labels and hints */
+:is(.onboarding-shell, .smoothie-scope) .field-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+.smoothie-scope .history-section { margin-top: 0; padding-top: 0; border-top: 0; }
+
+/* ---------- login: one narrow card, the app icon and its name above it ---------- */
+.login-layout { width: 100%; margin: 8px 0 24px; }
+.login-mark { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 0 auto 22px; animation: welcome-pop .7s var(--onboarding-spring) both; }
+.login-mark-tile { display: block; width: 72px; height: 72px; border-radius: 20px; box-shadow: 0 18px 36px -16px rgba(0, 120, 102, 0.55), 0 2px 6px rgba(13, 59, 64, 0.08); }
+.login-mark-name { font-size: 20px; font-weight: 700; letter-spacing: -.02em; color: var(--onboarding-ink); }
+.login-card { padding: 32px 20px; }
+.login-card .registration-card-header { display: block; margin-bottom: 26px; text-align: center; }
+.login-card .registration-eyebrow { letter-spacing: .14em; }
+.login-card h1 { margin: 0 0 10px; font: 500 36px/1.25 var(--onboarding-serif); letter-spacing: -.02em; color: var(--onboarding-ink); }
+.login-card .guide-description { font-size: 17px; text-wrap: balance; }
+.login-card form { display: grid; gap: 20px; }
+.login-card .smoothie-button { width: 100%; margin-top: 6px; }
+.login-register { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; margin: 26px 0 0; color: var(--onboarding-muted); font-size: 17px; }
+.login-register + .login-register { margin-top: 10px; }
+
+/* notices: a tinted sheet with a hairline of its own colour; the icon beside the sentence */
+.smoothie-alert, .smoothie-note { display: flex; align-items: flex-start; gap: 12px; margin: 0; padding: 14px 16px; border-radius: 18px; font-size: 17px; line-height: 1.6; animation: onboarding-fade .35s var(--onboarding-ease) both; }
+.smoothie-alert { border: 1px solid rgba(193, 44, 53, 0.22); background: var(--color-danger-bg); color: var(--onboarding-danger); font-weight: 500; }
+.smoothie-note { margin-bottom: 22px; border: 1px solid rgba(0, 99, 85, 0.16); background: var(--color-info-bg); color: var(--onboarding-ink); }
+:is(.smoothie-alert, .smoothie-note) > svg { width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px; }
+.smoothie-note > svg { color: var(--color-info); }
+.smoothie-note > span { flex: 1; min-width: 0; }
+
+/* ---------- motion ---------- */
+@keyframes onboarding-rise { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes onboarding-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes welcome-fade { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes welcome-title { from { opacity: 0; transform: translateY(28px) scale(.97); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes welcome-pop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes welcome-draw { to { stroke-dashoffset: 0; } }
+@keyframes welcome-drift { from { transform: translate3d(-6%, -4%, 0) scale(1); } to { transform: translate3d(6%, 6%, 0) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-back, .welcome-eyebrow, .welcome-stage h1, .welcome-description, .welcome-intro > .smoothie-button, .welcome-login, .welcome-handnote, .welcome-footnote, .registration-guide, .registration-card, .login-mark, .smoothie-alert, .smoothie-note { animation: none; }
+  .welcome-light::before, .welcome-light::after { animation: none; }
+  .journey-arrow path { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+}

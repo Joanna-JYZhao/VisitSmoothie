@@ -1,0 +1,12 @@
+{
+  "name": "@trimed/patient-dictation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Server-side patient audio dictation with a stable text handoff.",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "exports": { ".": { "types": "./index.d.mts", "import": "./index.mjs" } },
+  "types": "./index.d.mts",
+  "files": ["index.mjs", "index.d.mts", "cli.mjs", "README.md", "VERIFICATION.md", ".env.example"],
+  "scripts": { "test": "node --test tests/*.test.mjs", "dictate": "node cli.mjs" }
+}

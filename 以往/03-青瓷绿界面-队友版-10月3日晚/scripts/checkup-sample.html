@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>体检报告（示例）</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; }
+  body { width: 1240px; height: 1754px; padding: 46px 80px 30px; font-family: "Songti SC", "STSong", "SimSun", serif; color: #111; font-size: 21px; line-height: 1.5; }
+  h1 { font-family: "PingFang SC", "Heiti SC", sans-serif; font-size: 40px; text-align: center; margin: 0; letter-spacing: 10px; }
+  .org { text-align: center; font-size: 23px; margin-top: 2px; color: #333; font-family: "PingFang SC", sans-serif; }
+  .rule { border-top: 3px solid #111; margin: 12px 0 10px; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px 20px; }
+  h2 { font-family: "PingFang SC", "Heiti SC", sans-serif; font-size: 23px; margin: 14px 0 6px; padding: 3px 12px; background: #eef2f5; border-left: 6px solid #1c5a8a; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #555; padding: 2px 12px; text-align: left; }
+  th { background: #f3f5f7; font-family: "PingFang SC", sans-serif; font-weight: 600; }
+  td.flag { text-align: center; font-weight: 700; }
+  .kv { display: grid; grid-template-columns: 150px 1fr; row-gap: 2px; }
+  .kv b { font-family: "PingFang SC", sans-serif; font-weight: 600; }
+  ol { margin: 0; padding-left: 34px; }
+  .foot { display: flex; justify-content: space-between; margin-top: 12px; }
+  .note { margin-top: 8px; font-size: 17px; color: #666; text-align: center; font-family: "PingFang SC", sans-serif; }
+</style>
+</head>
+<body>
+  <h1>健康体检报告</h1>
+  <div class="org">安和健康体检中心</div>
+  <div class="rule"></div>
+  <div class="meta">
+    <div>姓名：陈建华</div><div>性别：男</div><div>出生日期：1968-03-12</div>
+    <div>体检编号：TJ20260920-0138</div><div>年龄：58 岁</div><div>体检日期：2026-09-20</div>
+  </div>
+
+  <h2>一、一般检查</h2>
+  <table>
+    <tr><th>项目</th><th>结果</th><th>参考范围</th><th>提示</th></tr>
+    <tr><td>身高</td><td>172 cm</td><td>—</td><td class="flag"></td></tr>
+    <tr><td>体重</td><td>78.5 kg</td><td>—</td><td class="flag"></td></tr>
+    <tr><td>体重指数（BMI）</td><td>26.5</td><td>18.5–23.9</td><td class="flag">↑</td></tr>
+    <tr><td>血压</td><td>148/92 mmHg</td><td>&lt;140/90</td><td class="flag">↑</td></tr>
+    <tr><td>脉搏</td><td>76 次/分</td><td>60–100</td><td class="flag"></td></tr>
+  </table>
+
+  <h2>二、病史（受检者自述）</h2>
+  <div class="kv">
+    <b>既往史：</b><span>高血压（8 年）；2 型糖尿病（3 年）</span>
+    <b>过敏史：</b><span>青霉素</span>
+    <b>目前用药：</b><span>苯磺酸氨氯地平片 5mg 每日一次；盐酸二甲双胍片 0.5g 每日两次</span>
+    <b>手术史：</b><span>胆囊切除术（2012 年）</span>
+    <b>家族史：</b><span>父亲 高血压；母亲 2 型糖尿病</span>
+  </div>
+
+  <h2>三、检验结果</h2>
+  <table>
+    <tr><th>项目</th><th>结果</th><th>参考范围</th><th>提示</th></tr>
+    <tr><td>空腹血糖</td><td>7.8 mmol/L</td><td>3.9–6.1</td><td class="flag">↑</td></tr>
+    <tr><td>糖化血红蛋白</td><td>7.2 %</td><td>4.0–6.0</td><td class="flag">↑</td></tr>
+    <tr><td>总胆固醇</td><td>5.9 mmol/L</td><td>&lt;5.2</td><td class="flag">↑</td></tr>
+    <tr><td>甘油三酯</td><td>2.3 mmol/L</td><td>&lt;1.7</td><td class="flag">↑</td></tr>
+    <tr><td>低密度脂蛋白胆固醇</td><td>3.8 mmol/L</td><td>&lt;3.4</td><td class="flag">↑</td></tr>
+    <tr><td>尿酸</td><td>452 μmol/L</td><td>208–428</td><td class="flag">↑</td></tr>
+    <tr><td>谷丙转氨酶</td><td>38 U/L</td><td>9–50</td><td class="flag"></td></tr>
+    <tr><td>肌酐</td><td>82 μmol/L</td><td>57–97</td><td class="flag"></td></tr>
+    <tr><td>血红蛋白</td><td>148 g/L</td><td>130–175</td><td class="flag"></td></tr>
+    <tr><td>血型</td><td>A 型（Rh 阳性）</td><td>—</td><td class="flag"></td></tr>
+  </table>
+
+  <h2>四、其他检查</h2>
+  <div class="kv">
+    <b>腹部超声：</b><span>脂肪肝（轻度）</span>
+    <b>心电图：</b><span>窦性心律，正常心电图</span>
+    <b>胸部 X 线：</b><span>未见明显异常</span>
+  </div>
+
+  <h2>五、总检结论与建议</h2>
+  <ol>
+    <li>血压偏高（148/92 mmHg）：建议心内科随诊，按医嘱服药，每日监测血压。</li>
+    <li>空腹血糖、糖化血红蛋白高于参考范围：建议内分泌科复诊。</li>
+    <li>血脂偏高、轻度脂肪肝：低脂饮食，适量运动，3 至 6 个月后复查。</li>
+    <li>尿酸偏高：少吃动物内脏和海鲜，多饮水，3 个月后复查。</li>
+  </ol>
+  <div class="foot"><span>总检医师：（签名）</span><span>报告日期：2026-09-22</span></div>
+  <div class="note">本报告为演示用的虚构样例，人物与机构均不存在。</div>
+</body>
+</html>

@@ -1,0 +1,268 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useStore, type DemoPersona } from "@/lib/store";
+import { aiHealth, type AiHealth } from "@/lib/ai/client";
+import { fmtISODate } from "@/lib/utils";
+import { useToast } from "@/components/Toast";
+import { Button, Card, Modal, PageHeader, SectionTitle, Select, Toggle } from "@/components/ui";
+
+type Perm = NotificationPermission | "unsupported";
+const INTERVALS = [
+  { hours: 12, label: "一天两次" },
+  { hours: 24, label: "每天一次" },
+  { hours: 48, label: "两天一次" },
+];
+const METRIC_CADENCE = [
+  { hours: 24, label: "每天" },
+  { hours: 48, label: "两天一次" },
+  { hours: 72, label: "三天一次" },
+  { hours: 168, label: "每周" },
+  { hours: 0, label: "不提醒" },
+];
+const PERSONA_NAME: Record<DemoPersona, string> = { liming: "李明", wang: "王秀兰" };
+
+function Block({ title, detail, children }: { title: string; detail?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <div className="px-5 py-4">
+      <p className="text-lg font-medium text-ink">{title}</p>
+      {detail && <p className="mt-0.5 text-base leading-relaxed text-ink-2">{detail}</p>}
+      {children && <div className="mt-3">{children}</div>}
+    </div>
+  );
+}
+
+export default function SettingsPage() {
+  const { state, updateSettings, loadDemo, resetAll, exportJSON } = useStore();
+  const router = useRouter();
+  const toast = useToast();
+  const [perm, setPerm] = useState<Perm>(() => (typeof Notification === "undefined" ? "unsupported" : Notification.permission));
+  const [health, setHealth] = useState<AiHealth | null>(null);
+  const [pinging, setPinging] = useState(false);
+  const [confirm, setConfirm] = useState<null | DemoPersona | "reset">(null);
+
+  useEffect(() => {
+    let alive = true;
+    aiHealth().then((h) => alive && setHealth(h));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const notifyOn = state.settings.notificationsEnabled && perm === "granted";
+  const interval = state.settings.checkInIntervalHours;
+
+  const toggleNotify = async (on: boolean) => {
+    if (perm === "unsupported") return;
+    if (!on) {
+      updateSettings({ notificationsEnabled: false });
+      toast.show("已关掉提醒");
+      return;
+    }
+    const p = perm === "granted" ? "granted" : await Notification.requestPermission();
+    setPerm(p);
+    if (p === "granted") {
+      updateSettings({ notificationsEnabled: true });
+      try {
+        new Notification("医伴", { body: "提醒已经打开。到了该问你的时候，我会来提醒。" });
+      } catch {
+        /* ignore */
+      }
+      toast.show("已打开提醒", "good");
+    } else {
+      toast.show("浏览器没有允许通知。请在地址栏左边的网站设置里允许", "danger");
+    }
+  };
+
+  const ping = async () => {
+    setPinging(true);
+    const h = await aiHealth(true);
+    setHealth(h);
+    setPinging(false);
+    if (h.ok) toast.show(`连接正常，用了 ${((h.latencyMs ?? 0) / 1000).toFixed(1)} 秒`, "good");
+    else toast.show(h.configured ? "没连上，请检查 Key 和网络" : "还没有配置 API Key", "danger");
+  };
+
+  const download = () => {
+    const blob = new Blob([exportJSON()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `yiban-backup-${fmtISODate(new Date())}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.show("备份文件已经下载", "good");
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader back={{ href: "/me", label: "我的档案" }} title="设置" />
+
+      <section>
+        <SectionTitle>提醒</SectionTitle>
+        <Card className="divide-y divide-line overflow-hidden">
+          <Block title="多久问我一次" detail="有不舒服在跟踪时，我按这个节奏在首页问你怎么样了。拖了两周以上的，改成每周问一次。">
+            <Select
+              value={String(interval)}
+              aria-label="多久问我一次"
+              onChange={(e) => {
+                updateSettings({ checkInIntervalHours: Number(e.target.value) });
+                toast.show("已改好", "good");
+              }}
+            >
+              {INTERVALS.map((i) => (
+                <option key={i.hours} value={i.hours}>
+                  {i.label}
+                </option>
+              ))}
+            </Select>
+          </Block>
+          {state.settings.longTerm && (
+            <Block title="多久提醒我记血糖" detail="血压和体重最多每周提醒一次。">
+              <Select
+                value={String(state.settings.metricReminderHours)}
+                aria-label="多久提醒我记血糖"
+                onChange={(e) => {
+                  updateSettings({ metricReminderHours: Number(e.target.value) });
+                  toast.show("已改好", "good");
+                }}
+              >
+                {METRIC_CADENCE.map((c) => (
+                  <option key={c.hours} value={c.hours}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
+            </Block>
+          )}
+          {perm === "unsupported" || perm === "denied" ? (
+            <Block
+              title="弹出提醒"
+              detail={
+                perm === "unsupported"
+                  ? "这个浏览器不能弹出提醒。打开医伴时，首页照样会问你。"
+                  : "浏览器不允许这个网站发通知。请在地址栏左边的网站设置里允许，再回来打开。"
+              }
+            />
+          ) : (
+            <Toggle
+              checked={notifyOn}
+              onChange={(v) => void toggleNotify(v)}
+              label="弹出提醒"
+              detail="网页开着的时候，到时间会弹出一条通知。关掉网页就不会提醒了。"
+            />
+          )}
+        </Card>
+      </section>
+
+      <section>
+        <SectionTitle>我的数据</SectionTitle>
+        <Card className="divide-y divide-line overflow-hidden">
+          <Block title="数据存在哪里" detail="档案和记录只存在这台设备的浏览器里。只有在你和医伴说话、整理给医生看的内容、认照片和语音的时候，相关内容才会发给 AI 模型。" />
+          <Block title="备份" detail="把档案和全部记录存成一个文件。">
+            <Button variant="secondary" onClick={download}>
+              下载备份
+            </Button>
+          </Block>
+          <Block title="看看演示" detail="用虚构人物的记录替换现在的数据。李明是一次肚子痛；王秀兰是一年的糖尿病管理。">
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" onClick={() => setConfirm("liming")}>
+                李明
+              </Button>
+              <Button variant="secondary" onClick={() => setConfirm("wang")}>
+                王秀兰
+              </Button>
+            </div>
+          </Block>
+          <Block title="全部清空" detail="删掉这台设备上的档案和所有记录，从头开始。">
+            <Button variant="dangerSoft" onClick={() => setConfirm("reset")}>
+              全部清空
+            </Button>
+          </Block>
+        </Card>
+      </section>
+
+      <section>
+        <SectionTitle>关于</SectionTitle>
+        <Card className="divide-y divide-line overflow-hidden">
+          <Block
+            title="使用须知"
+            detail="医伴只帮你记录、整理和提醒，不做诊断，不建议用药。指标的范围是一般的标准，你自己的目标听医生的。胸痛、喘不上气、神志不清、大出血这类急事，请立即拨打 120。"
+          />
+          <Block
+            title="AI 连接"
+            detail={
+              !health ? (
+                "正在检查…"
+              ) : health.configured ? (
+                <>
+                  已连接智谱 GLM。对话 {health.model}，认照片 {health.visionModel}，听语音 {health.speechModel}
+                  {health.ok === true && health.latencyMs != null && `。刚才测试用了 ${(health.latencyMs / 1000).toFixed(1)} 秒`}
+                  {health.ok === false && "。刚才测试没连上，对话会先用内置规则顶上"}
+                  。Key 和模型名在项目根目录的 .env.local 里改。
+                </>
+              ) : (
+                "还没有配置 GLM API Key。现在用内置规则回答，不能听语音、认照片。把 Key 填进 .env.local 再重启就可以了。"
+              )
+            }
+          >
+            <Button variant="secondary" onClick={ping} loading={pinging}>
+              测试连接
+            </Button>
+          </Block>
+        </Card>
+      </section>
+
+      <Modal
+        open={confirm === "liming" || confirm === "wang"}
+        title={`换成${confirm && confirm !== "reset" ? PERSONA_NAME[confirm] : ""}的演示数据？`}
+        onClose={() => setConfirm(null)}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirm(null)}>
+              不换了
+            </Button>
+            <Button
+              onClick={() => {
+                if (confirm === "liming" || confirm === "wang") loadDemo(confirm);
+                setConfirm(null);
+                toast.show("已换成演示数据", "good");
+                router.push("/");
+              }}
+            >
+              换成演示
+            </Button>
+          </>
+        }
+      >
+        现在的档案和记录会被演示数据替换。想留着的话，请先下载备份。
+      </Modal>
+
+      <Modal
+        open={confirm === "reset"}
+        title="全部清空？"
+        onClose={() => setConfirm(null)}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirm(null)}>
+              不清了
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                resetAll();
+                setConfirm(null);
+                router.replace("/onboarding");
+              }}
+            >
+              全部清空
+            </Button>
+          </>
+        }
+      >
+        档案、全部记录和对话都会删掉，找不回来。
+      </Modal>
+    </div>
+  );
+}

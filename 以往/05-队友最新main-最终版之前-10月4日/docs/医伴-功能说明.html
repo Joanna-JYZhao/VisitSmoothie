@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>医伴 功能说明</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; width: 210mm; height: 297mm; }
+  body { font-family: "PingFang SC", "Hiragino Sans GB", sans-serif; color: #0f1b2d; font-size: 10pt; line-height: 1.5; }
+  .page { width: 210mm; height: 297mm; padding: 11mm 14mm 9mm; overflow: hidden; display: flex; flex-direction: column; gap: 3mm; }
+  h1 { margin: 0; font-size: 22pt; color: #004b63; }
+  .sub { color: #4a5a6b; font-size: 11pt; margin-top: 1mm; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; }
+  .box { border: 0.3mm solid #b2dff4; background: #eff9fd; border-radius: 3mm; padding: 2.4mm 3.6mm; }
+  .box h2 { margin: 0 0 1mm; font-size: 12pt; color: #004b63; }
+  .box p { margin: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.3pt; line-height: 1.45; }
+  th, td { border: 0.25mm solid #cfd8e0; padding: 1.2mm 2.2mm; text-align: left; vertical-align: top; }
+  th { background: #eff9fd; color: #004b63; }
+  td.k { width: 14%; font-weight: 600; color: #004b63; }
+  td.how { width: 31%; color: #24384d; }
+  .sec { font-size: 12.5pt; font-weight: 600; color: #004b63; border-bottom: 0.5mm solid #017a9e; padding-bottom: 1mm; margin-bottom: 1.5mm; }
+  .red { background: #fef0f1; border-color: #eab3b6; } .red h2 { color: #a92d33; }
+  .foot { margin-top: auto; font-size: 9.2pt; color: #4a5a6b; border-top: 0.25mm solid #cfd8e0; padding-top: 2mm; }
+</style></head>
+<body><div class="page">
+  <div><h1>医伴 · 功能说明</h1><div class="sub">你的私人医生助理。平时帮你记，看病时替你说。打开就是一个对话框，有事跟它说就行。</div></div>
+
+  <div class="two">
+    <div class="box"><h2>你只需要做两件事</h2><p>① 不舒服时，按住说话（或打字）告诉它。<br>② 看完医生，把医嘱、处方拍给它。<br>其余的整理、存档、提醒都由它自动完成。</p></div>
+    <div class="box red"><h2>紧急情况</h2><p>右上角红色「应急」随时可点：给身边的人看的应急卡（我是谁、有什么病、对什么过敏、联系人、晕倒怎么做），一键拨打 120。对话里说到危险的情况，也会立刻弹出红色提示。</p></div>
+  </div>
+
+  <div>
+    <div class="sec">有哪些功能</div>
+    <table>
+      <tr><th>功能</th><th>是干什么的</th><th>怎么用</th></tr>
+      <tr><td class="k">注册</td><td>记下年龄、性别、学历、基础病、家族遗传病。基础病可以以后再填。</td><td class="how">第一次打开时填一张表；有体检报告可以拍一下自动填。</td></tr>
+      <tr><td class="k">问诊</td><td>把你说的不舒服问清楚：哪里、怎么个疼法、多久了、吃过什么药、什么时候更明显。疼的地方可以在身体图上点。口语会确认成医生的说法（比如「扭着疼」就是绞痛）。和以前的记录有关时会主动问一句。</td><td class="how">直接说哪里不舒服，然后点它给的选项或接着说。</td></tr>
+      <tr><td class="k">病情描述</td><td>问清楚后写成一段给医生看的话。不满意可以改，可以保存或放弃。</td><td class="how">问诊结束自动出现；哪里不对直接说。</td></tr>
+      <tr><td class="k">初步分诊</td><td>告诉你要不要看医生、多急、挂哪个科、去之前留意什么。不下诊断，不说是什么病。</td><td class="how">和病情描述一起出现。</td></tr>
+      <tr><td class="k">去看医生</td><td>把这次的情况、相关的以前记录、过敏和在吃的药整理成一页，给医生看。</td><td class="how">点下方「去看医生」，或说「我要去医院了」。</td></tr>
+      <tr><td class="k">拍医嘱</td><td>认出诊断、药和用法、注意事项、其他治疗、时间地点、复诊时间，存进就诊记录。</td><td class="how">点输入栏右边的相机拍照。</td></tr>
+      <tr><td class="k">提醒</td><td>把医嘱整理成要做的事：吃药、复诊等。可以选哪些要提醒、多久提醒一次。</td><td class="how">拍医嘱后点「整理要做的事并提醒」。</td></tr>
+      <tr><td class="k">解释</td><td>用大白话讲诊断是什么意思、药是干什么的、常见副作用和注意事项。以说明书和医生为准。</td><td class="how">拍医嘱后点「给我解释一下」，或直接问。</td></tr>
+      <tr><td class="k">随时问</td><td>上次医生说了什么、这个药怎么吃、这个能不能吃。按你的档案和记录回答，并说明依据是哪一条。</td><td class="how">直接问。</td></tr>
+      <tr><td class="k">讲解病史</td><td>把你的病史整理好，讲给医生听，或者用大白话讲给你自己听。</td><td class="how">点下方「讲解病史」。</td></tr>
+      <tr><td class="k">导出</td><td>把给医生的一页存成 PDF、打印或复制成文字。</td><td class="how">点下方「导出」。</td></tr>
+      <tr><td class="k">每天问候</td><td>记着的不舒服，第二天会问一句怎么样了；明显加重时提示你去看医生。</td><td class="how">点「好多了 / 差不多 / 更严重了」。</td></tr>
+      <tr><td class="k">我的资料</td><td>个人信息、就诊记录、提醒、血糖血压；可以自己补充以前的病史。</td><td class="how">点左上角的头像。</td></tr>
+    </table>
+  </div>
+
+  <div class="two">
+    <div class="box"><h2>它会做的</h2><p>整理你说的话、提醒你记不住的事、告诉你要不要去看医生、复述医生的医嘱、讲说明书上的一般用法。</p></div>
+    <div class="box"><h2>它不会做的</h2><p>不下诊断，不替你定药量，不评价医生的方案，不写你没说过的事。照片和录音只用来认字，不保存。</p></div>
+  </div>
+
+  <div class="foot">医伴 第三版 · 2026 年 10 月 3 日 · 可点击样子：http://localhost:3200/proto/index.html（示例内容，不接 AI）</div>
+</div></body></html>

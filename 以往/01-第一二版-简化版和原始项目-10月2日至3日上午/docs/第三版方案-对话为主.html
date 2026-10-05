@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>医伴 第三版方案：对话为主</title>
+<style>
+  @page { size: A4; margin: 13mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "PingFang SC", "Hiragino Sans GB", "Heiti SC", sans-serif; color: #0f1b2d; font-size: 10.4pt; line-height: 1.62; }
+  h1 { font-size: 23pt; line-height: 1.25; margin: 0; color: #004b63; letter-spacing: 0.5pt; }
+  h2 { font-size: 15pt; line-height: 1.3; margin: 0 0 3mm; color: #004b63; padding-bottom: 1.6mm; border-bottom: 0.6mm solid #017a9e; break-after: avoid; }
+  h3 { font-size: 11.6pt; margin: 4.5mm 0 1.5mm; color: #00617f; break-after: avoid; }
+  p { margin: 0 0 2.2mm; }
+  ul, ol { margin: 0 0 2.4mm; padding-left: 5.5mm; }
+  li { margin-bottom: 0.9mm; }
+  section { margin-top: 8mm; }
+  section.first { margin-top: 0; }
+  section.pb { break-before: page; margin-top: 0; }
+  .pagebreak { break-before: page; }
+  .sub { color: #4a5a6b; }
+  .lead { font-size: 11.4pt; color: #0f1b2d; }
+  .cover { padding-top: 8mm; }
+  .tag { display: inline-block; padding: 0.4mm 2.6mm; border-radius: 99px; background: #fff4e0; color: #9a5b00; font-size: 9.4pt; font-weight: 600; }
+  .meta { margin-top: 3mm; color: #4a5a6b; font-size: 9.8pt; }
+  .box { border: 0.3mm solid #b2dff4; background: #eff9fd; border-radius: 3mm; padding: 3.2mm 4mm; margin: 0 0 3mm; break-inside: avoid; }
+  .box.plain { background: #fff; border-color: #cfd8e0; }
+  .box.warn { background: #fff4e0; border-color: #e9c98f; }
+  .box.red { background: #fef0f1; border-color: #eab3b6; }
+  .box h3 { margin-top: 0; }
+  .quote { border-left: 1mm solid #7ec6e6; padding: 0.6mm 0 0.6mm 3.4mm; color: #24384d; margin: 0 0 2.4mm; }
+  table { width: 100%; border-collapse: collapse; margin: 0 0 3.2mm; font-size: 9.5pt; line-height: 1.5; break-inside: avoid; }
+  th, td { border: 0.25mm solid #cfd8e0; padding: 1.5mm 2.2mm; vertical-align: top; text-align: left; }
+  th { background: #eff9fd; color: #004b63; font-weight: 600; }
+  td.k { width: 23%; font-weight: 600; color: #004b63; background: #f7fbfd; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; }
+  .card { border: 0.3mm solid #cfd8e0; border-radius: 3mm; padding: 3mm 3.4mm; break-inside: avoid; }
+  .card b.t { display: block; color: #004b63; font-size: 10.8pt; margin-bottom: 0.8mm; }
+  .num { display: inline-flex; width: 5.6mm; height: 5.6mm; border-radius: 50%; background: #017a9e; color: #fff; font-size: 9pt; font-weight: 700; align-items: center; justify-content: center; margin-right: 1.6mm; }
+  /* diagrams */
+  .flow { display: flex; align-items: stretch; gap: 0; margin: 2mm 0 3.4mm; break-inside: avoid; }
+  .flow .node { flex: 1; border: 0.35mm solid #017a9e; border-radius: 2.6mm; padding: 2.2mm 2.4mm; font-size: 9.2pt; line-height: 1.45; background: #fff; }
+  .flow .node b { display: block; color: #004b63; font-size: 10pt; margin-bottom: 0.5mm; }
+  .flow .node.fill { background: #017a9e; color: #fff; border-color: #017a9e; }
+  .flow .node.fill b { color: #fff; }
+  .flow .node.soft { background: #eff9fd; }
+  .flow .arr { flex: 0 0 6mm; display: flex; align-items: center; justify-content: center; color: #017a9e; font-size: 13pt; font-weight: 700; }
+  .stack { display: grid; gap: 1.6mm; }
+  .pill { display: inline-block; padding: 0.3mm 2.2mm; border-radius: 99px; border: 0.3mm solid #7ec6e6; background: #eff9fd; color: #004b63; font-size: 8.8pt; margin: 0 1mm 1mm 0; white-space: nowrap; }
+  .pill.o { border-color: #e9c98f; background: #fff4e0; color: #9a5b00; }
+  .pill.r { border-color: #eab3b6; background: #fef0f1; color: #a92d33; }
+  .opt { margin: 0 0 1mm; padding-left: 7mm; text-indent: -7mm; }
+  .opt b { color: #004b63; }
+  .rec { color: #18794e; font-weight: 600; }
+  .small { font-size: 9.2pt; color: #4a5a6b; }
+  .toc { columns: 2; column-gap: 8mm; margin: 0; padding-left: 5.5mm; }
+  .mock-caption { margin: 0 0 3mm; }
+  .dec { border: 0.3mm solid #cfd8e0; border-radius: 2.6mm; padding: 2.2mm 3.4mm 1.4mm; margin: 0 0 2.2mm; break-inside: avoid; }
+  .dec.first { border-color: #7ec6e6; background: #eff9fd; }
+  .dec .q { font-weight: 600; color: #004b63; margin: 0 0 1mm; font-size: 10.6pt; }
+  .dec .o { margin: 0 0 0.8mm; padding-left: 5mm; font-size: 9.9pt; line-height: 1.55; }
+  .dec .o b { color: #24384d; }
+  .dec .o b.rec, .rec { color: #18794e; }
+  .keep { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<section class="first cover">
+  <span class="tag">方案，等你批准。批准前不改代码</span>
+  <h1 style="margin-top:4mm">医伴 第三版方案：对话为主</h1>
+  <p class="lead" style="margin-top:2.5mm">主界面只有一个对话框。患者只做两件事：不舒服时跟它说，看完医生把医嘱拍给它。其余的都在后台自动完成。</p>
+  <p class="meta">2026 年 10 月 3 日 · 主管整理 · 依据：inbox/redesign-chat-first.md（你的原话和功能说明）、对接员转来的四个回答、现有代码</p>
+
+  <div class="box" style="margin-top:5mm">
+    <h3>一页看懂</h3>
+    <ul style="margin-bottom:0">
+      <li><b>界面只剩三处：</b>一个对话（主界面）、一页「我的资料」、角落里一个红色的「应急」按钮。电脑上显示成一部手机，只在手机里操作；真手机上全屏。</li>
+      <li><b>患者只做两件事：</b>不舒服时说一句；看完医生拍一张医嘱。默认按住说话，可以切到打字，可以拍照。</li>
+      <li><b>后台自动判断你要干什么：</b>是说不舒服、是在提问、是传了医嘱，还是报了一个血糖数。患者不用找功能，也不用知道有哪些功能。</li>
+      <li><b>现有的能力都留着，只是不再是一个个页面：</b>追问、给医生的一页、医嘱存档、问答、提醒、健康指标、应急手册，全部变成对话里的一步，需要时才出现。</li>
+      <li><b>安全的做法不变：</b>危险信号由写死的规则判断；给医生看的内容只由记录生成；AI 写的每一句都要过滤。新增的是「初步分诊」：要不要看医生、多急、挂哪科。</li>
+      <li><b>工作量：</b>大约 13 到 16 个小时的并行开发，分三段，每段结束都有能看的东西。见第 9 节。</li>
+      <li><b>需要你定 12 件事</b>，每件我都给了选项和建议，见第 10 节。最要紧的是第 1 件：分诊说到什么程度。</li>
+    </ul>
+  </div>
+
+  <h3>目录</h3>
+  <ol class="toc">
+    <li>我对你想法的理解</li>
+    <li>要解决的问题</li>
+    <li>解决办法总览</li>
+    <li>界面示意：六张图</li>
+    <li>每一步流程</li>
+    <li>前端怎么做</li>
+    <li>后端怎么做</li>
+    <li>和现在的版本相比</li>
+    <li>工作量和顺序</li>
+    <li>需要你拍板的 12 件事</li>
+    <li>AI 能做什么、不能做什么</li>
+  </ol>
+</section>
+
+<section class="pb">
+  <h2>1　我对你想法的理解</h2>
+  <p>下面是我读完你的原话和功能说明之后的理解。哪一条理解错了，请直接指出来，方案跟着改。</p>
+  <table>
+    <tr><th style="width:38%">你说的</th><th>我的理解</th></tr>
+    <tr><td>「主界面就是一个直接说，然后 AI 就可以直接给你回」「有点像豆包」「默认还是语音输入，我可以切换打字」「可以上传照片」</td><td>打开就是对话。输入栏上最大的是「按住说话」，旁边可以切到键盘、可以拍照或从相册选。AI 的回复直接出现在对话里。</td></tr>
+    <tr><td>「下面你可以选择一些，比如去看医生、讲解病史、导出」</td><td>输入栏上方有三个快捷选项。它们是「捷径」，不是必经之路：不点它们，直接说「我要去看医生了」也一样。</td></tr>
+    <tr><td>「再有一个界面可以查看患者的详细信息」</td><td>第二个界面「我的资料」：个人信息、就诊记录、提醒、血糖血压。平时不用进，想看的时候才进。</td></tr>
+    <tr><td>「患者不需要知道所有功能，但是他需要的时候这个功能要有，就像特斯拉或者车一样」「应急功能一定要有，但是不能很复杂」</td><td>功能都在，但不摆出来。日常只有对话；后台看情况把需要的那一步递到患者面前。应急是例外：它像车上的应急按钮，固定在角落，任何时候一点就开。</td></tr>
+    <tr><td>「患者唯一需要做的就是不舒服跟 AI 说，然后拿完医生信息后上传」「所有的都是后端，他会自动，不需要患者一个一个去理解」</td><td>这是整个方案的核心。整理、归档、关联以前的记录、设提醒、准备复诊要说的话，都是后台的事。</td></tr>
+    <tr><td>「我一问我就知道我什么病」</td><td>按你回给对接员的话：做初步分诊，结合历史记录判断要不要看医生，不给过多医疗建议。说不说可能的病，我列成了选项请你定（第 10 节第 1 件）。</td></tr>
+    <tr><td>「我一问我就知道这能不能吃」</td><td>食物和药都算。结合过敏、基础病、医生的医嘱来回答；不替人定剂量。</td></tr>
+    <tr><td>功能说明第 1 部分：问诊</td><td>患者说哪里不舒服，AI 把缺的信息问出来（八类），疼痛用身体图定位，口语词确认成规范说法，和以前的记录有关联时追问，最后生成一段病情描述，不满意可以改。</td></tr>
+    <tr><td>功能说明第 2 部分：医嘱</td><td>上传医嘱照片，提取药物、注意事项、诊断、时间地点、其他治疗、复诊时间；展示给患者；然后二选一：a 整理待办并设提醒（频率可选），b 解释。复诊前帮着准备要说的话；之后出现副作用可以接着记。</td></tr>
+    <tr><td>「离开页面弹出提示问保存还是放弃」</td><td>每次问诊或医嘱都是一条就诊记录，可以只有问诊、只有医嘱，或者两者都有。结束时让患者选保存还是放弃。</td></tr>
+    <tr><td>注册：年龄、性别、学历、基础病、家族遗传病</td><td>填表为主，基础病可以先跳过。体检报告是可选的，随时可以拍来补全。</td></tr>
+    <tr><td>「做成手机版，有一个手机造型，像虚拟机那种」</td><td>电脑浏览器里显示一部手机的外形，应用只在这部「手机」里运行。</td></tr>
+  </table>
+  <div class="box warn">
+    <b>有两个词我拿不准，先按下面的理解做，并列进了第 10 节请你确认：</b>
+    <ul style="margin-bottom:0">
+      <li>「讲解病史」：我理解为两种都要。一是把我的病史整理成医生看得懂的一段话，讲给医生；二是用大白话把诊断和医嘱讲给我自己听。</li>
+      <li>「导出」：我理解为把给医生的那一页、或者全部就诊记录，存成 PDF、打印，或复制成文字。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>2　要解决的问题</h2>
+  <div class="cols3">
+    <div class="card"><b class="t">说不清</b>不知道怎么描述病情。说了口语，医生要再翻译一遍；轻的症状觉得不重要，就不说了。</div>
+    <div class="card"><b class="t">记不住</b>什么时候开始的、以前得过什么、医生上次怎么说的、药怎么吃、哪天复诊。</div>
+    <div class="card"><b class="t">效率低</b>医生要从头问一遍。患者回家后医嘱没人盯，下次复诊又从头说。</div>
+  </div>
+  <p style="margin-top:3mm">这三个问题来自最早的项目概述，没有变。第三版要多解决一个：</p>
+  <div class="box red">
+    <b>第四个问题：现在的产品还是太复杂。</b>第二版把功能做成了一个个入口：首页的卡片、去看医生、问医伴、应急手册、看完医生了、我的档案、长期管理。每一个单看都不难，但患者要先弄明白「我现在该点哪个」。这本身就是负担，对老人尤其是。
+  </div>
+  <h3>第三版怎么回应这四个问题</h3>
+  <table>
+    <tr><th style="width:16%">问题</th><th>第三版的做法</th></tr>
+    <tr><td class="k">说不清</td><td>AI 把缺的问出来（八类信息）；疼在哪里用图点；口语词确认成医生的说法；和以前的记录有关联时主动追问；最后替患者写成一段病情描述。</td></tr>
+    <tr><td class="k">记不住</td><td>说过的、拍过的都自动归进就诊记录；医嘱变成待办和提醒；记不清的直接问（上次医生说了什么、这个药怎么吃、这个能不能吃）。</td></tr>
+    <tr><td class="k">效率低</td><td>去看医生前一键生成给医生的一页；复诊前自动准备「这次要说什么」；医嘱拍照就存档，不用手打。</td></tr>
+    <tr><td class="k">太复杂</td><td>只有一个对话。患者不选功能，后台判断。应急单独留一个按钮。</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>3　解决办法总览</h2>
+  <p>一句话：<b>患者只管说和拍，后台负责听懂、分流、整理、归档、提醒。</b></p>
+  <div class="flow">
+    <div class="node fill"><b>患者做的</b>① 不舒服时说一句<br>② 看完医生拍医嘱<br><span style="opacity:.85">平时想问就问</span></div>
+    <div class="arr">→</div>
+    <div class="node soft"><b>后台自动判断</b>这是在说不舒服、提问、传医嘱，还是报一个数？<br>有没有危险信号？<br>和以前哪条记录有关？</div>
+    <div class="arr">→</div>
+    <div class="node"><b>对应的一步出现在对话里</b>追问 · 身体图 · 病情描述 · 分诊建议 · 医嘱整理 · 待办和提醒 · 解释 · 回答</div>
+    <div class="arr">→</div>
+    <div class="node soft"><b>自动存进就诊记录</b>下次不舒服、复诊、提问时自动调出来</div>
+  </div>
+  <h3>像车一样分三层</h3>
+  <table>
+    <tr><th style="width:20%">层</th><th style="width:30%">车上的对应</th><th>医伴里是什么</th></tr>
+    <tr><td class="k">天天用的</td><td>方向盘、油门</td><td>对话框：说话、打字、拍照。</td></tr>
+    <tr><td class="k">自动的</td><td>发动机、变速箱、各种传感器</td><td>听懂意图、追问、整理、关联以前的记录、分诊、归档、提醒、每天问一句怎么样了。患者看不见，也不用懂。</td></tr>
+    <tr><td class="k">应急的</td><td>双闪、SOS 按钮</td><td>右上角红色的「应急」：给身边的人看的应急卡和一键拨打 120。对话里一旦出现危险信号，也会立刻给出红色提示。</td></tr>
+  </table>
+  <h3>患者说一句话之后，后台可能走的六条路</h3>
+  <table>
+    <tr><th style="width:24%">患者说的或做的</th><th style="width:20%">后台认成</th><th>接下来发生什么</th></tr>
+    <tr><td>「这两天右膝盖疼」</td><td>说不舒服</td><td>进入问诊：追问缺的信息，疼痛给身体图，最后出病情描述和分诊建议，存成一条就诊记录。</td></tr>
+    <tr><td>拍了一张医嘱或处方</td><td>传医嘱</td><td>认出诊断、药、注意事项、其他治疗、时间地点、复诊时间；展示给患者；问要「整理待办并提醒」还是「解释」。</td></tr>
+    <tr><td>「这个药能和酒一起吗」「虾能不能吃」「上次医生说了什么」</td><td>提问</td><td>查档案、过敏、医嘱和以前的记录来回答，并指出依据是哪条记录。</td></tr>
+    <tr><td>「今天空腹血糖 6.5」</td><td>报一个数</td><td>记下来；太高或太低时按规则立刻提醒，并跟进复测。</td></tr>
+    <tr><td>「我明天去医院」或点「去看医生」</td><td>要去看医生</td><td>把这次的情况和相关的以前记录整理成给医生的一页，可以直接给医生看，也可以导出。</td></tr>
+    <tr><td>「胸口很闷，喘不上气」</td><td>危险信号</td><td>不等 AI：规则立刻给出红色提示和「拨打 120」按钮。</td></tr>
+  </table>
+  <p class="small">认不准的时候不猜：AI 会问一句「你是想……还是……？」。认错了，患者说一句「不是，我是想问……」就改过来。</p>
+  <h3>界面只有三处</h3>
+  <div class="cols3" style="margin-bottom:3mm">
+    <div class="card"><b class="t">① 对话（主界面）</b>打开就是它。上面是对话，下面是三个快捷选项和输入栏。左上角进「我的资料」，右上角是「应急」。</div>
+    <div class="card"><b class="t">② 我的资料</b>个人信息、就诊记录、提醒、血糖血压、设置。可以自己补充以前的病史。</div>
+    <div class="card"><b class="t">③ 应急</b>固定在右上角的红色按钮。点开是应急卡：我是谁、有什么病、对什么过敏、联系人、晕倒怎么做，还有拨打 120。</div>
+  </div>
+</section>
+
+<section class="pb">
+  <h2>4　界面示意：六张图</h2>
+  <p class="mock-caption" style="margin-bottom:2mm">示意图，说明每一步长什么样。电脑上整个应用显示在这样一部手机里，真手机上全屏。</p>
+  <style>
+/* 医伴 · 对话为主 · 6 个手机界面示意（片段：所有样式只作用在 .mk-wrap 内） */
+.mk-wrap{display:grid;grid-template-columns:57mm 57mm 57mm;column-gap:6.5mm;row-gap:7mm;width:184mm;margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC","Hiragino Sans GB",sans-serif;font-size:6.6pt;font-weight:400;font-style:normal;line-height:1.45;color:#0f1b2d;text-align:left;letter-spacing:0;break-inside:avoid;page-break-inside:avoid;}
+.mk-cell{display:flex;flex-direction:column;width:57mm;min-width:0;margin:0;padding:0;}
+.mk-cap{display:block;height:5mm;margin:0;padding:0;font-size:9pt;line-height:3.8mm;font-weight:700;color:#004b63;white-space:nowrap;}
+.mk-phone{position:relative;display:flex;flex-direction:column;width:57mm;height:113.5mm;margin:0;padding:0;box-sizing:border-box;border:1.6mm solid #0f1b2d;border-radius:7mm;background:#fff;overflow:hidden;font-size:6.6pt;line-height:1.45;color:#0f1b2d;}
+.mk-status{position:relative;flex:none;display:flex;align-items:center;justify-content:space-between;height:4.4mm;padding:0 4.4mm 0 5mm;box-sizing:border-box;}
+.mk-time{font-size:5.8pt;font-weight:700;line-height:1;}
+.mk-notch{position:absolute;left:50%;top:1mm;width:12mm;height:2.7mm;margin-left:-6mm;border-radius:1.35mm;background:#0f1b2d;}
+.mk-batt{display:block;width:3.8mm;height:1.9mm;}
+.mk-top{flex:none;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:9mm;padding:0 2.6mm;box-sizing:border-box;border-bottom:0.25mm solid #e4eaef;}
+.mk-avatar{justify-self:start;display:flex;align-items:center;justify-content:center;width:5.8mm;height:5.8mm;box-sizing:border-box;border:0.25mm solid #cfe6ef;border-radius:50%;background:#eff9fd;}
+.mk-i-av{display:block;width:3.6mm;height:3.6mm;}
+.mk-title{font-size:7.6pt;font-weight:700;line-height:1.45;white-space:nowrap;}
+.mk-sos{justify-self:end;padding:0.35mm 2.3mm;border-radius:3mm;background:#c8373e;color:#fff;font-size:6.6pt;font-weight:700;line-height:1.45;white-space:nowrap;}
+.mk-back{justify-self:start;display:flex;align-items:center;gap:0.7mm;color:#017a9e;font-weight:700;white-space:nowrap;}
+.mk-i-back{display:block;width:1.5mm;height:2.5mm;}
+.mk-chat{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:flex-start;gap:1.8mm;padding:2.4mm 2.6mm;box-sizing:border-box;}
+.mk-ai,.mk-me{max-width:88%;padding:1.2mm 2mm;box-sizing:border-box;}
+.mk-ai{align-self:flex-start;border:0.25mm solid #e4eaef;border-radius:0.8mm 2.8mm 2.8mm 2.8mm;background:#fff;}
+.mk-me{align-self:flex-end;border-radius:2.8mm 0.8mm 2.8mm 2.8mm;background:#017a9e;color:#fff;}
+.mk-card{align-self:stretch;box-sizing:border-box;border:0.25mm solid #e4eaef;border-radius:2.4mm;background:#fff;overflow:hidden;}
+.mk-ch{padding:0.8mm 2mm;background:#eff9fd;border-bottom:0.25mm solid #d6ecf4;color:#004b63;font-weight:700;}
+.mk-cb{padding:1.5mm 2mm 1.7mm;}
+.mk-cb-knee{padding:1.2mm 1.4mm 1.3mm;}
+.mk-grp{align-self:stretch;display:flex;flex-direction:column;align-items:flex-start;gap:1.2mm;}
+.mk-opts{display:flex;flex-wrap:wrap;gap:1.2mm;}
+.mk-opt{padding:0.4mm 1.9mm;border:0.25mm solid #017a9e;border-radius:3mm;background:#fff;color:#017a9e;white-space:nowrap;}
+.mk-opt-on{background:#017a9e;color:#fff;font-weight:700;}
+.mk-btns{display:flex;gap:1.4mm;margin-top:1.6mm;}
+.mk-btn{display:flex;align-items:center;justify-content:center;padding:0.5mm 2.8mm;box-sizing:border-box;border:0.25mm solid #017a9e;border-radius:3mm;background:#fff;color:#017a9e;font-weight:700;white-space:nowrap;}
+.mk-btn-q{border-color:#cfd8e0;color:#4a5a6b;}
+.mk-pri{background:#017a9e;color:#fff;}
+.mk-row2{align-self:stretch;display:flex;gap:1.4mm;}
+.mk-row2 .mk-btn{flex:1 1 auto;padding:1.1mm 1.4mm;}
+.mk-warn{align-self:stretch;box-sizing:border-box;padding:1.5mm 2.2mm 1.6mm;border:0.25mm solid #f0d9ae;border-radius:2.4mm;background:#fff4e0;}
+.mk-wt{font-size:7.6pt;font-weight:700;color:#9a5b00;}
+.mk-ws{margin-top:0.3mm;font-size:5.8pt;color:#0f1b2d;}
+.mk-mute{color:#4a5a6b;}
+.mk-em{font-weight:700;color:#017a9e;}
+.mk-knee{display:block;width:100%;height:26.4mm;}
+.mk-sel{margin-top:0.4mm;font-size:5.8pt;color:#4a5a6b;text-align:center;}
+.mk-photo{padding:1.2mm;}
+.mk-thumb{display:block;width:17mm;height:12mm;}
+.mk-pcap{margin-top:0.4mm;font-size:5.8pt;text-align:center;}
+.mk-kv{display:grid;grid-template-columns:6.4mm 1fr;column-gap:1.5mm;row-gap:1.1mm;align-items:center;}
+.mk-k{padding:0.15mm 0;border-radius:0.8mm;background:#eff9fd;color:#004b63;font-size:5.8pt;font-weight:700;text-align:center;}
+.mk-list{display:flex;flex-direction:column;}
+.mk-li{display:flex;align-items:center;justify-content:space-between;gap:1.6mm;padding:1.3mm 2mm;border-top:0.25mm solid #e4eaef;}
+.mk-li:first-child{border-top:0;}
+.mk-sw{position:relative;flex:none;width:5.8mm;height:3.3mm;border-radius:1.65mm;background:#cfd8e0;}
+.mk-sw::after{content:"";position:absolute;top:0.4mm;left:0.4mm;width:2.5mm;height:2.5mm;border-radius:50%;background:#fff;}
+.mk-on{background:#017a9e;}
+.mk-on::after{left:2.9mm;}
+.mk-h{align-self:stretch;margin-top:0.6mm;font-weight:700;color:#004b63;}
+.mk-wide{align-self:stretch;display:flex;align-items:center;justify-content:center;height:7.2mm;margin-top:0.8mm;border-radius:3.6mm;background:#017a9e;color:#fff;font-weight:700;}
+.mk-note{align-self:stretch;font-size:5.8pt;color:#4a5a6b;text-align:center;}
+.mk-page{gap:1.5mm;}
+.mk-info{position:relative;align-self:stretch;box-sizing:border-box;padding:1.7mm 2.4mm 1.8mm;border:0.25mm solid #d6ecf4;border-radius:2.4mm;background:#eff9fd;}
+.mk-edit{position:absolute;top:1.9mm;right:2.4mm;font-size:5.8pt;font-weight:700;color:#017a9e;}
+.mk-who{margin-bottom:0.3mm;font-size:7.6pt;font-weight:700;color:#004b63;}
+.mk-red{font-weight:700;color:#c8373e;}
+.mk-group{align-self:stretch;box-sizing:border-box;border:0.25mm solid #e4eaef;border-radius:2.4mm;background:#fff;overflow:hidden;}
+.mk-gi{display:flex;align-items:center;justify-content:space-between;gap:1.6mm;padding:1.3mm 2.2mm;border-top:0.25mm solid #e4eaef;}
+.mk-gi:first-child{border-top:0;}
+.mk-sub{font-size:5.8pt;color:#4a5a6b;}
+.mk-chev{display:block;flex:none;width:1.5mm;height:2.5mm;}
+.mk-bottom{flex:none;padding:1.5mm 2.6mm 0;border-top:0.25mm solid #e4eaef;}
+.mk-quick{display:flex;gap:1.4mm;}
+.mk-qc{padding:0.4mm 2.2mm;border:0.25mm solid #cfe6ef;border-radius:3mm;background:#eff9fd;color:#004b63;white-space:nowrap;}
+.mk-input{display:flex;align-items:center;gap:2mm;padding-top:1.6mm;}
+.mk-ib{flex:none;display:flex;align-items:center;justify-content:center;width:6.6mm;height:6.6mm;box-sizing:border-box;border:0.25mm solid #e4eaef;border-radius:50%;background:#fff;}
+.mk-i-ib{display:block;width:4mm;height:4mm;}
+.mk-talk{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:1mm;height:7.2mm;border-radius:3.6mm;background:#017a9e;color:#fff;font-weight:700;white-space:nowrap;}
+.mk-i-mic{display:block;width:3.2mm;height:3.2mm;}
+.mk-home{flex:none;display:flex;align-items:center;justify-content:center;height:3.4mm;}
+.mk-bar{display:block;width:15mm;height:0.9mm;border-radius:0.45mm;background:#0f1b2d;}
+/* 带底色的元素：打印时保留底色 */
+.mk-wrap,.mk-phone,.mk-notch,.mk-avatar,.mk-sos,.mk-ai,.mk-me,.mk-card,.mk-ch,.mk-opt,.mk-opt-on,.mk-btn,.mk-pri,.mk-warn,.mk-k,.mk-sw,.mk-sw::after,.mk-on,.mk-wide,.mk-info,.mk-group,.mk-qc,.mk-ib,.mk-talk,.mk-bar,.mk-knee,.mk-thumb,.mk-batt{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+</style>
+<div class="mk-wrap">
+
+  <!-- ① 主界面 -->
+  <div class="mk-cell">
+    <div class="mk-cap">① 主界面</div>
+    <div class="mk-phone">
+      <div class="mk-status"><span class="mk-time">9:41</span><span class="mk-notch"></span><svg class="mk-batt" viewBox="0 0 24 12" aria-hidden="true"><rect x="1" y="1" width="19" height="10" rx="2.6" fill="none" stroke="#0f1b2d" stroke-width="1.4"/><rect x="3.2" y="3.2" width="12.6" height="5.6" rx="1.2" fill="#0f1b2d"/><path d="M22.4 4.6v2.8" stroke="#0f1b2d" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="mk-top"><span class="mk-avatar"><svg class="mk-i-av" viewBox="0 0 24 24" fill="none" stroke="#017a9e" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.9"/><path d="M4.6 20.4c1.1-4 4-6 7.4-6s6.3 2 7.4 6"/></svg></span><span class="mk-title">医伴</span><span class="mk-sos">应急</span></div>
+      <div class="mk-chat">
+        <div class="mk-ai">早上好。哪里不舒服，<br>或者有什么想问的，直接跟我说。</div>
+        <div class="mk-ai">看完医生，把医嘱拍给我就行。</div>
+      </div>
+      <div class="mk-bottom"><div class="mk-quick"><span class="mk-qc">去看医生</span><span class="mk-qc">讲解病史</span><span class="mk-qc">导出</span></div><div class="mk-input"><span class="mk-ib"><svg class="mk-i-ib" viewBox="0 0 24 24" fill="none" stroke="#4a5a6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="2.4"/><path d="M6.6 9.6h.01M10.2 9.6h.01M13.8 9.6h.01M17.4 9.6h.01M6.6 12.6h.01M10.2 12.6h.01M13.8 12.6h.01M17.4 12.6h.01M9.2 15.4h5.6"/></svg></span><span class="mk-talk"><svg class="mk-i-mic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5"/><path d="M5 11.5a7 7 0 0 0 14 0M12 18.5v3"/></svg>按住 说话</span><span class="mk-ib"><svg class="mk-i-ib" viewBox="0 0 24 24" fill="none" stroke="#4a5a6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.6c0-1.1.9-2 2-2h2.3l1.6-2.3h5.2l1.6 2.3h2.3c1.1 0 2 .9 2 2v8.6c0 1.1-.9 2-2 2h-13c-1.1 0-2-.9-2-2z"/><circle cx="12" cy="12.7" r="3.4"/></svg></span></div></div>
+      <div class="mk-home"><span class="mk-bar"></span></div>
+    </div>
+  </div>
+
+  <!-- ② 问诊：追问和身体图 -->
+  <div class="mk-cell">
+    <div class="mk-cap">② 问诊：追问和身体图</div>
+    <div class="mk-phone">
+      <div class="mk-status"><span class="mk-time">9:41</span><span class="mk-notch"></span><svg class="mk-batt" viewBox="0 0 24 12" aria-hidden="true"><rect x="1" y="1" width="19" height="10" rx="2.6" fill="none" stroke="#0f1b2d" stroke-width="1.4"/><rect x="3.2" y="3.2" width="12.6" height="5.6" rx="1.2" fill="#0f1b2d"/><path d="M22.4 4.6v2.8" stroke="#0f1b2d" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="mk-top"><span class="mk-avatar"><svg class="mk-i-av" viewBox="0 0 24 24" fill="none" stroke="#017a9e" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.9"/><path d="M4.6 20.4c1.1-4 4-6 7.4-6s6.3 2 7.4 6"/></svg></span><span class="mk-title">医伴</span><span class="mk-sos">应急</span></div>
+      <div class="mk-chat">
+        <div class="mk-me">这两天右膝盖疼，上下楼更厉害</div>
+        <div class="mk-ai">记下了。点一下图上最疼的地方。</div>
+        <div class="mk-card">
+          <div class="mk-ch">哪里最疼</div>
+          <div class="mk-cb mk-cb-knee">
+            <svg class="mk-knee" viewBox="0 0 44.6 26.2" font-size="2.1" aria-hidden="true">
+              <g transform="translate(13.6 0)">
+                <path d="M-4.8 0.4C-4.7 4-4.4 7.5-4.4 10C-4.4 12.5-4.6 14.5-4.2 17C-3.9 19-3.2 21-2.9 22.4H2.9C3.3 20.6 4.5 18.6 4.6 16.4C4.7 14.5 4.4 12.6 4.4 10C4.4 7.5 4.7 4 4.8 0.4Z" fill="#f2f6f9"/>
+                <path d="M-4.8 0.4C-4.7 4-4.4 7.5-4.4 10C-4.4 12.5-4.6 14.5-4.2 17C-3.9 19-3.2 21-2.9 22.4M4.8 0.4C4.7 4 4.4 7.5 4.4 10C4.4 12.6 4.7 14.5 4.6 16.4C4.5 18.6 3.3 20.6 2.9 22.4" fill="none" stroke="#8a9bab" stroke-width="0.3" stroke-linecap="round"/>
+                <rect x="-4.1" y="9" width="2.1" height="6.4" rx="1.05" fill="#fff" stroke="#9fb1bf" stroke-width="0.25"/>
+                <ellipse cx="0" cy="12.2" rx="1.7" ry="2.9" fill="#fff" stroke="#9fb1bf" stroke-width="0.25"/>
+                <rect x="2" y="9" width="2.1" height="6.4" rx="1.05" fill="#017a9e"/>
+                <circle cx="3.05" cy="12.2" r="0.72" fill="#fff"/>
+                <path d="M0 6.8V9.2" stroke="#9fb1bf" stroke-width="0.25"/>
+                <text x="0" y="5.9" text-anchor="middle" fill="#4a5a6b">前面</text>
+                <text x="-5.1" y="12.95" text-anchor="end" fill="#4a5a6b">外侧</text>
+                <text x="5.1" y="12.95" fill="#017a9e" font-weight="700">内侧</text>
+                <text x="0" y="25.5" text-anchor="middle" fill="#4a5a6b">正面</text>
+              </g>
+              <g transform="translate(35.2 0)">
+                <path d="M-4.8 0.4C-4.7 4-4.4 7.5-4.4 10C-4.4 12.5-4.6 14.5-4.2 17C-3.9 19-3.2 21-2.9 22.4H2.9C3.3 20.6 4.5 18.6 4.6 16.4C4.7 14.5 4.4 12.6 4.4 10C4.4 7.5 4.7 4 4.8 0.4Z" fill="#f2f6f9"/>
+                <path d="M-4.8 0.4C-4.7 4-4.4 7.5-4.4 10C-4.4 12.5-4.6 14.5-4.2 17C-3.9 19-3.2 21-2.9 22.4M4.8 0.4C4.7 4 4.4 7.5 4.4 10C4.4 12.6 4.7 14.5 4.6 16.4C4.5 18.6 3.3 20.6 2.9 22.4" fill="none" stroke="#8a9bab" stroke-width="0.3" stroke-linecap="round"/>
+                <ellipse cx="0" cy="12.4" rx="3.2" ry="2.3" fill="#fff" stroke="#9fb1bf" stroke-width="0.25"/>
+                <path d="M0 6.8V10.1" stroke="#9fb1bf" stroke-width="0.25"/>
+                <text x="0" y="5.9" text-anchor="middle" fill="#4a5a6b">后面</text>
+                <text x="0" y="25.5" text-anchor="middle" fill="#4a5a6b">背面</text>
+              </g>
+            </svg>
+            <div class="mk-sel">已选：右膝 <span class="mk-em">内侧</span></div>
+          </div>
+        </div>
+        <div class="mk-grp">
+          <div class="mk-ai">是怎么个疼法？</div>
+          <div class="mk-opts"><span class="mk-opt">酸胀</span><span class="mk-opt">刺痛</span><span class="mk-opt">一动就疼</span><span class="mk-opt">说不清</span></div>
+        </div>
+      </div>
+      <div class="mk-bottom"><div class="mk-quick"><span class="mk-qc">去看医生</span><span class="mk-qc">讲解病史</span><span class="mk-qc">导出</span></div><div class="mk-input"><span class="mk-ib"><svg class="mk-i-ib" viewBox="0 0 24 24" fill="none" stroke="#4a5a6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="2.4"/><path d="M6.6 9.6h.01M10.2 9.6h.01M13.8 9.6h.01M17.4 9.6h.01M6.6 12.6h.01M10.2 12.6h.01M13.8 12.6h.01M17.4 12.6h.01M9.2 15.4h5.6"/></svg></span><span class="mk-talk"><svg class="mk-i-mic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5"/><path d="M5 11.5a7 7 0 0 0 14 0M12 18.5v3"/></svg>按住 说话</span><span class="mk-ib"><svg class="mk-i-ib" viewBox="0 0 24 24" fill="none" stroke="#4a5a6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.6c0-1.1.9-2 2-2h2.3l1.6-2.3h5.2l1.6 2.3h2.3c1.1 0 2 .9 2 2v8.6c0 1.1-.9 2-2 2h-13c-1.1 0-2-.9-2-2z"/><circle cx="12" cy="12.7" r="3.4"/></svg></span></div></div>
+      <div class="mk-home"><span class="mk-bar"></span></div>
+    </div>
+  </div>
+
+  <!-- ③ 病情描述和分诊 -->
+  <div class="mk-cell">
+    <div class="mk-cap">③ 病情描述和分诊</div>
+    <div class="mk-phone">
+      <div class="mk-status"><span class="mk-time">9:41</span><span class="mk-notch"></span><svg class="mk-batt" viewBox="0 0 24 12" aria-hidden="true"><rect x="1" y="1" width="19" height="10" rx="2.6" fill="none" stroke="#0f1b2d" stroke-width="1.4"/><rect x="3.2" y="3.2" width="12.6" height="5.6" rx="1.2" fill="#0f1b2d"/><path d="M22.4 4.6v2.8" stroke="#0f1b2d" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="mk-top"><span class="mk-avatar"><svg class="mk-i-av" viewBox="0 0 24 24" fill="none" stroke="#017a9e" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.9"/><path d="M4.6 20.4c1.1-4 4-6 7.4-6s6.3 2 7.4 6"/></svg></span><span class="mk-title">医伴</span><span class="mk-sos">应急</span></div>
+      <div class="mk-chat">
+        <div class="mk-card">
+          <div class="mk-ch">给医生的病情描述</div>
+          <div class="mk-cb">
+            <div>右膝内侧疼痛 2 天，上下楼时加重，<br>休息后减轻。没有外伤，没有用药。</div>
+            <div><span class="mk-mute">以前：</span>2024 年右膝扭伤过一次。</div>
+            <div class="mk-btns"><span class="mk-btn mk-pri">保存</span><span class="mk-btn">改一下</span><span class="mk-btn mk-btn-q">放弃</span></div>
+          </div>
+        </div>
+        <div class="mk-warn">
+          <div class="mk-wt">建议这几天去看医生 · 骨科</div>
+          <div class="mk-ws">如果膝盖红肿发热，<br>或者走不了路，当天就去。</div>
+        </div>
+        <div class="mk-ai">哪里不对直接告诉我，我重新写。</div>
+      </div>
+      <div class="mk-bottom"><div class="mk-quick"><span class="mk-qc">去看医生</span><span class="mk-qc">讲解病史</span><span class="mk-qc">导出</span></div><div class="mk-input"><span class="mk-ib"><svg class="mk-i-ib" viewBox="0 0 24 24" fill="none" stroke="#4a5a6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="2.4"/><path d="M6.6 9.6h.01M10.2 9.6h.01M13.8 9.6h.01M17.4 9.6h.01M6.6 12.6h.01M10.2 12.6h.01M13.8 12.6h.01M17.4 12.6h.01M9.2 15.4h5.6"/></svg></span><span class="mk-talk"><svg class="mk-i-mic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5"/><path d="M5 11.5a7 7 0 0 0 14 0M12 18.5v3"/></svg>按住 说话</span><span class="mk-ib"><svg class="mk-i-ib" viewBox="0 0 24 24" fill="none" stroke="#4a5a6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.6c0-1.1.9-2 2-2h2.3l1.6-2.3h5.2l1.6 2.3h2.3c1.1 0 2 .9 2 2v8.6c0 1.1-.9 2-2 2h-13c-1.1 0-2-.9-2-2z"/><circle cx="12" cy="12.7" r="3.4"/></svg></span></div></div>
+      <div class="mk-home"><span class="mk-bar"></span></div>
+    </div>
+  </div>
+
+  <!-- ④ 看完医生：拍医嘱 -->
+  <div class="mk-cell">
+    <div class="mk-cap">④ 看完医生：拍医嘱</div>
+    <div class="mk-phone">
+      <div class="mk-status"><span class="mk-time">9:41</span><span class="mk-notch"></span><svg class="mk-batt" viewBox="0 0 24 12" aria-hidden="true"><rect x="1" y="1" width="19" height="10" rx="2.6" fill="none" stroke="#0f1b2d" stroke-width="1.4"/><rect x="3.2" y="3.2" width="12.6" height="5.6" rx="1.2" fill="#0f1b2d"/><path d="M22.4 4.6v2.8" stroke="#0f1b2d" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="mk-top"><span class="mk-avatar"><svg class="mk-i-av" viewBox="0 0 24 24" fill="none" stroke="#017a9e" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.9"/><path d="M4.6 20.4c1.1-4 4-6 7.4-6s6.3 2 7.4 6"/></svg></span><span class="mk-title">医伴</span><span class="mk-sos">应急</span></div>
+      <div class="mk-chat">
+        <div class="mk-me mk-photo">
+          <svg class="mk-thumb" viewBox="0 0 17 12" aria-hidden="true"><rect width="17" height="12" rx="1.3" fill="#d9e0e6"/><g transform="rotate(-3 8.5 6)"><rect x="2.6" y="1.3" width="11.8" height="9.4" rx="0.4" fill="#f6f8fa"/><g stroke="#97a5b1" stroke-width="0.5" stroke-linecap="round"><path d="M4 3.1h5.2"/><path d="M4 4.7h9M4 6.1h8.2M4 7.5h8.6"/><path d="M9.4 9.2h3.6"/></g></g></svg>
+          <div class="mk-pcap">医嘱照片</div>
+        </div>
+        <div class="mk-card">
+          <div class="mk-ch">我从医嘱里认出了这些</div>
+          <div class="mk-cb mk-kv">
+            <span class="mk-k">诊断</span><span>右膝内侧副韧带轻度损伤</span>
+            <span class="mk-k">药</span><span>洛索洛芬钠片，每日三次，饭后</span>
+            <span class="mk-k">其他</span><span>戴护膝，少走路 2 周</span>
+            <span class="mk-k">复诊</span><span>两周后</span>
+          </div>
+        </div>
+        <div class="mk-row2"><span class="mk-btn mk-pri">整理要做的事并提醒</span><span class="mk-btn">给我解释一下</span></div>
+      </div>
+      <div class="mk-bottom"><div class="mk-quick"><span class="mk-qc">去看医生</span><span class="mk-qc">讲解病史</span><span class="mk-qc">导出</span></div><div class="mk-input"><span class="mk-ib"><svg class="mk-i-ib" viewBox="0 0 24 24" fill="none" stroke="#4a5a6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="2.4"/><path d="M6.6 9.6h.01M10.2 9.6h.01M13.8 9.6h.01M17.4 9.6h.01M6.6 12.6h.01M10.2 12.6h.01M13.8 12.6h.01M17.4 12.6h.01M9.2 15.4h5.6"/></svg></span><span class="mk-talk"><svg class="mk-i-mic" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5"/><path d="M5 11.5a7 7 0 0 0 14 0M12 18.5v3"/></svg>按住 说话</span><span class="mk-ib"><svg class="mk-i-ib" viewBox="0 0 24 24" fill="none" stroke="#4a5a6b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.6c0-1.1.9-2 2-2h2.3l1.6-2.3h5.2l1.6 2.3h2.3c1.1 0 2 .9 2 2v8.6c0 1.1-.9 2-2 2h-13c-1.1 0-2-.9-2-2z"/><circle cx="12" cy="12.7" r="3.4"/></svg></span></div></div>
+      <div class="mk-home"><span class="mk-bar"></span></div>
+    </div>
+  </div>
+
+  <!-- ⑤ 提醒怎么设 -->
+  <div class="mk-cell">
+    <div class="mk-cap">⑤ 提醒怎么设</div>
+    <div class="mk-phone">
+      <div class="mk-status"><span class="mk-time">9:41</span><span class="mk-notch"></span><svg class="mk-batt" viewBox="0 0 24 12" aria-hidden="true"><rect x="1" y="1" width="19" height="10" rx="2.6" fill="none" stroke="#0f1b2d" stroke-width="1.4"/><rect x="3.2" y="3.2" width="12.6" height="5.6" rx="1.2" fill="#0f1b2d"/><path d="M22.4 4.6v2.8" stroke="#0f1b2d" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="mk-top"><span class="mk-avatar"><svg class="mk-i-av" viewBox="0 0 24 24" fill="none" stroke="#017a9e" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.4" r="3.9"/><path d="M4.6 20.4c1.1-4 4-6 7.4-6s6.3 2 7.4 6"/></svg></span><span class="mk-title">医伴</span><span class="mk-sos">应急</span></div>
+      <div class="mk-chat">
+        <div class="mk-card">
+          <div class="mk-ch">要做的事</div>
+          <div class="mk-list">
+            <div class="mk-li"><div>吃药：洛索洛芬钠片<div class="mk-mute">早、中、晚饭后</div></div><span class="mk-sw mk-on"></span></div>
+            <div class="mk-li"><div>戴护膝</div><span class="mk-sw"></span></div>
+            <div class="mk-li"><div>复诊：10 月 17 日</div><span class="mk-sw mk-on"></span></div>
+          </div>
+        </div>
+        <div class="mk-h">吃药多久提醒一次</div>
+        <div class="mk-opts"><span class="mk-opt mk-opt-on">每次都提醒</span><span class="mk-opt">每天一次</span><span class="mk-opt">不提醒</span></div>
+        <div class="mk-wide">设好了</div>
+        <div class="mk-note">要改随时跟我说，比如：晚上那次不用提醒了。</div>
+      </div>
+      <div class="mk-home"><span class="mk-bar"></span></div>
+    </div>
+  </div>
+
+  <!-- ⑥ 我的资料 -->
+  <div class="mk-cell">
+    <div class="mk-cap">⑥ 我的资料</div>
+    <div class="mk-phone">
+      <div class="mk-status"><span class="mk-time">9:41</span><span class="mk-notch"></span><svg class="mk-batt" viewBox="0 0 24 12" aria-hidden="true"><rect x="1" y="1" width="19" height="10" rx="2.6" fill="none" stroke="#0f1b2d" stroke-width="1.4"/><rect x="3.2" y="3.2" width="12.6" height="5.6" rx="1.2" fill="#0f1b2d"/><path d="M22.4 4.6v2.8" stroke="#0f1b2d" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div class="mk-top"><span class="mk-back"><svg class="mk-i-back" viewBox="0 0 8 13" fill="none" stroke="#017a9e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 1.5 1.8 6.5l4.7 5"/></svg>返回</span><span class="mk-title">我的资料</span><span class="mk-sos">应急</span></div>
+      <div class="mk-chat mk-page">
+        <div class="mk-info">
+          <span class="mk-edit">修改</span>
+          <div class="mk-who">58 岁 · 女 · 高中</div>
+          <div><span class="mk-mute">基础病：</span>高血压、2 型糖尿病</div>
+          <div><span class="mk-mute">家族：</span>母亲 2 型糖尿病</div>
+          <div><span class="mk-red">过敏：</span>磺胺类药物</div>
+        </div>
+        <div class="mk-h">就诊记录</div>
+        <div class="mk-group">
+          <div class="mk-gi"><div>右膝疼 · 10 月 3 日<div class="mk-sub">问诊 + 医嘱</div></div><svg class="mk-chev" viewBox="0 0 8 13" fill="none" stroke="#4a5a6b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5 6.2 6.5l-4.7 5"/></svg></div>
+          <div class="mk-gi"><div>年度复诊 · 9 月 12 日<div class="mk-sub">医嘱</div></div><svg class="mk-chev" viewBox="0 0 8 13" fill="none" stroke="#4a5a6b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5 6.2 6.5l-4.7 5"/></svg></div>
+        </div>
+        <div class="mk-h">更多</div>
+        <div class="mk-group">
+          <div class="mk-gi"><div>提醒（3 条）</div><svg class="mk-chev" viewBox="0 0 8 13" fill="none" stroke="#4a5a6b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5 6.2 6.5l-4.7 5"/></svg></div>
+          <div class="mk-gi"><div>血糖和血压</div><svg class="mk-chev" viewBox="0 0 8 13" fill="none" stroke="#4a5a6b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5 6.2 6.5l-4.7 5"/></svg></div>
+          <div class="mk-gi"><div>设置</div><svg class="mk-chev" viewBox="0 0 8 13" fill="none" stroke="#4a5a6b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5 6.2 6.5l-4.7 5"/></svg></div>
+        </div>
+      </div>
+      <div class="mk-home"><span class="mk-bar"></span></div>
+    </div>
+  </div>
+
+</div>
+
+</section>
+
+<section class="pb">
+  <h2>5　每一步流程</h2>
+
+  <h3>5.1　第一次打开：注册</h3>
+  <ul>
+    <li>一张表，五项：年龄、性别、学历、基础病、家族遗传病。基础病可以点「以后再填」。</li>
+    <li>表的下面有一行「有体检报告？拍一下，我帮你填」。这是可选的，以后在对话里随时拍也行。现有的体检报告识别直接用。</li>
+    <li>学历只用来决定 AI 解释时用词的深浅，不会出现在给医生的内容里。</li>
+    <li>填完直接进对话。AI 说一句它能做什么，不做功能介绍。</li>
+  </ul>
+
+  <h3>5.2　不舒服时：问诊</h3>
+  <p>患者说一句哪里不舒服。AI 只问缺的，一次一个问题，能点选的就给选项，可以回答「不清楚」跳过。</p>
+  <table>
+    <tr><th style="width:17%">要问清的八类</th><th style="width:36%">怎么问</th><th>什么时候不问</th></tr>
+    <tr><td class="k">部位</td><td>疼痛类弹出身体图，点一下最疼的地方；膝、肩、腰背、腹部有放大的细分图。</td><td>患者已经说得很具体，或者不是疼痛类的不舒服（比如失眠）。</td></tr>
+    <tr><td class="k">疼痛方式</td><td>给几个可以点的说法：酸胀、刺痛、绞痛、烧灼感、一动就疼、说不清。</td><td>不是疼痛。</td></tr>
+    <tr><td class="k">持续时间</td><td>「什么时候开始的？」</td><td>第一句话里已经说了。</td></tr>
+    <tr><td class="k">什么时候会不舒服、特定情境</td><td>「什么时候更明显？比如饭后、夜里、活动时。」</td><td>已经说了诱因。</td></tr>
+    <tr><td class="k">伴随症状</td><td>按部位给两三个最相关的，可以多选；另有「没有别的」。</td><td>已经说了。</td></tr>
+    <tr><td class="k">接触的药物</td><td>「吃过或用过什么药吗？」</td><td>已经说了，或者明确说没吃。</td></tr>
+    <tr><td class="k">病史</td><td>不让患者从头讲：档案和以前的就诊记录里有的，直接带进描述；只对有关联的问一句确认。</td><td>没有相关记录。</td></tr>
+    <tr><td class="k">有多难受</td><td>有点难受、比较难受、非常难受，三选一。</td><td>已经说了。</td></tr>
+  </table>
+  <div class="cols">
+    <div class="box plain">
+      <h3>口语变成医生的说法</h3>
+      <p>患者说「扭着疼」，AI 确认：「是一阵一阵拧着的那种疼吗？医生管这个叫绞痛。」患者点「是」。病情描述里写「绞痛（患者原话：扭着疼）」，两种说法都留着。</p>
+      <p style="margin-bottom:0" class="small">常见的口语词有一张对照表，写在代码里；表里没有的由 AI 提出规范说法，同样要患者确认后才写进去。</p>
+    </div>
+    <div class="box plain">
+      <h3>和以前的记录有关联时追问</h3>
+      <p>档案里有糖尿病，这次说脚麻；或者三个月前看过胃炎，这次又是上腹痛。AI 会问一句：「你三个月前看过急性胃炎，这次和那次像吗？」</p>
+      <p style="margin-bottom:0" class="small">目的是不漏掉患者觉得不重要的信息。AI 只是问，不下结论。慢性病患者的问诊会把以前的报告和指标自动整合进来。</p>
+    </div>
+  </div>
+  <div class="keep">
+  <h3>问完之后</h3>
+  <ol>
+    <li><b>生成病情描述。</b>一段给医生看的话，放在一张卡片里。患者不满意，直接说「不对，是饭后才疼」或「再加一句我对青霉素过敏」，AI 重新写。</li>
+    <li><b>给出分诊建议。</b>要不要看医生、多急、挂哪个科、去之前留意什么。有危险信号时直接是红色提示。说到什么程度见第 10 节第 1 件。</li>
+    <li><b>保存或放弃。</b>卡片上有「保存」「改一下」「放弃」。保存后成为一条就诊记录。</li>
+    <li><b>之后每天问一句。</b>AI 在对话里主动问「昨天说的膝盖疼，今天怎么样了？」，患者点「好多了、差不多、更严重了」之一，或者直接说。</li>
+  </ol>
+  </div>
+
+  <h3>5.3　去看医生</h3>
+  <ul>
+    <li>点「去看医生」，或者直接说「我明天去医院」。有正在记的不舒服，就用它；没有，就先走一遍 5.2 的问诊。</li>
+    <li>生成给医生的一页：最上面是大字的几行要点，下面是病情描述、时间线、相关的以前记录、过敏和在吃的药、可以问医生的问题。</li>
+    <li>这一页可以全屏直接给医生看，也可以导出成 PDF、打印，或复制成文字。</li>
+  </ul>
+
+  <h3>5.4　看完医生：医嘱</h3>
+  <ol>
+    <li><b>拍照上传。</b>病历、处方、医嘱单、药盒都行，可以拍几张。照片只用来认字，认完就丢。也可以说一遍或打字。</li>
+    <li><b>后台提取六类信息：</b>有哪些药和怎么吃、要注意的事项、诊断、时间和地点、其他治疗措施（比如锻炼哪里、制动）、复诊时间（有就提取）。认不准的地方会标出来。</li>
+    <li><b>展示给患者确认。</b>不对的地方直接说，AI 改。</li>
+    <li><b>二选一，也可以都选：</b>
+      <ul>
+        <li><b>a　整理要做的事并提醒。</b>AI 列出待办：吃药、其他治疗、复诊。患者选哪些要提醒、多久提醒一次，然后一键设好。</li>
+        <li><b>b　给我解释一下。</b>AI 列出可以解释的部分：诊断是什么意思、每个药是干什么的、常见的副作用、注意事项为什么要注意。患者点哪个讲哪个，也可以直接问。</li>
+      </ul>
+    </li>
+    <li><b>自动归档。</b>如果之前有对应的问诊，医嘱并进同一条就诊记录；没有，就单独成一条。</li>
+    <li><b>之后。</b>出现副作用或新的变化，直接在对话里说，会记进这条记录。有复诊的，到时间前 AI 帮着准备「这次复诊可以说什么」：这段时间的变化、药吃得怎么样、有没有副作用、想问的问题。</li>
+  </ol>
+
+  <div class="keep">
+  <h3>5.5　平时提问</h3>
+  <table>
+    <tr><th style="width:26%">问的是</th><th>怎么回答</th></tr>
+    <tr><td class="k">记不清的事</td><td>「上次医生说了什么」「什么时候复诊」「我对什么过敏」：直接按记录原文回答，不经过 AI 改写，一个字都不会错。</td></tr>
+    <tr><td class="k">能不能吃（食物）</td><td>先查过敏和医嘱里的忌口，有就明确说不能，并指出是哪条记录；再看基础病给一般性的提醒（比如糖尿病和甜食）；都没有就说记录里没有相关限制。</td></tr>
+    <tr><td class="k">能不能吃（药）、药怎么吃</td><td>先复述医生怎么开的；再讲说明书上的一般用法和常见注意事项；涉及两种药能不能一起吃、要不要加量减量，一律请他问医生或药师。不替人定剂量。</td></tr>
+    <tr><td class="k">这是什么病、严不严重</td><td>医生已经下过诊断的，讲这个诊断是什么意思；还没看医生的，走分诊，不猜病名（除非你在第 10 节选了别的选项）。</td></tr>
+  </table>
+  </div>
+
+  <div>
+  <h3>5.6　紧急情况</h3>
+  <ul>
+    <li>对话里出现危险信号（胸痛伴喘不上气、神志不清、一侧手脚无力、呕血黑便、血糖过低等），由规则立刻给出红色提示和「拨打 120」按钮，不等 AI。</li>
+    <li>右上角的「应急」随时可以点：应急卡按档案自动生成，给身边的人看。现有的应急手册直接用。</li>
+  </ul>
+  <h3>5.7　我的资料和就诊记录</h3>
+  <ul>
+    <li>一条就诊记录可以是完整的（问诊加医嘱），也可以只有问诊或只有医嘱。后续的追问、副作用、复诊都接在同一条下面。</li>
+    <li>患者可以自己补充以前的病史，问诊时会用到。</li>
+    <li>中途离开：没写完的问诊自动存成草稿，下次打开时 AI 先问「上次说到一半，接着说还是放弃？」。</li>
+  </ul>
+  </div>
+</section>
+
+<section>
+  <h2>6　前端怎么做</h2>
+  <table>
+    <tr><th style="width:20%">部分</th><th>做法</th></tr>
+    <tr><td class="k">技术</td><td>不换：Next.js 16、TypeScript、Tailwind 4，本地 <code>npm run dev</code> 运行。现有的界面组件、语音和拍照的代码继续用。</td></tr>
+    <tr><td class="k">手机外形</td><td>最外层加一个「手机壳」：屏幕宽度大于手机时，页面中央显示一部手机（约 390 × 844），应用只在里面运行和滚动；真手机上自动全屏，不显示外壳。这是一层外观，不影响里面的代码。</td></tr>
+    <tr><td class="k">页面</td><td>从现在的十几个页面减到四个：对话（/）、我的资料（/me）、应急（/sos）、给医生的一页（/doctor/…，用于全屏展示和导出）。注册是对话前的一屏。</td></tr>
+    <tr><td class="k">对话</td><td>一条连续的对话。消息有两种：普通的文字气泡，和「卡片」。卡片是带按钮的结构化内容，每一种对应后台的一步：可点的回答、身体图、病情描述、分诊建议、医嘱整理、待办和提醒设置、解释选项、记数反馈、红色警报、指向某条记录的链接。</td></tr>
+    <tr><td class="k">输入栏</td><td>中间是大的「按住说话」，松手就发；说的话先变成文字显示在自己的气泡里，认错了可以点气泡改。左边切到键盘，右边拍照或从相册选。现有的录音、切段、语音转文字、图片压缩都直接用。</td></tr>
+    <tr><td class="k">快捷选项</td><td>输入栏上方三个：去看医生、讲解病史、导出。它们只是替患者说一句话，走的是和打字一样的路。</td></tr>
+    <tr><td class="k">身体图</td><td>用矢量图画：全身正面和背面各一张，分成约 30 个可以点的区域；膝、肩、腰背、腹部各有一张放大的细分图。点了之后得到规范的部位名称（比如「右膝内侧」）。</td></tr>
+    <tr><td class="k">数据</td><td>仍然只存在这台设备的浏览器里（之前定的）。结构调整为：档案、就诊记录（问诊、医嘱、后续）、对话、提醒、指标读数。旧数据自动迁移。新增「导出全部资料」做备份。</td></tr>
+    <tr><td class="k">提醒</td><td>应用开着时在对话里提醒，并发浏览器通知。另外给每条提醒一个「加进手机日历」的按钮，网页关着也能响。见第 10 节第 4 件。</td></tr>
+    <tr><td class="k">字和按钮</td><td>沿用现在的规矩：正文不小于 17 像素，可点的地方不小于 48 像素，不用小灰字，不出现技术词。</td></tr>
+  </table>
+</section>
+
+<section class="pb">
+  <h2>7　后端怎么做</h2>
+  <p>现在后端是按功能分的七八个接口，由页面决定调哪个。第三版加一个「总调度」：页面只把患者这一轮说的话或拍的照片交给它，由它决定走哪条路。</p>
+  <div class="flow">
+    <div class="node soft"><b>① 收到一轮输入</b>文字、语音转的文字，或照片；加上档案、当前的就诊记录、最近的对话</div>
+    <div class="arr">→</div>
+    <div class="node"><b>② 安全预检</b>写死的规则：危险信号、危险的读数。命中就先给红色提示</div>
+    <div class="arr">→</div>
+    <div class="node"><b>③ 判断意图</b>明显的用规则（有照片、在回答上一个问题、报了一个数）；其余交给模型，认不准就反问</div>
+    <div class="arr">→</div>
+    <div class="node fill"><b>④ 对应的流程</b>问诊、医嘱、问答、记数、给医生的一页、提醒</div>
+    <div class="arr">→</div>
+    <div class="node"><b>⑤ 过滤</b>模型写的每一句都过一遍：没说过的不写、不猜病、不改药量</div>
+    <div class="arr">→</div>
+    <div class="node soft"><b>⑥ 返回</b>要显示的气泡和卡片，加上要存进记录的内容</div>
+  </div>
+  <table>
+    <tr><th style="width:17%">模块</th><th style="width:47%">做什么</th><th>现有代码能用多少</th></tr>
+    <tr><td class="k">意图判断</td><td>把一轮输入分到六条路之一；认不准时生成一句反问。</td><td>新做。</td></tr>
+    <tr><td class="k">问诊</td><td>从患者的话里提取八类信息；决定下一个问什么（顺序由规则定，措辞由模型写）；口语对照；关联以前的记录；生成和修改病情描述。</td><td>约一半：追问上限、不重复提问、从话里读开始时间和轻重、找相似记录，都有了。八类信息、身体图、口语对照、修改重写是新的。</td></tr>
+    <tr><td class="k">分诊</td><td>要不要看、多急、挂哪科。危险信号和加重的判断由规则定，模型只负责措辞和科室。</td><td>规则已有（危险信号、发烧、加重、拖了几天）。科室和分诊卡片是新的。</td></tr>
+    <tr><td class="k">医嘱</td><td>认照片或听口述，提取六类信息；生成待办；生成解释。</td><td>提取已有（文字和照片都能用）。待办、提醒频率、解释是新的。</td></tr>
+    <tr><td class="k">问答</td><td>查记录回答；能不能吃；药怎么吃。</td><td>大部分已有：问医伴的规则直答、带出处、剂量和猜病名的过滤，都做好并测过。「能不能吃」是新的。</td></tr>
+    <tr><td class="k">给医生的一页</td><td>要点和时间线只由记录按规则生成；细节由模型写并过滤。</td><td>已有，直接用。</td></tr>
+    <tr><td class="k">提醒和每天追问</td><td>到时间在对话里发一条消息；记录回答。</td><td>每天追问已有。吃药和其他待办的提醒是新的。</td></tr>
+    <tr><td class="k">语音和照片</td><td>语音转文字；照片识别。</td><td>已有，直接用。</td></tr>
+  </table>
+  <div class="cols">
+    <div class="box plain">
+      <h3>用的模型</h3>
+      <p style="margin-bottom:0">不变：智谱 GLM。对话和整理用 glm-5，认照片用 glm-4.6v，语音用 glm-asr-2512。Key 只放在服务端。没有 Key 或接口失败时，内置的规则顶上，演示不会挂。</p>
+    </div>
+    <div class="box plain">
+      <h3>怎么保证不乱说</h3>
+      <p style="margin-bottom:0">三层：规则先于模型（危险信号、该不该催就医）；记录先于文采（给医生的要点只按记录生成，查记录的问题按原文回答）；模型的每句话都过滤。每一条约束都写成代码和测试，现在有 1114 项自动检查，第三版继续加。</p>
+    </div>
+  </div>
+  <p class="small">一轮对话最多调用模型两次（判断意图一次，执行一次），大多数情况一次：明显的意图由规则判断。预计每轮回复 2 到 4 秒；认照片 20 到 40 秒，期间显示「正在认字」。</p>
+</section>
+
+<section>
+  <h2>8　和现在的版本相比</h2>
+  <table>
+    <tr><th style="width:14%"></th><th>内容</th></tr>
+    <tr><td class="k">保留，直接用</td><td>
+      危险信号和各种判断规则；从话里读时间、轻重、体温、血糖血压；找相似的以前记录；给医生的一页（要点、时间线、细节、导出）；医嘱的文字和照片识别；体检报告识别；问答的规则直答、带出处和全部过滤；应急手册的全部内容；血糖血压的规则、提醒和趋势；语音和拍照；李明和王秀兰两套演示数据；全部自动检查。
+    </td></tr>
+    <tr><td class="k">改造</td><td>
+      每天的追问：从首页卡片改成对话里的一条消息。<br>
+      问医伴：不再是单独一页，就是主对话。<br>
+      看完医生：从单独一页改成对话里拍照，之后多了待办提醒和解释两个选项。<br>
+      健康指标：不再有首页卡片，改成在对话里报数，趋势图放进「我的资料」。<br>
+      年度摘要：并进「去看医生」，慢病用户生成的那一页自动带上这一年的变化。<br>
+      建档：从体检报告为主改回填表为主，多了学历和家族遗传病；体检报告变成可选。<br>
+      我的档案：改名「我的资料」，就诊记录按「问诊加医嘱」重新组织。
+    </td></tr>
+    <tr><td class="k">砍掉的页面</td><td>
+      首页的各种卡片和入口、去看医生页、问医伴页、看完医生页、症状对话页和详情页、长期管理开关、顶部导航的两个标签。<b>功能都还在，只是不再是页面。</b>
+    </td></tr>
+    <tr><td class="k">新做</td><td>
+      手机外形；对话主界面和各种卡片；后端总调度和意图判断；八类信息的问诊；身体图；口语对照和确认；病情描述的修改重写；分诊卡片；医嘱之后的待办、提醒频率和解释；复诊前的准备；「能不能吃」；保存还是放弃和草稿；注册表单；导出全部资料。
+    </td></tr>
+    <tr><td class="k">先放一放</td><td>
+      中英文切换：界面文字的英文版已经做了一部分，第三版先只把中文做好；英文的对话需要一整套英文的安全过滤，等主线稳定后再做。见第 10 节第 9 件。
+    </td></tr>
+  </table>
+  <div class="box warn">
+    <b>现在手上有两个版本，请知道：</b>3000 端口是你们上午看的冻结版；3200 端口是加了英文界面的版本，还没有换过去。第三版会从 3200 的代码接着改。另外，这两个版本里都有一个今天查出来的安全漏洞（慢病用户在首页记高血糖时，「立即就医」的提示不出现）。第三版重做首页后它会消失；在那之前要不要先花 15 分钟修掉，请你定（第 10 节第 11 件）。
+  </div>
+</section>
+
+<section>
+  <h2>9　工作量和顺序</h2>
+  <p>按今天的做法：我拆任务、分给多个员工并行做、逐个验收。下面是估计，不是承诺；每一段结束我都会在浏览器里走一遍再交给你看。</p>
+  <table>
+    <tr><th style="width:17%">阶段</th><th style="width:15%">时间</th><th>做什么</th><th style="width:25%">结束时你能看到</th></tr>
+    <tr><td class="k">第一段：主线</td><td>5 到 6 小时</td><td>手机外形；对话界面和卡片的框架；输入栏（语音默认、打字、拍照）；后端总调度和意图判断；问诊（追问、口语对照、关联追问、病情描述、分诊）；给医生的一页接进对话；拍医嘱并整理；注册表单。</td><td>在手机外形里：说一句不舒服，被追问，拿到病情描述和分诊；拍医嘱，看到整理结果。</td></tr>
+    <tr><td class="k">第二段：补全</td><td>5 到 6 小时</td><td>身体图；待办、提醒频率和加进日历；解释；能不能吃；我的资料和就诊记录；导出；每天追问和报数进对话；应急按钮；保存还是放弃和草稿；旧数据迁移；两套演示数据改成新结构。</td><td>功能说明里的每一条都能走通。</td></tr>
+    <tr><td class="k">第三段：检验</td><td>3 到 4 小时</td><td>规则和过滤的自动检查；用真实模型成批提问找漏洞；两轮模拟用户（一位慢病老人、一位普通感冒的年轻人）实际试用；按发现的问题修。</td><td>一份试用报告：每个任务点了几下、哪里卡住、修了什么。</td></tr>
+  </table>
+  <p><b>合计约 13 到 16 小时</b>，中间需要你看两次。如果只要最快能演示的，第一段做完就可以给团队看。</p>
+  <h3>主要的风险</h3>
+  <table>
+    <tr><th style="width:30%">风险</th><th>怎么应对</th></tr>
+    <tr><td>后台认错患者的意图</td><td>明显的情况用规则判断；认不准就反问；认错了患者说一句就能改；每次分流都记日志，用模拟用户专门测。</td></tr>
+    <tr><td>只有一个对话框，患者不知道能做什么</td><td>三个快捷选项；AI 在合适的时候主动递下一步（「要不要我整理成给医生看的一页？」）；第一次打开时用两句话说清楚两件事。</td></tr>
+    <tr><td>语音认错字，尤其是药名</td><td>说的话先显示成文字，可以改；药名和诊断以医嘱照片为准。</td></tr>
+    <tr><td>AI 说了不该说的</td><td>沿用三层做法，新功能（分诊、解释、能不能吃）各自加过滤和测试。</td></tr>
+    <tr><td>提醒收不到</td><td>网页关着时浏览器通知不可靠，所以加「加进手机日历」。</td></tr>
+  </table>
+</section>
+
+<section class="pb">
+  <h2>10　需要你拍板的 12 件事</h2>
+  <p>回复对接员时写「1A 2A 3B」这样就行。<span class="rec">绿色</span>的是我的建议。</p>
+
+  <div class="dec first">
+    <p class="q">1　分诊说到什么程度？（最要紧）</p>
+    <p class="o"><b class="rec">A　只分诊：</b>要不要看医生、多急、挂哪个科、去之前留意什么。不提任何病名。这最接近你回给对接员的那句话。 <span class="rec">（建议）</span></p>
+    <p class="o"><b>B　分诊加方向：</b>再加一句「这类情况多半是哪一方面的问题」，比如「肠胃方面」，不说具体病名，并写明要医生判断。</p>
+    <p class="o"><b>C　分诊加可能的病名：</b>列出一两个可能的病，写明不是诊断。这最接近「一问就知道我什么病」。风险：说错会耽误人或者吓到人；现有的过滤都是按「不说病名」做的，要重做一遍并重新测。</p>
+  </div>
+
+  <div class="dec">
+    <p class="q">2　「讲解病史」是讲给谁？</p>
+    <p class="o"><b class="rec">A　两种都要：</b>点了以后先问「讲给医生，还是讲给你自己」。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　只讲给医生：</b>把病史整理成医生看得懂的一段。</p>
+    <p class="o"><b>C　只讲给自己：</b>用大白话解释诊断和医嘱。</p>
+  </div>
+  <div class="dec">
+    <p class="q">3　解释医嘱（b 选项）讲到多深？</p>
+    <p class="o"><b class="rec">A　讲明白：</b>诊断是什么意思、每个药是干什么的、常见副作用和注意事项，按一般的科普和说明书来，并写明以医生为准。不评价医生的方案，不建议换药或改量，剂量数字只复述医嘱。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　更保守：</b>只把医嘱换成大白话，不补充任何额外的知识。</p>
+  </div>
+  <div class="dec">
+    <p class="q">4　提醒怎么送到？</p>
+    <p class="o"><b class="rec">A　对话里提醒，加日历：</b>应用开着时在对话里提醒并发浏览器通知；另外每条提醒可以一键加进手机日历，网页关着也能响。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　只在对话里提醒：</b>不做日历。网页关着时收不到。</p>
+    <p class="o"><b>C　真正的推送：</b>做成可以安装的应用，需要服务器，工作量大，建议往后放。</p>
+  </div>
+  <div class="dec">
+    <p class="q">5　保存还是放弃怎么做？</p>
+    <p class="o"><b class="rec">A　自动存草稿：</b>问诊结束时在卡片上选保存或放弃；中途离开，下次回来 AI 先问接着说还是放弃。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　离开页面时弹窗问：</b>手机浏览器经常不弹这种窗，不可靠。</p>
+  </div>
+  <div class="dec">
+    <p class="q">6　身体图做多细？</p>
+    <p class="o"><b class="rec">A　全身加四张细分图：</b>全身正反面，加膝、肩、腰背、腹部。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　只做全身。</b></p>
+    <p class="o"><b>C　再加手、脚、头面部：</b>往后放。</p>
+  </div>
+  <div class="dec">
+    <p class="q">7　注册要不要称呼？你列的五项里没有姓名。</p>
+    <p class="o"><b class="rec">A　加一项「怎么称呼你」：</b>可以不填；填了会显示在给医生的一页上。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　不要。</b></p>
+  </div>
+  <div class="dec">
+    <p class="q">8　学历怎么用？</p>
+    <p class="o"><b class="rec">A　只用来调整解释的深浅：</b>不给医生看。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　也给医生看：</b>显示在资料和给医生的一页里。</p>
+  </div>
+  <div class="dec">
+    <p class="q">9　中英文切换怎么办？</p>
+    <p class="o"><b class="rec">A　第三版先只做中文：</b>等主线稳定后再做英文，届时连对话和安全过滤一起做。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　固定文字同时做英文：</b>AI 仍然说中文。</p>
+  </div>
+  <div class="dec">
+    <p class="q">10　手机外形在哪显示？</p>
+    <p class="o"><b class="rec">A　电脑上显示手机外形，真手机上全屏。</b> <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　真手机上也套一层外形。</b></p>
+  </div>
+  <div class="dec">
+    <p class="q">11　那个安全漏洞什么时候修？</p>
+    <p class="o"><b class="rec">A　现在就修：</b>约 15 分钟，3000 和 3200 都修。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　不单独修：</b>等第三版把首页换掉。</p>
+  </div>
+  <div class="dec">
+    <p class="q">12　现有的两个版本怎么处理？</p>
+    <p class="o"><b class="rec">A　3000 保留到第三版第一段做完；</b>3200 的英文界面版不再换过去，第三版从它的代码接着改。 <span class=rec>（建议）</span></p>
+    <p class="o"><b>B　先把 3200 换到 3000，</b>再开始第三版。</p>
+  </div>
+
+  <div class="box warn" style="margin-top:3mm">
+    <b>还有一件只能由你本人做的事：</b>第三版改了项目规则文件 CLAUDE.md 里好几条「已定决策」：导航只有两个入口、首页同一时间只突出一件事、AI 不给用药信息、界面全部中文，以及这次新加的分诊。我不会因为转达的消息去改那份文件。批准方案后，请在主管的终端里直接说一句「同意按第三版改 CLAUDE.md」，或者你自己改。
+  </div>
+</section>
+
+<section>
+  <h2>11　AI 能做什么、不能做什么</h2>
+  <div class="cols">
+    <div class="box">
+      <h3>能做</h3>
+      <ul style="margin-bottom:0">
+        <li>把患者说的话整理成医生看得懂的病情描述。</li>
+        <li>追问缺的信息；把口语确认成规范说法。</li>
+        <li>结合以前的记录提醒：这次和哪次像，有什么要告诉医生。</li>
+        <li>初步分诊：要不要看医生、多急、挂哪科。</li>
+        <li>把医嘱整理成待办并提醒。</li>
+        <li>复述医生开的药和用法；讲说明书上的一般用法、常见副作用和注意事项。</li>
+        <li>回答「能不能吃」：依据过敏、医嘱和基础病。</li>
+        <li>危险信号出现时，直接让人就医或拨打 120。</li>
+      </ul>
+    </div>
+    <div class="box red">
+      <h3>不做</h3>
+      <ul style="margin-bottom:0">
+        <li>不下诊断。说不说可能的病名，由你在第 10 节第 1 件里定；没有定之前按不说来做。</li>
+        <li>不替人定剂量，不建议加量、减量、停药、换药。</li>
+        <li>不评价医生的方案。</li>
+        <li>不写患者没说过的话：没说过有没有发烧，就不写「无发热」。</li>
+        <li>不编记录里没有的日期、数值、药名。</li>
+        <li>不保存照片和录音，只保存整理出的文字。</li>
+        <li>危险信号的判断不交给模型。</li>
+      </ul>
+    </div>
+  </div>
+  <h3>现在的状态（写这份方案时）</h3>
+  <ul>
+    <li>代码没有动。所有员工都停着，等你批准。</li>
+    <li>http://localhost:3000 是上午的冻结版；http://localhost:3200 是英文界面版。两个都能打开。</li>
+    <li>分享给队友的公网链接没有开：那一步被我这边的权限系统拦下了，需要你本人来做或放行，办法写在 HUMAN_TODO.md 第一条。</li>
+  </ul>
+  <p class="small" style="margin-top:6mm">这份方案的源文件：docs/第三版方案-对话为主.html。要改哪句，告诉对接员。</p>
+</section>
+
+</body>
+</html>

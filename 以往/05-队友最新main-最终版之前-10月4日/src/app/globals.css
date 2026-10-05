@@ -1,0 +1,234 @@
+@import "tailwindcss";
+
+/* Celadon: quiet grouped surfaces with a faint green-grey cast, system type, thin rules, and one
+ * accent family taken from the supplied VisitSmoothie mark (its teal). The class names are the same
+ * as before (brand-*, surface-*, line, ink-*), so every screen picks the accent up from here. */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  /* Older components using font-serif inherit the same system typography. */
+  --font-serif: var(--font-sans);
+  --color-canvas: #f2f2f7;
+  --color-canvas-tint: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f2f7;
+  --color-surface-3: #e5e5ea;
+  --color-line: #e2e2e7;
+  --color-line-strong: #8e8e93;
+  --color-ink: #1c1c1e;
+  --color-ink-2: #56565c;
+  --color-ink-3: #66666e;
+
+  /* the accent: the logo's celadon green (the human's decision, 2026-10-04: no blue anywhere). 600 carries white text (5.4:1); 700 and up are for text on white or 50. */
+  --color-brand-50: #edf7f4;
+  --color-brand-100: #d8efe8;
+  --color-brand-200: #b0ddd1;
+  --color-brand-300: #7fc7b7;
+  --color-brand-400: #44ab98;
+  --color-brand-500: #13917d;
+  --color-brand-600: #007866;
+  --color-brand-650: #006d5d;
+  --color-brand-700: #006355;
+  --color-brand-800: #024d43;
+  --color-brand-ink: #0d3b40;
+
+  /* Clinical meaning keeps its own tones (and always a written label), apart from the accent. */
+  --color-good: #287738;
+  --color-good-bg: #edf7ee;
+  --color-warn: #89570a;
+  --color-warn-bg: #fff5df;
+  --color-serious: #a6501f;
+  --color-serious-bg: #fbeee6;
+  --color-danger: #c12c35;
+  --color-danger-bg: #fff0f0;
+  /* info is a note, not a state of its own: it takes the accent green too */
+  --color-info: #006355;
+  --color-info-bg: #edf7f4;
+  --color-series-2: #bd5b20;
+  --radius-card: 12px;
+  --radius-sheet: 16px;
+
+  --shadow-card: 0 0 #0000;
+  --shadow-card-hover: 0 0 #0000;
+  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.12);
+  --shadow-pill: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-edge: 0 0 #0000;
+  --shadow-btn: 0 0 #0000;
+  --shadow-hero: 0 0 #0000;
+  --shadow-header: 0 1px 0 var(--color-line);
+  --shadow-glow: 0 0 #0000;
+  --shadow-inset-top: 0 0 #0000;
+  --shadow-raised: 0 0 #0000;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: var(--ease-out-soft);
+  --animate-fade-up: fade-up 0.2s ease-out backwards;
+  --animate-rise: fade-up 0.2s ease-out backwards;
+  --animate-pulse-dot: pulse-dot 1.2s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pop: fade-up 0.2s ease-out backwards;
+  --animate-breathe: none;
+  --animate-spin-soft: spin 0.9s linear infinite;
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  @keyframes fade-up { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse-dot { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+}
+
+html {
+  color-scheme: light;
+  font-size: 106.25%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+h1, h2, h3 { letter-spacing: -0.02em; text-wrap: balance; }
+::selection { background: var(--color-brand-100); }
+.glass { background: rgba(255, 255, 255, 0.94); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.lift { transition: background-color 0.15s, border-color 0.15s; }
+@media (hover: hover) { .lift:hover { filter: brightness(0.985); } }
+.press { transition: opacity 0.15s; }
+.press:active { opacity: 0.7; }
+.rise-1, .rise-2, .rise-3, .rise-4, .page-enter { animation: var(--animate-fade-up); }
+
+/* sizes are fixed (not viewport-based): the column is phone-wide even on a desktop screen */
+.t-display { font-size: 1.85rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.035em; }
+.t-title { font-size: 1.4rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.025em; }
+.t-heading { font-size: 1.15rem; line-height: 1.35; font-weight: 600; }
+.t-lead { font-size: 1.05rem; line-height: 1.55; }
+.t-body { font-size: 1rem; line-height: 1.55; }
+.t-number { font-size: 2.3rem; line-height: 1; font-weight: 700; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
+.tabular { font-variant-numeric: tabular-nums; }
+.name-title { font-size: 1.5rem; line-height: 1.2; font-weight: 650; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+
+.material, .material-raised, .light { background-color: var(--color-surface); }
+.tile-brand { background-color: var(--color-brand-600); }
+.tile-ink { background-color: #7056bf; }
+.tile-danger { background-color: var(--color-danger); }
+
+/* The supplied artwork remains unchanged and keeps its native 3:1 proportions. */
+.brand-logo { display: block; width: 11rem; height: auto; min-width: 0; max-width: 100%; mix-blend-mode: multiply; }
+.app-brand, .smoothie-brand { align-items: center; min-width: 0; max-width: 100%; min-height: 2.75rem; }
+
+/* The app icon (Logo.tsx): a white squircle with the mark, lifted off the page by a soft shadow. */
+.app-icon { filter: drop-shadow(0 1px 1.5px rgba(13, 59, 64, 0.12)) drop-shadow(0 6px 14px rgba(14, 118, 103, 0.16)); }
+
+/* ---------- the phone shell ----------
+ * One phone-wide column everywhere. On a wide screen it stands in the middle of a quiet
+ * ground; on a phone it is the whole window. Fixed bars use .phone-fixed so they line up with it. */
+:root {
+  --tab-h: 4.25rem;
+  --tab-bar: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px));
+  --phone-w: 430px;
+}
+.phone-col { position: relative; margin-inline: auto; width: 100%; max-width: var(--phone-w); min-height: 100dvh; background: var(--color-canvas); }
+.phone-fixed { position: fixed; left: 50%; width: 100%; max-width: var(--phone-w); translate: -50% 0; }
+@media (min-width: 480px) {
+  body { background: #d9e1de; }
+  .phone-col { box-shadow: 0 0 0 1px rgba(13, 59, 64, 0.07), 0 0 56px rgba(13, 59, 64, 0.09); }
+}
+.tab-bar { bottom: 0; z-index: 40; padding-bottom: env(safe-area-inset-bottom, 0px); background: rgba(255, 255, 255, 0.94); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); box-shadow: 0 -0.5px 0 var(--color-line), 0 -8px 24px rgba(13, 59, 64, 0.04); }
+/* the home button: the app icon standing up out of the bar */
+.tab-home { position: absolute; top: -1.9rem; left: 50%; translate: -50% 0; display: flex; align-items: center; justify-content: center; width: 4.25rem; height: 4.25rem; border-radius: 1.45rem; transition: translate 0.25s var(--ease-out-soft); }
+.tab-home:active { translate: -50% 1px; }
+.tab-home .app-icon { transition: transform 0.25s var(--ease-out-soft); }
+@media (hover: hover) { .tab-home:hover .app-icon { transform: translateY(-1px) scale(1.03); } }
+/* the name sits under the raised icon on the same line as the other tab labels; the active tab shows in its colour */
+.tab-home-name { position: absolute; top: calc(100% + 0.05rem); left: 50%; translate: -50% 0; white-space: nowrap; pointer-events: none; }
+
+/* ---------- the "ask AI" sheet ----------
+ * It grows from the bottom of the home into the whole screen, and sinks back. The page under it
+ * dims a little while it is up. Reduced motion: it simply fades. */
+.ask-scrim { inset: 0; z-index: 59; position: fixed; background: rgba(13, 31, 29, 0.28); animation: scrim-in 0.3s ease-out both; }
+.ask-scrim.is-closing { animation: scrim-out 0.26s ease-in forwards; }
+.ask-sheet { top: 0; bottom: 0; z-index: 60; display: flex; flex-direction: column; background: var(--color-canvas); animation: sheet-up 0.42s var(--ease-out-soft) both; will-change: translate; }
+.ask-sheet.is-closing { animation: sheet-down 0.28s cubic-bezier(0.4, 0, 1, 1) forwards; }
+.ask-sheet-body > * { animation: sheet-content 0.45s var(--ease-out-soft) 0.08s backwards; }
+@keyframes sheet-up { from { translate: -50% 100%; } to { translate: -50% 0; } }
+@keyframes sheet-down { from { translate: -50% 0; } to { translate: -50% 100%; } }
+@keyframes sheet-content { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scrim-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes sheet-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  /* no sliding: a short fade (the global rule below shortens it further, and it still ends cleanly) */
+  .ask-sheet { animation-name: sheet-fade-in; }
+  .ask-sheet.is-closing { animation-name: sheet-fade-out; }
+  .ask-sheet-body > * { animation: none; }
+}
+/* the question, said by the person: a tinted bubble on the right */
+.ask-bubble { border-radius: 1.25rem 1.25rem 0.4rem 1.25rem; background: var(--color-brand-600); color: #fff; }
+/* the answer: a white card with the app icon beside it */
+.ask-card { border-radius: 0.4rem 1.25rem 1.25rem 1.25rem; background: var(--color-surface); box-shadow: 0 0 0 0.5px var(--color-line), 0 1px 2px rgba(13, 59, 64, 0.04); }
+
+@media print { .phone-col { max-width: none; box-shadow: none; } }
+
+/* Retained names for older screens (the desktop rail is gone; kept so nothing unstyled appears). */
+.app-rail { background: transparent; }
+.nav-row { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; border-radius: 9px; padding: 0.45rem 0.5rem; font-size: 1rem; font-weight: 500; }
+.nav-row:hover { background: var(--color-surface-2); }
+.nav-row[aria-current="page"] { background: var(--color-brand-100); color: var(--color-brand-700); }
+.nav-icon { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; flex-shrink: 0; border-radius: 6px; color: white; }
+
+/* Retained utility names for older cards; ornament no longer occupies the reading surface. */
+.jade-edge { position: relative; }
+.pool { display: none; }
+.skeleton { border-radius: 6px; background: linear-gradient(90deg, var(--color-surface-2), var(--color-surface-3), var(--color-surface-2)); background-size: 200% 100%; animation: var(--animate-shimmer); }
+.spinner-ring { border-radius: 999px; border: 3px solid var(--color-brand-100); border-top-color: var(--color-brand-600); animation: var(--animate-spin-soft); }
+* { scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+.scroll-thin::-webkit-scrollbar-thumb { border-color: var(--color-surface); }
+input[type="date"], input[type="time"], input[type="datetime-local"] { min-height: 2.75rem; min-width: 0; }
+input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { width: 1.2rem; height: 1.2rem; padding: 0.2rem; cursor: pointer; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-brand-600); }
+:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* the sheet handed to the doctor: collapsed details open up on paper */
+.print-only {
+  display: none;
+}
+
+@media print {
+  html {
+    font-size: 81.25%;
+  }
+  body {
+    background: #fff;
+  }
+  .jade-edge::before {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  @page {
+    margin: 14mm;
+  }
+}

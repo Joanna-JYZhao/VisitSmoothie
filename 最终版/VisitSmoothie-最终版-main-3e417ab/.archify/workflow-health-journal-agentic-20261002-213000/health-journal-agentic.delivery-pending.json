@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "command": "deliver",
+  "status": "pending",
+  "receiptId": "60910e20-33c0-446a-a500-a04313252015",
+  "input": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-health-journal-agentic-20261002-213000/candidate.json",
+  "output": "/Users/xinlu/Documents/Stanford Venture Trip/.archify/workflow-health-journal-agentic-20261002-213000/health-journal-agentic.html"
+}

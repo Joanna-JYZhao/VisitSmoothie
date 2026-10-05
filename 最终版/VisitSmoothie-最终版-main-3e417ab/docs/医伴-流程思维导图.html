@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>医伴 · 流程思维导图</title>
+<style>
+  @page { size: A4 landscape; margin: 0 }
+  :root {
+    --teal: #017a9e;
+    --teal-deep: #004b63;
+    --teal-light: #eff9fd;
+    --teal-soft: #cfe8f1;
+    --ink: #17282f;
+    /* 三个问题的颜色：浅底 / 深字 / 线 */
+    --p1-bg: #e1f2f8; --p1-ink: #005671; --p1-line: #6db9d3;
+    --p2-bg: #eaf0fc; --p2-ink: #1f4a97; --p2-line: #91ade2;
+    --p3-bg: #fdf1df; --p3-ink: #864e00; --p3-line: #dcac66;
+    /* 版面网格 */
+    --W: 281mm;     /* 内容宽度 = 297 - 2 × 8 */
+    --bb: 0.25mm;   /* 主流程底板边框 */
+    --pad: 3mm;     /* 主流程底板内边距 */
+    --G: 4mm;       /* 步骤间距 */
+    --C: calc((var(--W) - 2 * var(--bb) - 2 * var(--pad) - 5 * var(--G)) / 6); /* 步骤宽 */
+    --drop: 9mm;    /* 主流程底板到分支卡片的距离（改它要同步改 .conn 的 SVG） */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { width: 297mm; height: 210mm; margin: 0; overflow: hidden; background: #fff; }
+  body { font-family: "PingFang SC", "Hiragino Sans GB", "Heiti SC", sans-serif; color: var(--ink); }
+  .page { position: relative; width: 297mm; height: 210mm; overflow: hidden; padding: 9mm 8mm 8mm; display: flex; flex-direction: column; background: #fff; }
+
+  /* 标题 */
+  .hd { display: flex; align-items: baseline; gap: 5mm; }
+  .hd h1 { font-size: 24pt; line-height: 1.2; font-weight: 600; color: var(--teal-deep); letter-spacing: 0.5pt; white-space: nowrap; }
+  .hd .sub { font-size: 14pt; font-weight: 500; color: var(--teal); letter-spacing: 0.5pt; white-space: nowrap; }
+  .hd .rule { flex: 1; align-self: center; border-top: 0.25mm solid var(--teal-soft); margin-left: 2mm; }
+
+  .label { font-size: 10.5pt; font-weight: 600; color: var(--teal); letter-spacing: 1pt; white-space: nowrap; line-height: 1.3; }
+
+  /* 要解决的问题 */
+  .problems { margin-top: auto; position: relative; }
+  .problems .label { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+  .prob-row { display: flex; justify-content: center; gap: 9mm; }
+  .prob { width: 66mm; height: 12.5mm; display: flex; align-items: center; justify-content: center; gap: 3mm; border-radius: 3mm; border: 0.3mm solid; white-space: nowrap; }
+  .prob b { font-size: 15pt; font-weight: 600; letter-spacing: 0.5pt; }
+  .prob span { font-size: 11.5pt; }
+  .p1 { background: var(--p1-bg); border-color: var(--p1-line); color: var(--p1-ink); }
+  .p2 { background: var(--p2-bg); border-color: var(--p2-line); color: var(--p2-ink); }
+  .p3 { background: var(--p3-bg); border-color: var(--p3-line); color: var(--p3-ink); }
+
+  /* 问题 → 主流程 */
+  .funnel { position: relative; height: 11mm; }
+  .funnel svg { position: absolute; left: 0; top: 0; width: 281mm; height: 11mm; }
+  .funnel .label { position: absolute; left: 0; bottom: 1mm; }
+  .funnel .cap { position: absolute; left: 143.6mm; top: 4.6mm; font-size: 11pt; line-height: 1.3; color: var(--teal-deep); white-space: nowrap; }
+
+  /* 主流程 */
+  .band { background: var(--teal-light); border: var(--bb) solid var(--teal-soft); border-radius: 4mm; padding: 3mm var(--pad); }
+  .steps { display: grid; grid-template-columns: repeat(6, var(--C)); column-gap: var(--G); }
+  .step { position: relative; display: flex; flex-direction: column; background: #fff; border: 0.4mm solid var(--teal); border-radius: 3mm; padding: 2.6mm 2.4mm 2.4mm; }
+  .step .head { padding-bottom: 1.8mm; border-bottom: 0.25mm solid var(--teal-soft); }
+  .no { width: 6.4mm; height: 6.4mm; border-radius: 50%; background: var(--teal); color: #fff; font-size: 11.5pt; font-weight: 600; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .step h2 { margin-top: 1.2mm; height: 14.6mm; display: flex; align-items: center; font-size: 16pt; line-height: 1.28; font-weight: 600; color: var(--teal-deep); }
+  .step ul { list-style: none; margin-top: 2.2mm; }
+  .step li { position: relative; padding-left: 2.7mm; font-size: 11pt; line-height: 1.5; }
+  .step li + li { margin-top: 1.4mm; }
+  .step li::before { content: ""; position: absolute; left: 0.1mm; top: calc(0.75em - 0.65mm); width: 1.3mm; height: 1.3mm; border-radius: 50%; background: var(--teal); }
+  .solves { margin-top: auto; padding-top: 2.4mm; display: flex; align-items: center; gap: 0.9mm; white-space: nowrap; }
+  .solves .lbl { font-size: 10.5pt; color: var(--teal-deep); margin-right: 0.5mm; }
+  .tag { font-size: 10.5pt; font-weight: 600; line-height: 1.35; padding: 0.2mm 1mm; border-radius: 1.6mm; border: 0.2mm solid; }
+  .arr { position: absolute; top: 3mm; right: calc(-1 * (0.4mm + var(--G) / 2 + 2.8mm)); width: 5.6mm; height: 5.6mm; border-radius: 50%; background: #fff; border: 0.3mm solid var(--teal); z-index: 2; display: flex; align-items: center; justify-content: center; }
+  .arr svg { width: 3.6mm; height: 3.6mm; display: block; }
+  .nw { white-space: nowrap; }
+
+  /* 分支 */
+  .branches { position: relative; display: grid; grid-template-columns: repeat(6, var(--C)); column-gap: var(--G); padding: 0 calc(var(--bb) + var(--pad)); margin-top: var(--drop); }
+  .branches > .label { position: absolute; left: 0; top: -7mm; }
+  .branch { grid-column: span 2; position: relative; background: #fff; border: 0.3mm solid #8fc9dc; border-radius: 3mm; padding: 2.4mm 3.2mm 2.8mm; }
+  .branch .bh { display: flex; align-items: center; justify-content: space-between; gap: 3mm; }
+  .branch h3 { font-size: 14pt; font-weight: 600; color: var(--teal-deep); line-height: 1.3; }
+  .branch .solves { margin-top: 0; padding-top: 0; }
+  .branch p { margin-top: 1.4mm; font-size: 11pt; line-height: 1.5; }
+  .conn { position: absolute; left: calc(var(--C) / 2 - 0.3mm - 2mm); top: -13.55mm; width: 4mm; height: 13.25mm; overflow: visible; }
+
+  /* 原则 */
+  .principles { margin-top: auto; display: flex; align-items: center; gap: 2.2mm; padding: 2.3mm 4mm; background: var(--teal-light); border: 0.25mm solid var(--teal-soft); border-radius: 3mm; white-space: nowrap; font-size: 10pt; line-height: 1.4; }
+  .principles .label { margin-right: 1.6mm; }
+  .principles i { font-style: normal; color: var(--teal); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hd">
+    <h1>医伴 · 你的私人医生助理</h1>
+    <p class="sub">平时帮你记，看病时替你说</p>
+    <span class="rule"></span>
+  </header>
+
+  <section class="problems">
+    <span class="label">要解决的问题</span>
+    <div class="prob-row">
+      <div class="prob p1"><b>说不清</b><span>不知道怎么描述病情</span></div>
+      <div class="prob p2"><b>记不住</b><span>忘了时间和病史</span></div>
+      <div class="prob p3"><b>效率低</b><span>医生要从头问一遍</span></div>
+    </div>
+  </section>
+
+  <div class="funnel">
+    <svg viewBox="0 0 281 11" aria-hidden="true">
+      <path d="M65.5 0 V2.2 Q65.5 3.7 67 3.7 H214 Q215.5 3.7 215.5 2.2 V0" fill="none" stroke="#8cc6d9" stroke-width="0.3"/>
+      <path d="M140.5 0 V9.3" fill="none" stroke="#017a9e" stroke-width="0.35"/>
+      <path d="M139.1 8.6 L140.5 11 L141.9 8.6 Z" fill="#017a9e"/>
+    </svg>
+    <span class="label">主流程</span>
+    <span class="cap">下面每一步，标出它解决哪个问题</span>
+  </div>
+
+  <section class="band">
+    <div class="steps">
+
+      <article class="step">
+        <div class="head"><span class="no">1</span><h2><span>体检报告建档</span></h2></div>
+        <ul>
+          <li>拍一下体检报告，AI 把档案填好，看一眼就行</li>
+          <li>没有报告，也可以说一句话建档</li>
+        </ul>
+        <div class="solves"><span class="lbl">解决</span><span class="tag p2">记不住</span></div>
+        <i class="arr"><svg viewBox="0 0 10 10"><path d="M2.6 5 H7.2 M5.2 2.9 L7.4 5 L5.2 7.1" fill="none" stroke="#017a9e" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+      </article>
+
+      <article class="step">
+        <div class="head"><span class="no">2</span><h2><span>日常记录症状</span></h2></div>
+        <ul>
+          <li>不舒服时说一句或打一句</li>
+          <li>AI 最多追问四个问题：什么时候开始、有多难受、吃过什么药</li>
+        </ul>
+        <div class="solves"><span class="lbl">解决</span><span class="tag p1">说不清</span></div>
+        <i class="arr"><svg viewBox="0 0 10 10"><path d="M2.6 5 H7.2 M5.2 2.9 L7.4 5 L5.2 7.1" fill="none" stroke="#017a9e" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+      </article>
+
+      <article class="step">
+        <div class="head"><span class="no">3</span><h2><span>AI 定期追问</span></h2></div>
+        <ul>
+          <li>每天问一次，点「<span class="nw">好多了</span> / <span class="nw">差不多</span> / <span class="nw">更严重了</span>」</li>
+          <li>明显加重时直接提示「建议今天去看医生」</li>
+        </ul>
+        <div class="solves"><span class="lbl">解决</span><span class="tag p2">记不住</span></div>
+        <i class="arr"><svg viewBox="0 0 10 10"><path d="M2.6 5 H7.2 M5.2 2.9 L7.4 5 L5.2 7.1" fill="none" stroke="#017a9e" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+      </article>
+
+      <article class="step">
+        <div class="head"><span class="no">4</span><h2><span>去看医生：<br>给医生的一页</span></h2></div>
+        <ul>
+          <li>把这次的问题说一遍，结合档案和以前的记录整理成一页</li>
+          <li>第一屏大字、时间线、可以问医生的问题；可打印、可复制</li>
+        </ul>
+        <div class="solves"><span class="lbl">解决</span><span class="tag p1">说不清</span><span class="tag p3">效率低</span></div>
+        <i class="arr"><svg viewBox="0 0 10 10"><path d="M2.6 5 H7.2 M5.2 2.9 L7.4 5 L5.2 7.1" fill="none" stroke="#017a9e" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+      </article>
+
+      <article class="step">
+        <div class="head"><span class="no">5</span><h2><span>看完医生存档</span></h2></div>
+        <ul>
+          <li>拍病历或处方，或者说一遍</li>
+          <li>整理出诊断、用药、医嘱、复查日期，到时提醒</li>
+        </ul>
+        <div class="solves"><span class="lbl">解决</span><span class="tag p2">记不住</span></div>
+        <i class="arr"><svg viewBox="0 0 10 10"><path d="M2.6 5 H7.2 M5.2 2.9 L7.4 5 L5.2 7.1" fill="none" stroke="#017a9e" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+      </article>
+
+      <article class="step">
+        <div class="head"><span class="no">6</span><h2><span>复发时<br>调出既往记录</span></h2></div>
+        <ul>
+          <li>再不舒服时，自动找出以前类似的记录</li>
+          <li>当时的诊断和用药直接带进给医生的那一页</li>
+        </ul>
+        <div class="solves"><span class="lbl">解决</span><span class="tag p2">记不住</span><span class="tag p3">效率低</span></div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="branches">
+    <span class="label">分支</span>
+
+    <div class="branch" style="grid-column: 1 / span 2">
+      <svg class="conn" viewBox="0 0 4 13.25" aria-hidden="true"><circle cx="2" cy="1" r="0.95" fill="#017a9e"/><path d="M2 1 V11.6" stroke="#017a9e" stroke-width="0.3"/><path d="M0.95 11.2 L2 13.25 L3.05 11.2 Z" fill="#017a9e"/></svg>
+      <div class="bh"><h3>应急手册</h3><div class="solves"><span class="lbl">解决</span><span class="tag p1">说不清</span></div></div>
+      <p>按档案生成，给身边的人看：我是谁、有什么病、对什么过敏、联系人、晕倒怎么做</p>
+    </div>
+
+    <div class="branch" style="grid-column: 3 / span 2">
+      <svg class="conn" viewBox="0 0 4 13.25" aria-hidden="true"><circle cx="2" cy="1" r="0.95" fill="#017a9e"/><path d="M2 1 V11.6" stroke="#017a9e" stroke-width="0.3"/><path d="M0.95 11.2 L2 13.25 L3.05 11.2 Z" fill="#017a9e"/></svg>
+      <div class="bh"><h3>长期管理</h3><div class="solves"><span class="lbl">解决</span><span class="tag p2">记不住</span><span class="tag p3">效率低</span></div></div>
+      <p>慢病用户记血糖、血压，看趋势；复诊时给医生「这一年」的摘要</p>
+    </div>
+
+    <div class="branch" style="grid-column: 5 / span 2">
+      <svg class="conn" viewBox="0 0 4 13.25" aria-hidden="true"><circle cx="2" cy="1" r="0.95" fill="#017a9e"/><path d="M2 1 V11.6" stroke="#017a9e" stroke-width="0.3"/><path d="M0.95 11.2 L2 13.25 L3.05 11.2 Z" fill="#017a9e"/></svg>
+      <div class="bh"><h3>问医伴</h3><div class="solves"><span class="lbl">解决</span><span class="tag p2">记不住</span></div></div>
+      <p>记不清的事随时问，比如「上次医生说了什么」「这个药怎么吃」；回答带出处</p>
+    </div>
+  </section>
+
+  <footer class="principles">
+    <span class="label">原则</span>
+    <span>AI 只整理和提醒，不做诊断</span><i>·</i>
+    <span>危险信号由规则判断，直接建议就医或拨打 120</span><i>·</i>
+    <span>用户没说过的不写</span><i>·</i>
+    <span>说话、拍照都行，少打字</span><i>·</i>
+    <span>数据只存在自己的设备上</span>
+  </footer>
+
+</div>
+</body>
+</html>

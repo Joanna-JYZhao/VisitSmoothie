@@ -1,0 +1,10 @@
+# 永远不要提交 API Key 和本机数据
+.env
+.env.local
+.env.*.local
+.env.local.bak
+.data/
+node_modules/
+.next/
+*.tsbuildinfo
+.DS_Store

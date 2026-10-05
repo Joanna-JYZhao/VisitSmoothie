@@ -1,0 +1,606 @@
+/* Unit checks for 问医伴: the records, the answers given by rule, and the filters on what a model says. */
+import { check, finish } from "./_check";
+import { buildDemoState } from "../fixtures/demo-liming";
+import { buildWangXiulanState } from "../fixtures/demo-wang";
+import { agoText, askRecords, askRequestFor, suggestedQuestions } from "../../src/lib/ask";
+import { setLang } from "../../src/lib/lang";
+import { askAlert, fallbackAsk, latestVisit, medicineAsked, medicineCore, medicineName, medicinesOnFile, quickAnswer, zhDate } from "../../src/lib/ai/askRules";
+import { ASK_SYSTEM, askContext, buildAskMessages, doseTokens, guardAnswer, normalizeAsk } from "../../src/lib/ai/askAI";
+import { fmtDate } from "../../src/lib/utils";
+import type { AppState, AskRequest, Episode, Profile } from "../../src/lib/types";
+
+/*
+ * A fixed clock: Saturday 3 Oct 2026, 10:00 local time. The Li Ming demo is built relative to
+ * "now", and dates are printed relative to this year, so every check below would otherwise
+ * depend on the day and hour it runs.
+ */
+const RealDate = Date;
+const NOW = new RealDate(2026, 9, 3, 10, 0, 0).getTime();
+class FixedDate extends RealDate {
+  constructor(...args: unknown[]) {
+    if (args.length === 0) super(NOW);
+    else super(...(args as ConstructorParameters<typeof RealDate>));
+  }
+  static now() {
+    return NOW;
+  }
+}
+globalThis.Date = FixedDate as unknown as DateConstructor;
+
+// the Chinese datasets: 问医伴 answers in Chinese, and these checks quote the records word for word
+const wang = buildWangXiulanState(new Date(NOW), "zh");
+const liming = buildDemoState("zh");
+const blank: Profile = {
+  name: "赵敏",
+  gender: "女",
+  birthYear: 1962,
+  conditions: [],
+  allergies: [],
+  medications: [],
+  surgeries: [],
+  familyHistory: [],
+  createdAt: new Date(NOW).toISOString(),
+  updatedAt: new Date(NOW).toISOString(),
+};
+const fresh: AppState = { ...liming, profile: blank, episodes: [], demo: null };
+
+const reqOf = (state: AppState, question: string, history: AskRequest["history"] = []): AskRequest => ({
+  ...(askRequestFor(state, question, NOW) as AskRequest),
+  history,
+});
+const W = (q: string, history: AskRequest["history"] = []) => reqOf(wang, q, history);
+const L = (q: string, history: AskRequest["history"] = []) => reqOf(liming, q, history);
+const N = (q: string) => reqOf(fresh, q);
+const idOf = (req: AskRequest, label: RegExp) => req.records.find((r) => label.test(r.label))?.id ?? "?";
+
+/* ---------- the records ---------- */
+
+const wr = askRecords(wang, NOW);
+const lr = askRecords(liming, NOW);
+const numbered = wr.filter((r) => /^R\d+$/.test(r.id));
+
+check("records: Wang has nine dated records, then the profile, the metrics and the reminder", wr.map((r) => r.id).join(",") === "R1,R2,R3,R4,R5,R6,R7,R8,R9,P,M,N", wr.map((r) => r.id));
+check("records: dated records run from newest to oldest", numbered.every((r, i) => i === 0 || new Date(numbered[i - 1].date).getTime() >= new Date(r.date).getTime()), numbered.map((r) => r.date));
+check("records: two visits, three check-ups and four complaints", ["visit", "followup", "episode"].map((k) => numbered.filter((r) => r.kind === k).length).join() === "2,3,4", numbered.map((r) => r.kind));
+check("records: the newest one is the complaint still being tracked", wr[0].kind === "episode" && wr[0].label === "9月9日「脚麻」" && wr[0].text.includes("还在跟踪"), wr[0]);
+check("records: a record from another year carries the year in its label", wr.some((r) => r.label === "2025年11月10日 看医生（口渴、尿多、容易累）"), wr.map((r) => r.label));
+
+const sideEffect = wr.find((r) => r.kind === "visit" && r.label.startsWith("3月3日"));
+check("records: a visit keeps the doctor's words in parts, for quoting", sideEffect?.fields?.treatment === "二甲双胍片改为二甲双胍缓释片 1.5g 每日一次，晚餐后服用" && sideEffect.fields.diagnosis === "二甲双胍相关胃肠道反应" && sideEffect.fields.where === "市人民医院 内分泌科", sideEffect?.fields);
+check("records: a visit says how long ago it was, and whether that complaint is over", Boolean(sideEffect?.text.startsWith("2026年3月3日（约 7 个月前）因为「吃药后肚子胀、拉肚子」看医生") && sideEffect.text.includes("这次的不舒服后来好了（2026年3月18日）")), sideEffect?.text);
+check("records: a visit carries the paragraph archived with it", Boolean(sideEffect?.text.includes("当时存档的摘要：患者二甲双胍加量约一周后")), sideEffect?.text);
+check("records: a visit leads to the complaint it belongs to", /^\/episodes\/.+\/detail$/.test(sideEffect?.href ?? ""), sideEffect?.href);
+
+const lastCheck = wr.find((r) => r.kind === "followup" && r.label === "7月11日 9 个月复查与眼底检查");
+check("records: a check-up is a record of its own", lastCheck?.fields?.advice === "运动前适量加餐，晚餐不要吃得太少；年度复诊时做足部检查并查尿微量白蛋白" && lastCheck.fields.treatment === "维持原方案" && lastCheck.fields.ago === "约 3 个月前", lastCheck?.fields);
+check("records: and its link says which check-up it is, for the page that lists them", lastCheck?.href === `/me#followup-${wang.followUps[2].id}`, lastCheck?.href);
+
+const P = wr.find((r) => r.id === "P");
+check("records: the profile lists conditions, allergies and long-term medicines", Boolean(P?.text.includes("过敏：磺胺类药物") && P.text.includes("长期在吃的药：缬沙坦 每日一次、二甲双胍缓释片 1.5g 每日一次") && P.text.includes("紧急联系人：女儿 陈静")), P?.text);
+check("records: an empty profile says so instead of saying nothing", askRecords(fresh, NOW)[0].text === "档案；老毛病：没有写；过敏：没有写；长期在吃的药：没有写", askRecords(fresh, NOW)[0].text);
+
+const M = wr.find((r) => r.id === "M");
+const metricLine = (label: string) => M?.text.split("；").find((s) => s.startsWith(`${label}：`)) ?? "";
+check("records: metrics give the latest reading with its date and how it sits in the general range", /^空腹血糖：最近一次 \d\.\d（\d+月\d+日），在一般范围内，最近两周记了 \d+ 次、平均 \d\.\d/.test(metricLine("空腹血糖")), metricLine("空腹血糖"));
+check("records: all four HbA1c results are listed with their dates", metricLine("糖化血红蛋白") === "糖化血红蛋白：最近一次 6.8%（7月11日），在一般范围内，之前是 8.5%（2025年11月10日）、7.6%（1月12日）、7.0%（4月14日），一般低于 7.0%", metricLine("糖化血红蛋白"));
+check("records: the change in weight is worked out here, not left to a model", metricLine("体重") === "体重：最近一次 67.2 公斤（9月28日），最早一次 72.0 公斤（2025年11月6日），比最早一次少了 4.8 公斤", metricLine("体重"));
+check("records: blood pressure is judged by 140/90 only", metricLine("血压") === "血压：最近一次 126/78（9月30日），在一般范围内，最早一次 138/86（2025年11月10日），一般低于 140/90，医生可能给你定得更低", metricLine("血压"));
+check("records: the low reading is kept, and the ranges are said to be general", Boolean(M?.text.includes("低血糖记录：6月14日 3.6") && M.text.endsWith("这些范围是一般标准，你自己的目标以医生说的为准")), M?.text);
+check("records: no metrics record without readings", !lr.some((r) => r.kind === "metrics"));
+
+const reminder = wr.find((r) => r.id === "N");
+check("records: today's appointment is the reminder", reminder?.text === "记下的下一次：今天（10月3日 周六）要去看医生：年度复诊" && reminder.kind === "reminder", reminder);
+check("records: no reminder when nothing is planned", !lr.some((r) => r.kind === "reminder"));
+const overdue = askRecords({ ...wang, nextVisit: { at: new Date(2026, 8, 20, 9).toISOString(), note: "年度复诊" } }, NOW).find((r) => r.id === "N");
+check("records: an appointment that has passed is not called the next one to come", overdue?.text === "记下的下一次：原定 9月20日 周日去看医生：年度复诊（日子已经过了）", overdue?.text);
+const due = new Date(2026, 9, 10, 9).toISOString();
+const withFollowUp: AppState = {
+  ...liming,
+  episodes: liming.episodes.map((e, i) => (i === 0 ? { ...e, visit: { date: "2026-10-02", diagnosis: "急性胃炎", treatment: "奥美拉唑肠溶胶囊（每天一粒，早饭前）", followUp: "一周后复查", followUpAt: due, recordedAt: new Date(NOW).toISOString() } } : e)),
+};
+const followUpReminder = askRecords(withFollowUp, NOW).find((r) => r.id === "N");
+check("records: a follow-up date set at a visit becomes a reminder", followUpReminder?.text === "记下的下一次：7 天后（10月10日 周六）前后复查「肚子痛」：一周后复查", followUpReminder?.text);
+const carried = askRecords({ ...withFollowUp, nextVisit: { at: due, note: "肚子痛：一周后复查" } }, NOW).find((r) => r.id === "N");
+check("records: a reminder carried over to the home screen is not said twice", carried?.text === "记下的下一次：7 天后（10月10日 周六）要去看医生：肚子痛：一周后复查", carried?.text);
+
+const cold = lr.find((r) => r.kind === "episode" && r.label.includes("感冒发烧"));
+check("records: a complaint keeps every entry, so the fever's peak is there", Boolean(cold?.text.includes("2月6日：体温升到 38.9℃，全身酸痛，开始咳嗽") && cold.text.includes("记下的最高体温是 38.9℃（2月6日）")), cold?.text);
+check("records: a complaint without a visit says so", Boolean(lr[0].text.endsWith("这次没有看医生的记录") && !cold?.text.includes("没有看医生")), [lr[0].text, cold?.text]);
+const template = liming.episodes[0];
+const longEpisode: Episode = {
+  ...template,
+  entries: Array.from({ length: 20 }, (_, i) => ({ id: `e${i}`, at: new Date(NOW - (20 - i) * 3_600_000).toISOString(), severity: null, note: `第${i + 1}条`, source: "user" as const })),
+};
+const longText = askRecords({ ...liming, episodes: [longEpisode] }, NOW)[0].text;
+check("records: a very long complaint keeps its first two and latest ten entries and says what is left out", longText.includes("第1条") && longText.includes("第2条") && !longText.includes("第3条；") && longText.includes("（中间还有 8 条记录没有列在这里）") && longText.includes("第11条") && longText.includes("第20条"), longText);
+const many: AppState = { ...liming, episodes: Array.from({ length: 40 }, (_, i) => ({ ...template, id: `x${i}`, title: `不舒服${i}`, startedAt: new Date(NOW - i * 86_400_000).toISOString() })) };
+check("records: at most ten complaints are listed, the most recent ones", askRecords(many, NOW).filter((r) => r.kind === "episode").length === 10 && askRecords(many, NOW)[0].label.includes("不舒服0"), askRecords(many, NOW).length);
+check("records: nothing to ask about without a profile", askRequestFor({ ...liming, profile: null }, "上次医生说了什么", NOW) === null);
+check("records: a request carries the last three turns and the local time", (() => {
+  const turn = (i: number) => ({ id: `t${i}`, at: "", question: `问${i}`, answer: `答${i}`, sources: [], mode: "fallback" as const });
+  const r = askRequestFor({ ...wang, asks: [1, 2, 3, 4].map(turn) }, " 二甲双胍怎么吃 ", NOW);
+  return r?.question === "二甲双胍怎么吃" && r.history.map((h) => h.question).join() === "问2,问3,问4" && r.localTime === "2026年10月3日 周六 10:00";
+})());
+
+const daysAgo = (n: number) => new Date(NOW - n * 86_400_000).toISOString();
+check("ago: counted in calendar days, in the words a person would use", [0, 1, 2, 5, 13].map((n) => agoText(daysAgo(n), NOW)).join("|") === "今天|昨天|前天|5 天前|13 天前", [0, 1, 2, 5, 13].map((n) => agoText(daysAgo(n), NOW)));
+check("ago: weeks, months and years are rounded", agoText("2026-09-19", NOW) === "上个月，约 2 周前" && agoText("2026-07-02", NOW) === "约 3 个月前" && agoText("2025-11-10", NOW) === "去年，约 11 个月前" && agoText("2023-10-01", NOW) === "约 3 年前", [agoText("2026-09-19", NOW), agoText("2026-07-02", NOW), agoText("2025-11-10", NOW), agoText("2023-10-01", NOW)]);
+check("ago: 上个月 goes by the calendar", agoText("2026-09-02", NOW) === "上个月，约 4 周前" && agoText("2026-08-30", NOW) === "约 5 周前", [agoText("2026-09-02", NOW), agoText("2026-08-30", NOW)]);
+check("ago: nothing is said about a date still to come", agoText(new Date(NOW + 5 * 86_400_000).toISOString(), NOW) === "");
+
+/* ---------- suggested questions ---------- */
+
+const ws = suggestedQuestions(wang, NOW);
+check("suggestions: Wang is offered the last visit, her medicine, the follow-up and her glucose", ws.join("|") === "上次医生说了什么？|二甲双胍缓释片怎么吃？|什么时候去复查？|最近血糖控制得怎么样？", ws);
+const ls = suggestedQuestions(liming, NOW);
+check("suggestions: Li Ming is offered the last visit, his medicine, the follow-up and his allergy", ls.join("|") === "上次医生说了什么？|奥美拉唑肠溶胶囊怎么吃？|什么时候去复查？|我对什么过敏？", ls);
+check("suggestions: a medicine is named without the verb in front of it", !ws.some((q) => q.includes("维持")), ws);
+const asked = suggestedQuestions({ ...liming, asks: ["上次医生说了什么？", "我对什么过敏？"].map((q, i) => ({ id: `a${i}`, at: "", question: q, answer: "", sources: [], mode: "fallback" as const })) }, NOW);
+check("suggestions: a question already asked makes room for the next one", asked.join("|") === "奥美拉唑肠溶胶囊怎么吃？|什么时候去复查？|上次头痛是什么时候？|我有哪些老毛病和在吃的药？", asked);
+check("suggestions: nothing on file, nothing to suggest", suggestedQuestions(fresh, NOW).length === 0, suggestedQuestions(fresh, NOW));
+check("suggestions: only a profile still gives something to ask", suggestedQuestions({ ...fresh, profile: { ...blank, conditions: ["高血压（十年）"], medications: ["氨氯地平（每天早上一片）"], allergies: ["海鲜"] } }, NOW).join("|") === "氨氯地平怎么吃？|我对什么过敏？|我有哪些老毛病和在吃的药？", suggestedQuestions({ ...fresh, profile: { ...blank, conditions: ["高血压（十年）"], medications: ["氨氯地平（每天早上一片）"], allergies: ["海鲜"] } }, NOW));
+check("suggestions: blood pressure is offered when glucose is not tracked", suggestedQuestions({ ...wang, settings: { ...wang.settings, trackedMetrics: ["bp"] } }, NOW).includes("最近血压怎么样？"));
+check("suggestions: with a check-up on file its findings are offered", suggestedQuestions({ ...fresh, checkups: [{ id: "c", date: "2026-03-05", abnormal: ["血脂偏高"], recordedAt: "" }] }, NOW).includes("体检有哪些要留意的？"));
+for (const q of [...ws, ...ls].filter((q) => !q.includes("怎么吃"))) {
+  check(`suggestions: 「${q}」 is answered on the spot, by rule`, quickAnswer(q.includes("过敏") ? L(q) : W(q)) !== null);
+}
+
+/* ---------- questions answered by quoting the record ---------- */
+
+const lastVisit = quickAnswer(W("上次医生说了什么？"));
+check(
+  "quick: the last visit is quoted word for word",
+  lastVisit?.answer ===
+    "最近一次看医生是 7月11日（约 3 个月前），在市人民医院 内分泌科（9 个月复查与眼底检查）。\n检查结果：糖化血红蛋白 6.8%；眼底检查未见糖尿病视网膜病变；血压 128/80 mmHg；已告知上月一次低血糖。\n开的药和处理：维持原方案。\n医生叮嘱：运动前适量加餐，晚餐不要吃得太少；年度复诊时做足部检查并查尿微量白蛋白。",
+  lastVisit?.answer,
+);
+check("quick: and cites that visit", lastVisit?.sources.join() === idOf(W(""), /^7月11日/), lastVisit?.sources);
+const limingVisit = quickAnswer(L("上次医生说了什么？"));
+check("quick: Li Ming's last visit has the diagnosis, the prescription, the advice and the follow-up", Boolean(limingVisit?.answer.startsWith("最近一次看医生是 7月2日（约 3 个月前），在市第一人民医院 消化内科（因为「胃痛」）。\n医生的诊断：急性胃炎（幽门螺杆菌检测阴性）。\n开的药和处理：奥美拉唑肠溶胶囊 20mg 每日一次，餐前服用，连续 14 天；铝碳酸镁咀嚼片 餐后嚼服。") && limingVisit.answer.endsWith("复查：两周后复诊评估；若复发需考虑胃镜检查。")), limingVisit?.answer);
+check("quick: the latest visit is the latest by date, however it was filed", latestVisit(wr)?.label === "7月11日 9 个月复查与眼底检查" && latestVisit(lr)?.label === "7月2日 看医生（胃痛）", [latestVisit(wr)?.label, latestVisit(lr)?.label]);
+check("quick: with no visit on file it says how to file one", quickAnswer(N("上次医生说了什么"))?.answer === "记录里还没有看医生的记录。看完医生后点「看完医生了」，拍照或者说一遍，下次我就能告诉你。" && quickAnswer(N("上次医生说了什么"))?.sources.length === 0);
+
+for (const q of [
+  "上次医生说了什么？",
+  "医生说了什么",
+  "上次医生怎么说的",
+  "医生上次说了啥",
+  "上次看病医生说了什么",
+  "上次去医院医生都交代了什么",
+  "请问上次医生说了什么",
+  "大夫上回怎么讲的",
+  "上次医生跟我说了什么来着？",
+  "医生说什么了",
+  "上次看医生说了什么",
+  "我最近一次看医生，医生怎么说的",
+]) {
+  check(`quick: 「${q}」 asks what the doctor said`, Boolean(quickAnswer(W(q))?.answer.startsWith("最近一次看医生是 7月11日")), quickAnswer(W(q)));
+}
+// These look alike and ask something else: they need more than the record read back.
+for (const q of [
+  "上次医生说的幽门螺杆菌是什么意思",
+  "医生说要复查是查什么",
+  "上次医生说了什么药",
+  "医生说我能喝酒吗",
+  "上次医生说什么时候复查",
+  "医生说的对吗",
+  "上次医生说的尿微量白蛋白要怎么查",
+  "医生说我是什么病",
+  "我什么时候该去医院",
+  "多久复查一次",
+  "上次复查是什么时候",
+  "看医生是什么时候",
+  "我对磺胺过敏吗",
+  "过敏了怎么办",
+  "二甲双胍怎么吃",
+  "血糖多少算正常",
+  "我的血糖应该控制在多少",
+  "为什么我血糖高",
+  "体检要查什么",
+  "我该吃什么药",
+]) {
+  check(`quick: 「${q}」 is not answered by pasting a record`, quickAnswer(W(q)) === null && quickAnswer(L(q)) === null, quickAnswer(W(q)) ?? quickAnswer(L(q)));
+}
+check("quick: 「那医生怎么说」 after another turn is left to a full answer, because it may mean another visit", quickAnswer(W("那医生怎么说", [{ question: "我 3 月那次拉肚子是怎么回事", answer: "…" }])) === null && quickAnswer(W("那医生怎么说")) !== null);
+
+for (const q of ["什么时候去复查？", "下次什么时候复查", "我什么时候要去复诊", "要不要复查", "复查是哪天", "下次看医生是什么时候", "下次什么时候去医院"]) {
+  check(`quick: 「${q}」 asks about the follow-up`, quickAnswer(W(q))?.answer === "记下的下一次：今天（10月3日 周六）要去看医生：年度复诊。" && quickAnswer(W(q))?.sources.join() === "N", quickAnswer(W(q)));
+}
+const limingFollowUp = quickAnswer(L("什么时候去复查？"));
+check("quick: without a date, the doctor's own words about coming back are quoted with their date", limingFollowUp?.answer === "记录里没有定好日子的复查。7月2日（约 3 个月前）看医生时，医生是这么说的：两周后复诊评估；若复发需考虑胃镜检查。" && limingFollowUp.sources.join() === idOf(L(""), /^7月2日 看医生/), limingFollowUp);
+const noPlan: AppState = { ...liming, episodes: liming.episodes.map((e) => (e.visit ? { ...e, visit: { ...e.visit, followUp: null } } : e)) };
+check("quick: no follow-up on file is said plainly", quickAnswer(reqOf(noPlan, "什么时候去复查"))?.answer === "记录里没有提到复查。最近一次看医生是 7月2日（约 3 个月前），那次没有记下要不要复查。" && quickAnswer(N("什么时候去复查"))?.answer === "记录里还没有看医生的记录，也没有约好的复查。", [quickAnswer(reqOf(noPlan, "什么时候去复查")), quickAnswer(N("什么时候去复查"))]);
+
+for (const q of ["我对什么过敏？", "我对什么药过敏", "我有什么过敏", "我有没有过敏", "对什么过敏", "我对哪些东西过敏"]) {
+  check(`quick: 「${q}」 asks about allergies`, quickAnswer(L(q))?.answer === "档案里写着你对青霉素过敏。看病、开药的时候记得告诉医生和药师。" && quickAnswer(L(q))?.sources.join() === "P", quickAnswer(L(q)));
+}
+check("quick: no allergy on file is not the same as no allergy", quickAnswer(N("我对什么过敏"))?.answer === "档案里没有记录过敏。如果你知道自己对什么过敏，可以在「我的档案」里加上。");
+
+const profileAnswer = quickAnswer(W("我有哪些老毛病和在吃的药？"));
+check("quick: the profile is read back line by line", profileAnswer?.answer === "老毛病：高血压（5 年）、2 型糖尿病（2025 年 11 月确诊）。\n长期在吃的药：缬沙坦 每日一次、二甲双胍缓释片 1.5g 每日一次。\n过敏：磺胺类药物。" && profileAnswer.sources.join() === "P", profileAnswer);
+check("quick: an empty profile says where to fill it in", quickAnswer(N("我有哪些老毛病"))?.answer === "档案里还没有写老毛病、过敏和长期在吃的药。可以在「我的档案」里点「修改」补上。");
+const myMedicines = quickAnswer(W("我现在在吃什么药？"));
+check("quick: the medicines being taken are the profile's list and the last prescription, with its date", myMedicines?.answer === "档案里「长期在吃的药」写的是：缬沙坦 每日一次、二甲双胍缓释片 1.5g 每日一次。\n最近一次开药是 4月14日（约 6 个月前）看医生时：维持二甲双胍缓释片 1.5g 每日一次。", myMedicines?.answer);
+const limingMedicines = quickAnswer(L("我在吃什么药"));
+check("quick: an old prescription is not called a medicine being taken", Boolean(limingMedicines?.answer.startsWith("档案里没有写长期在吃的药。\n最近一次开药是 7月2日（约 3 个月前）看医生时：") && limingMedicines.answer.endsWith("那是当时开的，现在还要不要吃，以医生说的为准。")), limingMedicines?.answer);
+
+const glucose = quickAnswer(W("最近血糖控制得怎么样？"));
+check("quick: how the glucose is doing is read from the metrics record, with no verdict added", Boolean(glucose && glucose.sources.join() === "M" && glucose.answer.split("\n").length === 5 && glucose.answer.startsWith("空腹血糖：最近一次") && glucose.answer.includes("\n糖化血红蛋白：最近一次 6.8%（7月11日）") && glucose.answer.includes("\n低血糖记录：6月14日 3.6。") && glucose.answer.endsWith("这些范围是一般标准，你自己的目标以医生说的为准。") && !/不错|达标|很好/.test(glucose.answer)), glucose?.answer);
+check("quick: one metric asked, one metric answered", quickAnswer(W("我的血压正常吗？"))?.answer === "血压：最近一次 126/78（9月30日），在一般范围内，最早一次 138/86（2025年11月10日），一般低于 140/90，医生可能给你定得更低。\n这些范围是一般标准，你自己的目标以医生说的为准。" && Boolean(quickAnswer(W("上次糖化血红蛋白是多少？"))?.answer.startsWith("糖化血红蛋白：最近一次 6.8%（7月11日）")) && Boolean(quickAnswer(W("体重多少了"))?.answer.startsWith("体重：最近一次 67.2 公斤")), [quickAnswer(W("我的血压正常吗？")), quickAnswer(W("体重多少了"))]);
+check("quick: without readings of one's own, a number is not looked up by rule", quickAnswer(L("我血压多少")) === null);
+const onlyPressure: AppState = { ...wang, measurements: wang.measurements.filter((m) => m.type === "bp") };
+check("quick: a metric never recorded is said to be missing", quickAnswer(reqOf(onlyPressure, "最近血糖怎么样"))?.answer === "还没有记过血糖。可以在首页记一次，以后我就能告诉你。");
+
+check("quick: no check-up report on file is said in one line", quickAnswer(W("我上次体检有什么问题？"))?.answer === "记录里没有体检报告。" && quickAnswer(W("体检有哪些要留意的？"))?.sources.length === 0);
+const checked: AppState = { ...liming, checkups: [{ id: "c1", date: "2026-03-05", institution: "市体检中心", abnormal: ["总胆固醇偏高", "轻度脂肪肝"], advice: "低脂饮食，半年后复查血脂", recordedAt: "" }] };
+const checkup = quickAnswer(reqOf(checked, "体检有哪些要留意的？"));
+check("quick: a check-up's flagged items are read back as printed", checkup?.answer === "最近一次体检是 3月5日（约 7 个月前），在市体检中心。\n报告上要留意的：总胆固醇偏高、轻度脂肪肝。\n体检建议：低脂饮食，半年后复查血脂。" && checkup.sources.join() === idOf(reqOf(checked, ""), /体检$/), checkup);
+
+/* ---------- medicines on file ---------- */
+
+for (const [line, name] of [
+  ["二甲双胍缓释片 1.5g 每日一次", "二甲双胍缓释片"],
+  ["维持二甲双胍缓释片 1.5g 每日一次", "二甲双胍缓释片"],
+  ["二甲双胍片改为二甲双胍缓释片 1.5g 每日一次，晚餐后服用", "二甲双胍缓释片"],
+  ["二甲双胍由 0.5g 每日两次加量为 0.5g 每日三次", "二甲双胍"],
+  ["氨氯地平（每天早上一片）", "氨氯地平"],
+  ["布洛芬缓释胶囊（每次 1 粒，每日 2 次，饭后）", "布洛芬缓释胶囊"],
+  ["缬沙坦 每日一次", "缬沙坦"],
+  ["阿司匹林肠溶片100mg", "阿司匹林肠溶片"],
+  ["停用二甲双胍", "二甲双胍"],
+  ["继续服用缬沙坦", "缬沙坦"],
+] as const) {
+  check(`medicines: the name in 「${line}」 is 「${name}」`, medicineName(line) === name, medicineName(line));
+}
+check("medicines: the dosage form is not part of what a medicine is", medicineCore("二甲双胍缓释片") === "二甲双胍" && medicineCore("奥美拉唑肠溶胶囊") === "奥美拉唑" && medicineCore("铝碳酸镁咀嚼片") === "铝碳酸镁" && medicineCore("缬沙坦") === "缬沙坦" && medicineCore("钙片") === "钙片");
+
+const wm = medicinesOnFile(W(""));
+check("medicines: Wang's are listed newest prescription first, then the profile's", wm.map((m) => `${m.name}@${m.source?.label.split(" ")[0]}`).join("|") === "二甲双胍缓释片@4月14日|二甲双胍缓释片@3月3日|二甲双胍@1月12日|二甲双胍片@2025年11月10日|缬沙坦@我的档案|二甲双胍缓释片@我的档案", wm.map((m) => `${m.name}@${m.source?.label}`));
+check("medicines: every form of metformin is the same medicine", wm.filter((m) => m.core === "二甲双胍").length === 5, wm.map((m) => m.core));
+check("medicines: 「维持原方案」 names no medicine", !wm.some((m) => m.line.includes("原方案")));
+const lm = medicinesOnFile(L(""));
+check("medicines: Li Ming's are the three he was prescribed; 「多饮水、休息」 is not one", lm.map((m) => m.name).join("|") === "奥美拉唑肠溶胶囊|铝碳酸镁咀嚼片|布洛芬缓释胶囊", lm.map((m) => m.name));
+check("medicines: each keeps the line as the doctor wrote it", lm[0].line === "奥美拉唑肠溶胶囊 20mg 每日一次，餐前服用，连续 14 天" && lm[1].line === "铝碳酸镁咀嚼片 餐后嚼服", lm.map((m) => m.line));
+
+const sprained: AppState = {
+  ...fresh,
+  profile: { ...blank, medications: ["钙片", "降压药（名字不记得）"] },
+  episodes: [{ ...template, id: "s1", title: "脚扭了", visit: { date: "2026-09-30", diagnosis: "踝关节扭伤", treatment: "复位；拍片；石膏固定；输液；布洛芬缓释胶囊（每次 1 粒，每日 2 次，饭后）；甲钴胺；多饮水、休息", recordedAt: "" } }],
+};
+const sm = medicinesOnFile(reqOf(sprained, ""));
+check("medicines: what was done on the spot is not a medicine", sm.map((m) => m.name).join("|") === "布洛芬缓释胶囊|甲钴胺|钙片|降压药", sm.map((m) => m.name));
+check("medicines: so 「复位」 is never offered as something to take", suggestedQuestions(sprained, NOW).join("|").includes("布洛芬缓释胶囊怎么吃？") && !suggestedQuestions(sprained, NOW).join("|").includes("复位"), suggestedQuestions(sprained, NOW));
+
+check("medicines: 「二甲双胍」 finds 「二甲双胍缓释片」", medicineAsked("二甲双胍怎么吃", W("")).some((m) => m.name === "二甲双胍缓释片") && medicineAsked("二甲双胍怎么吃", W("")).length === 5, medicineAsked("二甲双胍怎么吃", W("")).map((m) => m.name));
+check("medicines: the full name finds it too, and another medicine is not dragged in", medicineAsked("缬沙坦什么时候吃", W("")).map((m) => m.name).join() === "缬沙坦" && medicineAsked("奥美拉唑肠溶胶囊怎么吃？", L("")).map((m) => m.name).join() === "奥美拉唑肠溶胶囊");
+check("medicines: one that is not on file is not found", medicineAsked("布洛芬怎么吃", W("")).length === 0 && medicineAsked("二甲双胍怎么吃", L("")).length === 0 && medicineAsked("复位怎么做", reqOf(sprained, "")).length === 0);
+
+/* ---------- everything by rule, when no model can be reached ---------- */
+
+const fb = (req: AskRequest) => fallbackAsk(req);
+check("fallback: what the rules can quote, they quote", fb(W("上次医生说了什么？")).answer === lastVisit?.answer && fb(W("上次医生说了什么？")).mode === "fallback" && fb(W("上次医生说了什么？")).hint === null);
+
+const metformin = fb(W("二甲双胍怎么吃"));
+check(
+  "fallback: a medicine on file is answered from the newest prescriptions, newest first",
+  metformin.answer ===
+    "记录里「二甲双胍」是这样写的：\n最近一次是 4月14日（约 6 个月前）看医生时：维持二甲双胍缓释片 1.5g 每日一次。\n更早一次是 3月3日（约 7 个月前）看医生时：二甲双胍片改为二甲双胍缓释片 1.5g 每日一次，晚餐后服用。\n档案里「长期在吃的药」：二甲双胍缓释片 1.5g 每日一次。\n现在怎么吃，以最近一次医生说的为准。说明书上的一般用法我现在查不了，具体看药盒里的说明书，或者问医生、药师。",
+  metformin.answer,
+);
+check("fallback: the dose from a year ago is not offered as how to take it now", !metformin.answer.includes("每日两次") && !metformin.answer.includes("每日三次"));
+check("fallback: and the records quoted are the ones cited", metformin.sources.join() === [idOf(W(""), /^4月14日/), idOf(W(""), /^3月3日/), "P"].join(), metformin.sources);
+const omeprazole = fb(L("奥美拉唑怎么吃？"));
+check("fallback: a medicine prescribed once is quoted with the date it was prescribed", omeprazole.answer === "记录里「奥美拉唑」是这样写的：\n最近一次是 7月2日（约 3 个月前）看医生时：奥美拉唑肠溶胶囊 20mg 每日一次，餐前服用，连续 14 天。\n说明书上的一般用法我现在查不了，具体看药盒里的说明书，或者问医生、药师。", omeprazole.answer);
+check("fallback: a medicine from the profile alone is quoted from the profile", fb(W("缬沙坦一次吃几片？")).answer.startsWith("记录里「缬沙坦」是这样写的：\n档案里「长期在吃的药」：缬沙坦 每日一次。") && fb(W("缬沙坦一次吃几片？")).sources.join() === "P", fb(W("缬沙坦一次吃几片？")));
+const ibuprofen = fb(W("布洛芬怎么吃"));
+check("fallback: a medicine that is not on file is said not to be, before anything else", ibuprofen.answer === "记录里没有找到你问的这个药。记录里有的药是：\n· 维持二甲双胍缓释片 1.5g 每日一次（4月14日，约 6 个月前）\n· 缬沙坦 每日一次（档案里写的）\n说明书上的一般用法我现在查不了，具体看药盒里的说明书，或者问医生、药师。" && ibuprofen.sources.join() === `${idOf(W(""), /^4月14日/)},P`, ibuprofen);
+check("fallback: 「我的药怎么吃」 lists what is on file, one line a medicine", fb(L("我的药怎么吃")).answer.startsWith("记录里有这些药：\n· 奥美拉唑肠溶胶囊 20mg 每日一次，餐前服用，连续 14 天（7月2日，约 3 个月前）\n· 铝碳酸镁咀嚼片 餐后嚼服（7月2日，约 3 个月前）\n· 布洛芬缓释胶囊 退热（2月7日，约 8 个月前）\n"), fb(L("我的药怎么吃")).answer);
+check("fallback: with no medicine on file it says how one gets there", fb(N("阿司匹林怎么吃")).answer.startsWith("记录里没有你在吃的药。看完医生后在「看完医生了」里拍一下处方，我就记住了。") && fb(N("阿司匹林怎么吃")).sources.length === 0, fb(N("阿司匹林怎么吃")));
+
+check("fallback: 「过敏」 anywhere in the question brings the allergies", fb(L("我青霉素过敏要紧吗")).answer.startsWith("档案里写着你对青霉素过敏。") && fb(L("我青霉素过敏要紧吗")).sources.join() === "P");
+check("fallback: a metric is answered from the metrics record, not from the last visit", fb(W("我的血糖和以前比怎么样")).sources.join() === "M" && fb(W("我的血糖和以前比怎么样")).answer.startsWith("空腹血糖：最近一次"), fb(W("我的血糖和以前比怎么样")));
+check("fallback: no readings, no numbers", fb(L("我血压多少")).answer === "还没有记过血糖、血压这类数。在「我的档案」里打开「长期管理」，就可以在首页记了。" && fb(L("我血压多少")).sources.length === 0);
+check("fallback: 「上次体检」 is not 「上次看医生」", fb(W("上次体检查出什么了")).answer === "记录里没有体检报告。" && fb(reqOf(checked, "上次体检查出什么了")).answer.startsWith("最近一次体检是 3月5日"), [fb(W("上次体检查出什么了")), fb(reqOf(checked, "上次体检查出什么了"))]);
+check("fallback: a question about coming back is answered with what is on file about it", fb(W("医生说要复查是查什么")).answer === "记下的下一次：今天（10月3日 周六）要去看医生：年度复诊。" && fb(L("医生说要复查是查什么")).answer.startsWith("记录里没有定好日子的复查。7月2日（约 3 个月前）看医生时，医生是这么说的："), [fb(W("医生说要复查是查什么")), fb(L("医生说要复查是查什么"))]);
+const stomach = fb(L("我上次胃疼是什么时候"));
+check("fallback: an earlier complaint named in the question is read back, entry by entry", stomach.answer.startsWith("2026年6月30日（约 3 个月前）前后开始的「胃痛」，已经好了（2026年7月9日）。\n6月30日第一次记：晚饭后胃部隐痛，伴反酸、嗳气。\n") && stomach.sources.join() === idOf(L(""), /「胃痛」$/), stomach);
+check("fallback: a complaint that is not on file is not answered with some other record", fb(W("我上次胃痛是什么时候")).answer.startsWith("这个问题我现在答不了。") && fb(W("我上次胃痛是什么时候")).sources.length === 0, fb(W("我上次胃痛是什么时候")));
+check("fallback: surgery and family history come from the profile", fb(L("我做过什么手术")).answer.endsWith("做过的手术：阑尾切除（2015）。") && fb(L("我做过什么手术")).sources.join() === "P", fb(L("我做过什么手术")));
+const explain = fb(L("上次医生说的幽门螺杆菌是什么意思"));
+check("fallback: what it cannot explain it says it cannot, and reads the visit back", explain.answer.startsWith("这个问题我现在解释不了，先把最近一次看医生的记录念给你。\n最近一次看医生是 7月2日") && explain.sources.join() === idOf(L(""), /^7月2日 看医生/), explain);
+check("fallback: anything else gets the list of what can be looked up", fb(W("今天天气怎么样")).answer.startsWith("这个问题我现在答不了。我能直接查到的是：") && fb(W("今天天气怎么样")).sources.length === 0);
+check("fallback: an emergency in the question raises the alert whatever the answer is", fb(W("我现在胸口痛，喘不上气，怎么办")).hint?.level === "urgent" && fb(L("胃疼得受不了了，刚才还吐了血")).hint?.level === "urgent");
+
+/* ---------- danger signals in a question ---------- */
+
+// What is happening now always raises it, however the question is worded.
+for (const q of [
+  "我现在胸口痛，喘不上气，怎么办？",
+  "我刚测血糖 3.2，怎么办？",
+  "我老伴突然说话不清楚，一边手抬不起来，怎么办",
+  "胃疼得受不了了，刚才还吐了血",
+  "今天大便发黑是怎么回事",
+  "大便发黑是怎么回事",
+  "血压 190/115 要紧吗",
+  "胸口痛喘不上气",
+  // a word about the past does not make it the past
+  "和上次一样胸口痛",
+  "上次胸痛是怎么回事，现在又痛了",
+  "我胸痛，上次是什么时候",
+  "上次也这样，胸痛喘不上气是怎么回事",
+  "上次医生说胸痛要复诊，我胸痛是什么意思",
+  "之前没事，这两天大便发黑是怎么回事",
+  "去年吐过血，刚才又吐血了是怎么回事",
+  "医生说血糖低要吃糖，我现在血糖 3.1 是多少算低",
+  "上次那种胸口痛今天又来了是怎么回事",
+  "以前没有过，胸口痛得受不了是怎么回事",
+]) {
+  check(`alert: 「${q}」 raises it`, askAlert(q)?.level === "urgent", askAlert(q));
+}
+// Quoting a danger signal is not describing one.
+for (const q of ["上次医生说出现胸痛、呼吸困难要复诊是什么意思？", "我 6 月那次血糖 3.6 是怎么回事？", "医生说黑便要马上去急诊是什么意思", "最近一次医生说的胸闷要注意是什么意思", "去年那次吐血是哪天", "以前那次胸痛是怎么回事", "上次医生说了什么？", "二甲双胍怎么吃", "我有没有胸痛"]) {
+  check(`alert: 「${q}」 does not`, askAlert(q) === null, askAlert(q));
+}
+check("alert: a low reading stated now gets the advice for a low reading", Boolean(askAlert("我刚测血糖 3.2，怎么办？")?.text.startsWith("血糖 3.2 属于低血糖。")));
+
+/* ---------- doses ---------- */
+
+const tokens = (s: string) => doseTokens(s).join(",");
+for (const [text, want] of [
+  ["奥美拉唑肠溶胶囊 20mg 每日一次，餐前服用，连续 14 天", "20mg,x1"],
+  ["二甲双胍由 0.5g 每日两次加量为 0.5g 每日三次", "0.5g,0.5g,x2,x3"],
+  ["每次 1 粒，每日 2 次，饭后", "1粒,x2"],
+  ["每天早上一片", "1片"],
+  ["一次半片", "0.5片"],
+  ["1.50 克", "1.5g"],
+  ["20 毫克", "20mg"],
+  ["一次两颗", "2粒"],
+  ["每次十二单位", "12u"],
+  ["一次 1～2 片", "1片,2片"],
+  ["一到两粒", "1粒,2粒"],
+  ["缓释胶囊通常一天1～2次", "x1,x2"],
+  ["一天吃三次", "x3"],
+  ["每天服用 2 次", "x2"],
+  ["一天最多 4 次", "x4"],
+  ["24 小时内不超过 4 次", "x4"],
+  ["每晚一次", "x1"],
+  ["每 8 小时一次", "h8"],
+  ["间隔至少 6 小时", "h6"],
+  ["每 4-6 小时", "h4,h6"],
+  ["早晚各一片", "1片,早晚各"],
+  ["三餐后各一次", "三餐各"],
+] as const) {
+  check(`doses: 「${text}」 states ${want}`, tokens(text) === want, tokens(text));
+}
+// Not doses: food and drink, readings, and how often something else happens.
+for (const text of [
+  "吃 15 克左右的糖",
+  "喝 200 毫升水",
+  "用 200 毫升温水送下",
+  "先吃15克糖，比如3块糖或半杯果汁",
+  "盐每天不超过 6 克",
+  "每天喝水 1500 毫升以上",
+  "吃 2 片面包",
+  "体重 67.2 kg，血压 126/78 mmHg，空腹血糖 6.2 mmol/L",
+  "糖化血红蛋白 6.8%",
+  "每天测一次血糖",
+  "每天 2-3 次稀便",
+  "夜里起夜 3-4 次",
+  "15 分钟后复测",
+  "连续 14 天",
+  "早晚各量一次血压",
+  "扎手指取一滴血",
+  "整片吞服，不要掰开",
+]) {
+  check(`doses: 「${text}」 states none`, tokens(text) === "", tokens(text));
+}
+check("doses: 「用温水送服，一次 2 片」 is still a dose: the water is not what is counted", tokens("用温水送服，一次 2 片") === "2片" && tokens("一次 2 片，用温水送服") === "2片");
+
+/* ---------- the filters on what a model says ---------- */
+
+const guard = (answer: string, req: AskRequest) => guardAnswer(answer, req);
+const ASK_DOCTOR = "是什么病、什么原因引起的，要医生来判断。可以把相关的记录带给医生看。";
+const DOSE_NOTE = "具体一次吃多少、一天吃几次，以医生开的和药盒里的说明书为准。";
+const CHANGE_NOTE = "要不要调药，请问医生或药师，不要自己改。";
+const LABEL_NOTE = "具体以药盒里的说明书和医生的话为准。";
+const TEST_NOTE = "要不要做检查、做哪些检查，由医生决定。";
+const keeps = (name: string, sentence: string, req: AskRequest) => check(`guard keeps: ${name}`, guard(sentence, req).includes(sentence.replace(/您/g, "你")), guard(sentence, req));
+const drops = (name: string, sentence: string, req: AskRequest, gone = sentence) => check(`guard drops: ${name}`, !guard(sentence, req).includes(gone), guard(sentence, req));
+
+// doses that are on file for the medicine the sentence is about
+keeps("the doctor's own dose", "你现在吃的是二甲双胍缓释片，1.5g每日一次，晚餐后服用。", W("二甲双胍怎么吃？"));
+keeps("the same dose in other words", "医生开的是二甲双胍缓释片 1.5 克，每天 1 次。", W("二甲双胍怎么吃？"));
+keeps("an earlier dose, told as history", "2025年11月10日刚确诊时开的是二甲双胍片 0.5g 每日两次，随餐服用。", W("二甲双胍以前怎么吃的"));
+keeps("a dose from the profile", "记录里没有写缬沙坦一次吃几片，只记了每日一次。", W("缬沙坦一次吃几片？"));
+keeps("the doctor's line without the name, when the question named it", "医生开的是每日一次，晚餐后吃。", W("二甲双胍怎么吃？"));
+keeps("two medicines in one sentence, each with its own line", "7月2日看医生时，医生开了两种药：奥美拉唑肠溶胶囊20mg，每天一次，饭前吃，连吃14天；还有铝碳酸镁咀嚼片，饭后嚼着吃。", L("7 月那次胃痛医生开了什么药？"));
+
+// doses that are not
+const labelDose = guard("记录里没有布洛芬。布洛芬一般一次 0.3g，一天两次，饭后吃。有不舒服就停。", W("布洛芬怎么吃？"));
+check("guard: a dose that is not in the records goes, sentence and all, and a line says whom to ask", labelDose === `记录里没有布洛芬。有不舒服就停。\n${DOSE_NOTE}`, labelDose);
+drops("a frequency that another medicine has on file", "布洛芬一般一天两次。", W("布洛芬怎么吃？"));
+drops("a dose that another medicine has on file", "阿莫西林一次 0.5g。", W("阿莫西林怎么吃"));
+drops("a count of tablets worked out from grams", "1.5g 就是一次吃 3 片。", W("二甲双胍缓释片一次吃几片？"));
+drops("a span of times a day", "这是说明书上的一般说法：缓释胶囊通常一天1～2次，饭后服用，整粒吞服不要掰开嚼碎。", L("布洛芬一次吃几粒？"));
+drops("a label's numbers, even when old prescriptions had the same ones", "说明书上一般会写缓释片通常每日一次、随晚餐服用，普通片通常每日两到三次、随餐服用。", W("二甲双胍说明书上一般一天吃几次？"));
+drops("a label's number for a medicine on file", "二甲双胍说明书上一般一天 2-3 次。", W("二甲双胍怎么吃？"));
+drops("a daily maximum", "布洛芬 24 小时内不超过 4 次。", L("布洛芬怎么吃"));
+drops("a dose in a sentence that names nobody's prescription", "一次吃一片就行。", W("二甲双胍怎么吃？"));
+check("guard: a removed dose leaves the line about label and doctor, once", guard("二甲双胍一般从 0.5g 开始。", W("二甲双胍怎么吃？")) === DOSE_NOTE, guard("二甲双胍一般从 0.5g 开始。", W("二甲双胍怎么吃？")));
+const twoHalves = guard("医生开的是奥美拉唑肠溶胶囊 20mg 每日一次；严重的时候可以一天两次。", L("奥美拉唑怎么吃？"));
+check("guard: only the half with the unlisted dose goes", twoHalves === `医生开的是奥美拉唑肠溶胶囊 20mg 每日一次。\n${DOSE_NOTE}`, twoHalves);
+const orphan = guard("医生开的是二甲双胍缓释片1.5g每日一次。说明书上一般会写普通片通常每日两到三次。这是说明书上的一般说法，具体以药盒里的说明书和医生的话为准。", W("二甲双胍说明书上一般一天吃几次？"));
+check("guard: 「这是说明书上的一般说法」 goes with the sentence it pointed at", orphan === `医生开的是二甲双胍缓释片1.5g每日一次。具体以药盒里的说明书和医生的话为准。\n${DOSE_NOTE}`, orphan);
+const MARCH = "你现在的二甲双胍缓释片是1.5g每日一次、晚餐后服用，这是2026年3月3日看医生时开的。";
+const CLOSING = "具体以药盒里的说明书和医生的话为准。";
+check("guard: after a removed sentence, 「这是说明书上的一般说法」 does not land on the doctor's line", guard(`${MARCH}缓释片一般一次一片，整片吞服。这是说明书上的一般说法，${CLOSING}`, W("二甲双胍缓释片怎么吃？")) === `${MARCH}${CLOSING}\n${DOSE_NOTE}`, guard(`${MARCH}缓释片一般一次一片，整片吞服。这是说明书上的一般说法，${CLOSING}`, W("二甲双胍缓释片怎么吃？")));
+check("guard: nor when the model itself puts it right after the doctor's line", guard(`${MARCH}这是说明书上的一般说法，${CLOSING}`, W("二甲双胍缓释片怎么吃？")) === `${MARCH}${CLOSING}`, guard(`${MARCH}这是说明书上的一般说法，${CLOSING}`, W("二甲双胍缓释片怎么吃？")));
+check("guard: nor inside the same sentence as the doctor's line", guard("7月2日看医生时，医生开的是铝碳酸镁咀嚼片，餐后嚼服，这是说明书上的一般说法。", L("铝碳酸镁怎么吃")) === `7月2日看医生时，医生开的是铝碳酸镁咀嚼片，餐后嚼服。\n${CLOSING}`, guard("7月2日看医生时，医生开的是铝碳酸镁咀嚼片，餐后嚼服，这是说明书上的一般说法。", L("铝碳酸镁怎么吃")));
+check("guard: nor after the half of a sentence that was removed", guard(`医生开的是奥美拉唑肠溶胶囊 20mg 每日一次；严重的时候一般一天两次；这是说明书上的一般说法，${CLOSING}`, L("奥美拉唑怎么吃？")) === `医生开的是奥美拉唑肠溶胶囊 20mg 每日一次；${CLOSING}\n${DOSE_NOTE}`, guard(`医生开的是奥美拉唑肠溶胶囊 20mg 每日一次；严重的时候一般一天两次；这是说明书上的一般说法，${CLOSING}`, L("奥美拉唑怎么吃？")));
+const general = `${MARCH}说明书上一般说缓释片要整片吞服、不要掰开或嚼碎。这是说明书上的一般说法，${CLOSING}`;
+check("guard: it stays where it follows something general", guard(general, W("二甲双胍缓释片怎么吃？")) === general, guard(general, W("二甲双胍缓释片怎么吃？")));
+const sameSentence = `${MARCH}缓释片一般要整片吞，不要掰开或嚼碎，这是说明书上的一般说法，${CLOSING}`;
+check("guard: and inside a sentence that says something general", guard(sameSentence, W("二甲双胍缓释片怎么吃？")) === sameSentence, guard(sameSentence, W("二甲双胍缓释片怎么吃？")));
+const ahead = "记录里没有写布洛芬一次吃几粒。这是说明书上的一般说法：缓释胶囊要整粒吞服，不要掰开嚼碎。";
+check("guard: followed by a colon it introduces what comes next, and stays", guard(ahead, L("布洛芬一次吃几粒？")).startsWith(ahead), guard(ahead, L("布洛芬一次吃几粒？")));
+const afterAdvice = `布洛芬是常见的退烧止痛药，说明书上一般会写饭后服用。这些情况能不能吃布洛芬，要问医生或药师。这是说明书上的一般说法，${CLOSING}`;
+check("guard: 「要问医生」 is not a line of the record", guard(afterAdvice, W("布洛芬怎么吃？")) === afterAdvice, guard(afterAdvice, W("布洛芬怎么吃？")));
+
+// food is not medicine
+keeps("grams of sugar", "低血糖时先吃 15 克左右的糖，比如 3 块糖或半杯果汁，15 分钟后再测。", W("低血糖了怎么办？"));
+keeps("millilitres of water", "吃药时喝 200 毫升水。", W("二甲双胍怎么吃？"));
+keeps("readings", "你 6 月 14 日那次自测血糖 3.6 mmol/L，吃了 3 块糖并喝了半杯果汁，15 分钟后复测是 5.4。", W("我上次低血糖是什么时候"));
+
+// changing a prescription
+const reduce = guard("你血糖控制得可以，可以先减量试试。减药前最好问医生。", W("我能不能把二甲双胍减半？"));
+check("guard: 「可以先减量」 goes and the answer says whom to ask", reduce === `减药前最好问医生。\n${CHANGE_NOTE}`, reduce);
+drops("stopping for a few days", "你就先停药两天看看。", W("我可以自己把降压药停了吗？"));
+drops("taking one more", "血糖高的话可以多吃一片。", W("我能不能自己多吃一片二甲双胍？"));
+keeps("不要自己停药", "不要自己停药。", W("我可以自己把降压药停了吗？"));
+keeps("不可以自己停药", "降压药不可以自己停药，要问医生。", W("我可以自己把降压药停了吗？"));
+keeps("不建议自己减量", "不建议自己减量或停药。", W("我能不能把二甲双胍减半？"));
+keeps("a refusal that lists the changes", "但减药、减量、停药这些事我不能帮您决定，需要医生来判断。", W("我能不能把二甲双胍减半？"));
+keeps("leaving every change to the doctor", "加量、减量、停药、换药都要问医生，不要自己调整。", W("我能不能自己多吃一片二甲双胍？"));
+keeps("要不要减量 is the doctor's call", "要不要减量、停药这些事，最好听医生的，别自己停。", L("奥美拉唑吃了一个星期不痛了，可以停了吗？"));
+keeps("what the doctor changed", "2026年3月3日看医生时，医生把你的二甲双胍片换成了二甲双胍缓释片 1.5g 每日一次，晚餐后服用。", W("我 3 月份那次看病，医生给我开了什么药？"));
+keeps("what the doctor advised", "当时医生建议改为缓释片。", W("二甲双胍怎么吃？"));
+keeps("a change told as history", "这是2026年3月3日看医生时改的方案，之前普通片换成缓释片后胃肠不舒服就好多了。", W("二甲双胍怎么吃？"));
+keeps("missing a dose: do not double up", "如果漏服了一次想起来就尽快补上，快到下一次服药时间就跳过不要加倍吃。", W("二甲双胍怎么吃？"));
+keeps("asking first", "如果想停药，先问医生。", W("我可以自己把降压药停了吗？"));
+
+// a missed dose: the label's rule may be told, deciding for the person may not
+const missed = guard("说明书上的一般说法是：快到下一次服药时间就跳过这次，不要一次吃两倍的量。您现在已经是第二天上午了，离今晚服药时间不远，建议今晚按正常时间吃就行，不要现在补吃。", W("昨晚的二甲双胍忘了吃，现在怎么办？"));
+check("guard: the label's rule for a missed dose stays, the decision for this person goes", missed === "说明书上的一般说法是：快到下一次服药时间就跳过这次，不要一次吃两倍的量。\n漏吃的那一次现在该不该补，按药盒说明书上写的做；拿不准就问医生或药师。", missed);
+
+// guessing an illness or a cause
+const gastritis = guard("你这次可能是胃炎又犯了。上次医生诊断是急性胃炎。", L("我这次肚子痛是不是胃炎又犯了？"));
+check("guard: 「可能是胃炎」 goes, 「上次医生诊断是急性胃炎」 stays, and the answer says a doctor must judge", gastritis === `上次医生诊断是急性胃炎。\n${ASK_DOCTOR}`, gastritis);
+drops("a likely cause", "头晕可能是血压波动引起的。", W("我最近老头晕，是什么原因？"));
+drops("causes offered without the word 可能", "血压波动或颈椎问题都会引起头晕。", W("我最近老头晕，是什么原因？"));
+drops("a list of causes", "血糖低于3.9一般叫低血糖，常见原因包括运动量大、吃得少或药的影响，但具体是哪种原因要医生判断。", W("我 6 月那次血糖 3.6 是怎么回事？"));
+drops("a cause that is ruled out", "您当时检测是阴性，说明那次胃痛不是它引起的。", L("上次医生说的幽门螺杆菌是什么意思？"), "不是它引起的");
+drops("a medicine offered as the cause, when the question asks why", "你长期在吃的药里，缬沙坦每日一次，说明书上一般会写可能引起头晕。", W("我最近老头晕，是什么原因？"));
+drops("a link to an illness on file", "脚麻可能和糖尿病有关。", W("我脚麻是不是糖尿病并发症？"));
+drops("a complication named", "长期血糖高可能引起神经病变。", W("我脚麻是不是糖尿病并发症？"));
+drops("应该是", "应该是老毛病又犯了。", L("我这次肚子痛是怎么回事"));
+check("guard: when the answer already leaves it to the doctor, nothing is added", guard("头晕是什么原因，这要医生来判断。头晕可能是血压波动引起的。", W("我最近老头晕，是什么原因？")) === "头晕是什么原因，这要医生来判断。", guard("头晕是什么原因，这要医生来判断。头晕可能是血压波动引起的。", W("我最近老头晕，是什么原因？")));
+check("guard: a guess nobody asked for goes without a word", guard("结果是阴性。您当时检测是阴性，说明那次胃痛不是它引起的。", L("上次医生说的幽门螺杆菌是什么意思？")) === "结果是阴性。", guard("结果是阴性。您当时检测是阴性，说明那次胃痛不是它引起的。", L("上次医生说的幽门螺杆菌是什么意思？")));
+check("guard: advice to see someone survives the guess it came with", guard("这可能是胃炎又犯了，建议你去消化内科看看。", L("我这次肚子痛是不是胃炎又犯了？")) === `建议你去消化内科看看。\n${ASK_DOCTOR}`, guard("这可能是胃炎又犯了，建议你去消化内科看看。", L("我这次肚子痛是不是胃炎又犯了？")));
+keeps("the diagnosis a doctor made", "7月2日看医生时诊断为急性胃炎，当时医生说过若复发需考虑胃镜检查。", L("我这次肚子痛是不是胃炎又犯了？"));
+keeps("what the doctor suspected", "当时医生怀疑是胃溃疡。", L("上次医生说了什么病"));
+keeps("what the doctor suspected, said the other way round", "医生当时也怀疑是胃溃疡，所以让你两周后复诊。", L("上次医生说了什么病"));
+drops("a suspicion of one's own, with a doctor only nearby", "我不是医生，但怀疑是胃溃疡。", L("我这次肚子痛是怎么回事"));
+keeps("a rare harm named on a label", "二甲双胍少数人可能有乳酸酸中毒的风险，这是说明书上会写的。", W("二甲双胍有什么副作用"));
+drops("the same words about the person", "你可能有胃炎。", L("我这次肚子痛是怎么回事"));
+keeps("that it looks like last time", "你之前7月有过急性胃炎，症状也是饭后胃部隐痛伴反酸，有些像，但这次到底是不是胃炎复发，需要医生判断。", L("我这次肚子痛是不是胃炎又犯了？"));
+keeps("leaving it to the doctor", "头晕的原因有很多，需要医生来判断，我不能替您诊断。", W("我最近老头晕，是什么原因？"));
+keeps("症状 is not an illness", "如果症状加重，应该及时就医，可能需要把这些症状告诉医生。", W("我最近老头晕，是什么原因？"));
+keeps("病情 and 病历 are not illnesses", "可能需要带上病历，让医生了解病情。", L("我要带什么去医院"));
+keeps("what a word means", "幽门螺杆菌是一种长在胃里的细菌，感染了可能引起胃炎、胃溃疡等问题。", L("上次医生说的幽门螺杆菌是什么意思？"));
+keeps("a label's side effects", "二甲双胍常见的不舒服可能有肚子胀、拉肚子、嘴里有金属味，一般身体适应后会减轻。", W("二甲双胍怎么吃？"));
+keeps("a label's side effect that is the thing asked about", "二甲双胍可能引起拉肚子，这是说明书上常见的不舒服。", W("吃二甲双胍会不会拉肚子"));
+keeps("a label's warning about alcohol", "一般说明书上会提醒：吃二甲双胍时最好不要喝酒，因为喝酒可能增加乳酸酸中毒的风险。", W("吃二甲双胍能喝酒吗？"));
+keeps("a label's warning about the stomach", "布洛芬是退烧止痛药，但对胃有刺激，你本身有慢性胃炎，吃了可能让胃更不舒服甚至加重病情。", L("我肚子痛可以吃布洛芬吗？"));
+keeps("an allergy on file", "你的档案里记着对青霉素过敏，阿莫西林属于青霉素类药，所以你不能吃阿莫西林，吃了可能过敏甚至有危险。", L("我嗓子发炎了，能吃阿莫西林吗？"));
+keeps("随餐服用", "缓释片建议随餐或餐后服用，可以减少对胃的刺激。", W("二甲双胍是饭前吃还是饭后吃？"));
+keeps("可能引起胃不舒服", "这个药空腹吃可能引起胃不舒服。", W("二甲双胍怎么吃？"));
+
+// recommending a test
+const lipids = guard("记录里没有胆固醇这一项。您10月3日今天正好约了年度复诊，可以趁这次让医生查一下血脂。", W("我的胆固醇是多少？"));
+check("guard: a test that is recommended goes, and the answer says who decides", lipids === `记录里没有胆固醇这一项。\n${TEST_NOTE}`, lipids);
+drops("做个胃镜", "建议你去做个胃镜。", L("我要不要做胃镜？"));
+drops("去查一下", "你最好再去查个心电图。", W("我胸闷"));
+keeps("whether to have one is the doctor's call", "脚麻是不是需要做肌电图，这个要医生来判断。", W("我脚麻要不要去做个肌电图？"));
+keeps("让医生决定要不要做", "建议你带着之前的就诊记录去消化内科看看，让医生决定要不要做胃镜。", L("我要不要做胃镜？"));
+keeps("a test the doctor asked for", "7月11日看内分泌科时，医生叮嘱年度复诊时要做足部检查和查尿微量白蛋白。", W("医生说年度复诊要查什么？"));
+keeps("a test the doctor mentioned", "根据记录，7月2日看消化内科时医生说过，如果胃痛复发需要考虑做胃镜检查。", L("我要不要做胃镜？"));
+keeps("asking the doctor whether", "今天你正好要去看医生，可以问问医生要不要查胆固醇。", W("我的胆固醇是多少？"));
+keeps("measuring at home", "可以量一下血压看看有没有变化。", W("我最近老头晕，是什么原因？"));
+
+// the closing lines
+const howTo = guard("医生开的是二甲双胍缓释片 1.5g 每日一次，晚餐后服用。", W("二甲双胍怎么吃？"));
+check("guard: an answer about taking a medicine ends by pointing at the label and the doctor", howTo.endsWith(`\n${LABEL_NOTE}`), howTo);
+check("guard: for a medicine that is not on file too", guard("记录里没有布洛芬。一般饭后吃。", W("布洛芬怎么吃？")).endsWith(`\n${LABEL_NOTE}`), guard("记录里没有布洛芬。一般饭后吃。", W("布洛芬怎么吃？")));
+check("guard: not twice, when the answer already says it", guard("缓释片要整片吞，不要掰开。这是说明书上的一般说法，具体以药盒里的说明书和医生的话为准。", W("二甲双胍怎么吃？")) === "缓释片要整片吞，不要掰开。这是说明书上的一般说法，具体以药盒里的说明书和医生的话为准。");
+check("guard: label knowledge in an answer brings the line with it", guard("缓释片要整片吞，不要掰开。", W("这个药有什么要注意的")).endsWith(`\n${LABEL_NOTE}`));
+for (const [q, a, req] of [
+  ["我能喝酒吗？", "7月2日看消化内科时医生叮嘱过要避免酒精。", L("我能喝酒吗？")],
+  ["我血压多少？", "记录里没有量过血压的数值。可以去医院或者药店量。", L("我血压多少？")],
+  ["我 3 月份那次看病，医生给我开了什么药？", "医生把你的二甲双胍片换成了二甲双胍缓释片 1.5g 每日一次，晚餐后服用。", W("我 3 月份那次看病，医生给我开了什么药？")],
+  ["我可以自己把降压药停了吗？", "不能自己停。今天正好是年度复诊，可以问问医生。", W("我可以自己把降压药停了吗？")],
+  ["早饭怎么吃比较好", "记录里医生叮嘱过继续控制主食和甜食。", W("早饭怎么吃比较好")],
+] as const) {
+  check(`guard: 「${q}」 is not about taking a medicine, and gets no such line`, guard(a, req) === a, guard(a, req));
+}
+const verdict = guard("最近一次血压是 126/78（9月30日记的），正常。", W("我的血压怎么样啊"));
+check("guard: a verdict on a reading is followed by whose target counts", verdict === "最近一次血压是 126/78（9月30日记的），正常。\n这里说的范围是一般标准，你自己的目标以医生说的为准。", verdict);
+check("guard: not when the answer says so itself", guard("最近一次血压是 126/78，在一般范围内，你自己的目标听医生的。", W("我的血压怎么样啊")) === "最近一次血压是 126/78，在一般范围内，你自己的目标听医生的。");
+check("guard: 「按正常时间吃」 is no verdict on a reading", !guard("血糖有波动的话，下次按正常时间吃。", W("二甲双胍漏了一次")).includes("目标"), guard("血糖有波动的话，下次按正常时间吃。", W("二甲双胍漏了一次")));
+
+// tidying
+check("guard: record numbers never reach the reader", guard("7月2日看医生时诊断是急性胃炎（R3）。见 R1 和 [P]。", L("上次是什么病")) === "7月2日看医生时诊断是急性胃炎。见 和 。", guard("7月2日看医生时诊断是急性胃炎（R3）。见 R1 和 [P]。", L("上次是什么病")));
+check("guard: the app says 你", guard("您上次看医生是7月2日。", L("上次是哪天")) === "你上次看医生是7月2日。");
+check("guard: line breaks in an answer are kept", guard("第一行。\n第二行。", L("随便")) === "第一行。\n第二行。", guard("第一行。\n第二行。", L("随便")));
+check("guard: a blank line between paragraphs too", guard("第一段。\n\n第二段第一句。第二句。\n1. 一条\n2. 两条", L("随便")) === "第一段。\n\n第二段第一句。第二句。\n1. 一条\n2. 两条", guard("第一段。\n\n第二段第一句。第二句。\n1. 一条\n2. 两条", L("随便")));
+check("guard: a removed line takes its line break with it", guard("7月2日看医生时诊断是急性胃炎。\n这次可能是胃炎又犯了。\n建议带着记录去问医生。", L("我这次肚子痛是不是胃炎又犯了？")) === "7月2日看医生时诊断是急性胃炎。\n建议带着记录去问医生。", guard("7月2日看医生时诊断是急性胃炎。\n这次可能是胃炎又犯了。\n建议带着记录去问医生。", L("我这次肚子痛是不是胃炎又犯了？")));
+
+// an emergency: the red box has said what to do
+const stroke = guard("这可能是中风的危险信号，请立即拨打120或马上送医院急诊，不要耽搁。让他安静坐着或躺下。", W("我老伴突然说话不清楚，一边手抬不起来，怎么办"));
+check("guard: in an emergency the guess goes and the call for help stays, with nothing added", stroke === "请立即拨打120或马上送医院急诊。让他安静坐着或躺下。", stroke);
+check("guard: an emergency answer is never left empty", guard("这可能是心梗。", W("我现在胸口痛，喘不上气，怎么办？")) === "先照上面红框里说的做，不要等。");
+check("guard: nor is one given the lines meant for calmer questions", guard("你现在血糖 3.2，马上吃点含糖的东西，比如几块糖、半杯果汁，吃完等 15 分钟再测一次。", W("我刚测血糖 3.2，怎么办？")) === "你现在血糖 3.2，马上吃点含糖的东西，比如几块糖、半杯果汁，吃完等 15 分钟再测一次。");
+
+/* ---------- what comes back from a model ---------- */
+
+const visitId = idOf(L(""), /^7月2日 看医生/);
+const cited = normalizeAsk({ answer: "7月2日看医生时诊断是急性胃炎。", sources: [visitId, "R99", "X", "P", `[${visitId}]`, "m"] }, L("上次是什么病"));
+check("normalize: record numbers that do not exist are dropped, and none is counted twice", cited.sources.join() === `${visitId},P`, cited.sources);
+check("normalize: at most four records are cited", normalizeAsk({ answer: "好。", sources: ["R1", "R2", "R3", "R4", "R5", "R6"] }, W("随便")).sources.join() === "R1,R2,R3,R4");
+check("normalize: lower case, brackets and one string are all understood", normalizeAsk({ answer: "好。", sources: "[r1]、 P，M" }, W("随便")).sources.join() === "R1,P,M", normalizeAsk({ answer: "好。", sources: "[r1]、 P，M" }, W("随便")).sources);
+check("normalize: no sources is no sources", normalizeAsk({ answer: "好。" }, W("随便")).sources.length === 0 && normalizeAsk({ answer: "好。", sources: null }, W("随便")).sources.length === 0);
+check("normalize: the answer goes through the filters", normalizeAsk({ answer: "你这次可能是胃炎又犯了。上次医生诊断是急性胃炎。", sources: [] }, L("我这次肚子痛是不是胃炎又犯了？")).answer === gastritis);
+check("normalize: nothing usable still gives an answer", [null, "一句话", {}, { answer: 3 }, { answer: "  " }].every((raw) => normalizeAsk(raw, W("随便")).answer === "这个问题我答不上来。可以换个问法，或者直接问医生。"));
+const long = normalizeAsk({ answer: `${"这是一句话。".repeat(120)}`, sources: [] }, W("随便")).answer;
+check("normalize: an over-long answer ends at a whole sentence", long.length <= 700 && long.endsWith("这是一句话。"), long.length);
+
+/* ---------- what the model is given ---------- */
+
+const context = askContext(W("二甲双胍怎么吃？"));
+check("prompt: every record is there under its number", wr.every((r) => context.includes(`[${r.id}] ${r.text}`)), context.slice(0, 200));
+check("prompt: with the profile and the user's local time", context.startsWith("【患者档案】\n姓名：王秀兰") && context.endsWith("【当前时间】2026年10月3日 周六 10:00"), context.slice(-40));
+check("prompt: no records is said, not left blank", askContext({ ...N("x"), records: [] }).includes("除了档案，还没有别的记录。"));
+const turns = [1, 2, 3, 4].map((i) => ({ question: `问${i}`, answer: `答${i}` }));
+const messages = buildAskMessages(W("那饭前还是饭后？", turns));
+check("prompt: the last three turns go in as turns, then the question", messages.map((m) => m.role).join() === "system,user,assistant,user,assistant,user,assistant,user" && messages[1].content === "问2" && messages[6].content === "答4" && messages[7].content.startsWith("那饭前还是饭后？"), messages.map((m) => m.content.slice(0, 12)));
+check("prompt: the rules and the records travel together in the system message", messages[0].content.startsWith(ASK_SYSTEM) && messages[0].content.includes("[R1] "));
+for (const rule of ["不要自己加减换算", "只能说记录里没有", "不替医生加话", "他自己的目标听医生的", "answer 里不要出现编号", "不要让他照着以前的开法接着吃", "资料里没有就不要给数字", "不建议加量、减量、停药、换药", "不替他判断现在该不该补", "不做诊断", "不建议做检查", "立即就医或拨打 120"]) {
+  check(`prompt: says 「${rule}」`, ASK_SYSTEM.includes(rule));
+}
+
+/* ---------- the interface in English: for now 问医伴 still answers in Chinese ---------- */
+
+const zh = {
+  records: JSON.stringify(wr),
+  suggestions: ws.join("|"),
+  glucose: JSON.stringify(glucose),
+  fallback: JSON.stringify(fb(W("二甲双胍怎么吃"))),
+  alert: JSON.stringify(askAlert("我刚测血糖 3.2，怎么办？")),
+  context,
+};
+setLang("en");
+try {
+  check("english interface: dates elsewhere do turn English, so the checks below mean something", fmtDate(new Date(NOW), { year: true, weekday: true }) === "Sat, Oct 3, 2026", fmtDate(new Date(NOW), { year: true, weekday: true }));
+  check("english interface: a date for an answer stays Chinese", zhDate(new Date(NOW), { year: true, weekday: true }) === "2026年10月3日 周六", zhDate(new Date(NOW), { year: true, weekday: true }));
+  check("english interface: the records are the same Chinese text, labels and all", JSON.stringify(askRecords(wang, NOW)) === zh.records, askRecords(wang, NOW).find((r) => r.id === "M")?.text);
+  check("english interface: the questions offered are the Chinese ones the rules understand", suggestedQuestions(wang, NOW).join("|") === zh.suggestions, suggestedQuestions(wang, NOW));
+  check("english interface: what the rules quote is unchanged", JSON.stringify(quickAnswer(W("上次医生说了什么？"))) === JSON.stringify(lastVisit) && JSON.stringify(quickAnswer(W("最近血糖控制得怎么样？"))) === zh.glucose, quickAnswer(W("最近血糖控制得怎么样？")));
+  check("english interface: nor is the keyless answer", JSON.stringify(fb(W("二甲双胍怎么吃"))) === zh.fallback, fb(W("二甲双胍怎么吃")));
+  check("english interface: the alert reads like the answer under it", JSON.stringify(askAlert("我刚测血糖 3.2，怎么办？")) === zh.alert, askAlert("我刚测血糖 3.2，怎么办？"));
+  check("english interface: the filters add their lines in Chinese", guard("二甲双胍一般从 0.5g 开始。", W("二甲双胍怎么吃？")) === DOSE_NOTE && guard("医生开的是二甲双胍缓释片 1.5g 每日一次，晚餐后服用。", W("二甲双胍怎么吃？")) === howTo);
+  check("english interface: the model is given the same Chinese context", askContext(W("二甲双胍怎么吃？")) === zh.context);
+} finally {
+  // the language is one global value: left on English it would spoil every check that runs after this file
+  setLang("zh");
+}
+
+finish("ask");

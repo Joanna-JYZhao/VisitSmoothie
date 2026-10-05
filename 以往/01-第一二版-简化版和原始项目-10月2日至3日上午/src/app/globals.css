@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans CJK SC", "Helvetica Neue", Arial, sans-serif;
+
+  --color-canvas: #f5f7f9;
+  /* the top of every page: a faint brand wash that fades into the canvas */
+  --color-canvas-tint: #e6f2f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #f0f4f7;
+  --color-line: #e4eaef;
+  --color-line-strong: #cfd8e0;
+  --color-ink: #0f1b2d;
+  --color-ink-2: #4a5a6b;
+  /* the quietest text colour still passes 4.5:1 on white: no faint grey text anywhere */
+  --color-ink-3: #647488;
+
+  --color-brand-50: #eff9fd;
+  --color-brand-100: #d7f0fb;
+  --color-brand-200: #b2dff4;
+  --color-brand-300: #7ec6e6;
+  --color-brand-400: #3fa5cd;
+  --color-brand-500: #1c8cb4;
+  /* the main colour, and the lightest one white text may sit on (4.9:1) */
+  --color-brand-600: #017a9e;
+  /* the lower end of the main button's gradient; white text on it is 5.9:1 */
+  --color-brand-650: #016c8c;
+  --color-brand-700: #00617f;
+  --color-brand-800: #004b63;
+
+  /* Each tone passes 4.5:1 as text on its own tint and on white, and carries white text when solid. */
+  --color-good: #18794e;
+  --color-good-bg: #e7f6ee;
+  --color-warn: #9a5b00;
+  --color-warn-bg: #fff4e0;
+  --color-serious: #b34a20;
+  --color-serious-bg: #fdeee7;
+  --color-danger: #c8373e;
+  --color-danger-bg: #fef0f1;
+  --color-info: #2458b5;
+  --color-info-bg: #e9f0fd;
+
+  /* second chart series, validated together with brand-600 */
+  --color-series-2: #eb6834;
+
+  --radius-card: 20px;
+
+  /* cards rest on the page; floats (toasts, dialogs, the chat box) hover above it */
+  --shadow-card: 0 1px 2px rgba(15, 27, 45, 0.04), 0 6px 20px -8px rgba(15, 27, 45, 0.1);
+  --shadow-float: 0 18px 40px -14px rgba(15, 27, 45, 0.26), 0 4px 12px -2px rgba(15, 27, 45, 0.07);
+  /* the selected item of a segmented control, and other small raised things */
+  --shadow-pill: 0 1px 2px rgba(15, 27, 45, 0.1), 0 0 0 1px rgba(15, 27, 45, 0.03);
+  /* a quiet edge for white buttons and tiles */
+  --shadow-edge: 0 1px 2px rgba(15, 27, 45, 0.05);
+  /* the main button: a top highlight and a soft glow of its own colour */
+  --shadow-btn: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(0, 75, 99, 0.3), 0 8px 16px -8px rgba(1, 122, 158, 0.55);
+  --shadow-hero: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 2px 4px rgba(0, 75, 99, 0.2), 0 14px 28px -14px rgba(1, 122, 158, 0.6);
+  /* the page header once the page has scrolled under it */
+  --shadow-header: 0 1px 0 rgba(15, 27, 45, 0.06), 0 10px 24px -16px rgba(15, 27, 45, 0.2);
+
+  --animate-fade-up: fade-up 0.35s ease-out both;
+  --animate-pulse-dot: pulse-dot 1.2s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes pulse-dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.8);
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+html {
+  color-scheme: light;
+  /* everything is sized in rem, so this makes body text 17px and a 3rem button 51px */
+  font-size: 106.25%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  /* a wash of the brand colour behind the top of the page, gone within the first screen */
+  background-color: var(--color-canvas);
+  background-image: linear-gradient(180deg, var(--color-canvas-tint), var(--color-canvas));
+  background-repeat: no-repeat;
+  background-size: 100% 22rem;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* no single character left alone on a last line, and no long number pushing the page sideways */
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: var(--color-brand-100);
+}
+
+/* thin scrollbars inside chat */
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 999px;
+  border: 2px solid var(--color-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    animation: none;
+  }
+}
+
+/* the sheet handed to the doctor: collapsed details open up on paper */
+.print-only {
+  display: none;
+}
+
+@media print {
+  html {
+    font-size: 81.25%;
+  }
+  body {
+    background: #fff;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  @page {
+    margin: 14mm;
+  }
+}

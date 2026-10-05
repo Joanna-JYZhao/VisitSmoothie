@@ -1,0 +1,423 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Health Journal · 受控 Agent 工作流设计 v1",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": ".archify/workflow-health-journal-agentic-20261002-213000/health-journal-agentic.html"
+  },
+  "lanes": [
+    {
+      "id": "intake",
+      "label": "01 观察：患者原文与持久化"
+    },
+    {
+      "id": "agent",
+      "label": "02 规划：模型提议，代码核验"
+    },
+    {
+      "id": "exception",
+      "label": "异常与安全分支",
+      "variant": "exception"
+    },
+    {
+      "id": "action",
+      "label": "03 行动：工具有边界"
+    },
+    {
+      "id": "human",
+      "label": "04 人工接力"
+    },
+    {
+      "id": "memory",
+      "label": "05 验证与记忆"
+    }
+  ],
+  "mainPath": [
+    "entry",
+    "save",
+    "context",
+    "safety",
+    "planner",
+    "verify",
+    "route",
+    "draft",
+    "review",
+    "checkpoint"
+  ],
+  "nodes": [
+    {
+      "id": "entry",
+      "lane": "intake",
+      "col": 0,
+      "type": "external",
+      "label": "患者记录",
+      "sublabel": "随时记下症状变化",
+      "width": 156
+    },
+    {
+      "id": "save",
+      "lane": "intake",
+      "col": 1,
+      "type": "database",
+      "label": "先保存原文",
+      "sublabel": "AI 失败也不会丢失",
+      "width": 156
+    },
+    {
+      "id": "context",
+      "lane": "intake",
+      "col": 2,
+      "type": "backend",
+      "label": "读取上下文",
+      "sublabel": "档案 · 本次 · 已选历史",
+      "width": 156,
+      "height": 80
+    },
+    {
+      "id": "safety",
+      "lane": "agent",
+      "col": 2,
+      "type": "security",
+      "label": "紧急提示检查",
+      "sublabel": "命中规则则先提示求助",
+      "width": 156
+    },
+    {
+      "id": "planner",
+      "lane": "agent",
+      "col": 3,
+      "type": "cloud",
+      "label": "总控 Agent",
+      "sublabel": "DeepSeek 输出受限计划",
+      "width": 156
+    },
+    {
+      "id": "verify",
+      "lane": "agent",
+      "col": 4,
+      "type": "security",
+      "label": "核验计划与引用",
+      "sublabel": "动作白名单 · 原文来源",
+      "width": 156
+    },
+    {
+      "id": "route",
+      "lane": "agent",
+      "col": 5,
+      "type": "backend",
+      "label": "执行允许的工具",
+      "sublabel": "按目标与模型决定分流",
+      "width": 156
+    },
+    {
+      "id": "retry",
+      "lane": "exception",
+      "col": 3,
+      "type": "messagebus",
+      "label": "用户重试",
+      "sublabel": "新运行关联原失败记录",
+      "width": 156
+    },
+    {
+      "id": "failed",
+      "lane": "exception",
+      "col": 4,
+      "type": "security",
+      "label": "失败 / 中断",
+      "sublabel": "保留原文及安全错误码",
+      "width": 156
+    },
+    {
+      "id": "urgent",
+      "lane": "exception",
+      "col": 2,
+      "type": "security",
+      "label": "优先专业帮助",
+      "sublabel": "不等 AI · 不作诊断",
+      "width": 156
+    },
+    {
+      "id": "ask",
+      "lane": "action",
+      "col": 3,
+      "type": "frontend",
+      "label": "追问一个问题",
+      "sublabel": "等待患者下一次回答",
+      "width": 156
+    },
+    {
+      "id": "pause",
+      "lane": "action",
+      "col": 4,
+      "type": "backend",
+      "label": "本轮记录完成",
+      "sublabel": "不反复追问已有信息",
+      "width": 156
+    },
+    {
+      "id": "draft",
+      "lane": "action",
+      "col": 5,
+      "type": "backend",
+      "label": "生成摘要草稿",
+      "sublabel": "结构化原文及历史背景",
+      "width": 156
+    },
+    {
+      "id": "answer",
+      "lane": "human",
+      "col": 3,
+      "type": "external",
+      "label": "患者补充变化",
+      "sublabel": "保存后进入下一轮",
+      "width": 156
+    },
+    {
+      "id": "review",
+      "lane": "human",
+      "col": 5,
+      "type": "frontend",
+      "label": "患者核对摘要",
+      "sublabel": "可编辑 · 明确确认保存",
+      "width": 156
+    },
+    {
+      "id": "history",
+      "lane": "memory",
+      "col": 3,
+      "type": "database",
+      "label": "历史可供再调用",
+      "sublabel": "由患者选择关联到新事件",
+      "width": 156
+    },
+    {
+      "id": "visit",
+      "lane": "memory",
+      "col": 4,
+      "type": "frontend",
+      "label": "录入就诊结果",
+      "sublabel": "诊断与医嘱由患者填写",
+      "width": 156
+    },
+    {
+      "id": "checkpoint",
+      "lane": "memory",
+      "col": 5,
+      "type": "database",
+      "label": "保存版本与轨迹",
+      "sublabel": "来源快照 · PDF / 复制",
+      "width": 156
+    }
+  ],
+  "edges": [
+    {
+      "id": "entry-save",
+      "from": "entry",
+      "to": "save"
+    },
+    {
+      "id": "save-context",
+      "from": "save",
+      "to": "context",
+      "label": "载入"
+    },
+    {
+      "id": "context-safety",
+      "from": "context",
+      "to": "safety"
+    },
+    {
+      "id": "safety-planner",
+      "from": "safety",
+      "to": "planner",
+      "label": "未命中"
+    },
+    {
+      "id": "planner-verify",
+      "from": "planner",
+      "to": "verify",
+      "label": "JSON 计划"
+    },
+    {
+      "id": "verify-route",
+      "from": "verify",
+      "to": "route",
+      "label": "通过"
+    },
+    {
+      "id": "route-draft",
+      "from": "route",
+      "to": "draft",
+      "label": "就诊摘要"
+    },
+    {
+      "id": "draft-review",
+      "from": "draft",
+      "to": "review",
+      "label": "等待核对"
+    },
+    {
+      "id": "review-checkpoint",
+      "from": "review",
+      "to": "checkpoint",
+      "label": "确认保存"
+    },
+    {
+      "id": "safety-urgent",
+      "from": "safety",
+      "to": "urgent",
+      "label": "命中规则",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "verify-failed",
+      "from": "verify",
+      "to": "failed",
+      "label": "校验失败",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "planner-failed",
+      "from": "planner",
+      "to": "failed",
+      "label": "超时 / 错误",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          706.8,
+          318
+        ],
+        [
+          810,
+          318
+        ],
+        [
+          810,
+          402
+        ]
+      ]
+    },
+    {
+      "id": "failed-retry",
+      "from": "failed",
+      "to": "retry",
+      "label": "可重试"
+    },
+    {
+      "id": "retry-context",
+      "from": "retry",
+      "to": "context",
+      "label": "重新读取",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "id": "route-ask",
+      "from": "route",
+      "to": "ask",
+      "label": "缺少描述"
+    },
+    {
+      "id": "route-pause",
+      "from": "route",
+      "to": "pause",
+      "label": "本轮足够"
+    },
+    {
+      "id": "ask-answer",
+      "from": "ask",
+      "to": "answer",
+      "label": "等待回答"
+    },
+    {
+      "id": "answer-save",
+      "from": "answer",
+      "to": "save",
+      "label": "新记录",
+      "variant": "dashed",
+      "role": "return",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "via": [
+        [
+          310,
+          678
+        ]
+      ]
+    },
+    {
+      "id": "checkpoint-visit",
+      "from": "checkpoint",
+      "to": "visit",
+      "label": "就诊之后"
+    },
+    {
+      "id": "visit-history",
+      "from": "visit",
+      "to": "history",
+      "label": "归档"
+    },
+    {
+      "id": "history-context",
+      "from": "history",
+      "to": "context",
+      "label": "下次关联",
+      "variant": "dashed",
+      "role": "return",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          16,
+          816
+        ],
+        [
+          16,
+          56
+        ],
+        [
+          504,
+          56
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "统一运行合同",
+      "items": [
+        "每次运行都有 ID、目标、来源指纹、步骤、状态和输出",
+        "追踪外部动作与结果，不展示或保存模型内部推理",
+        "未变化数据重复请求不重复追问；故障保留原文"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "人类始终在关键节点接力",
+      "items": [
+        "追问后等待患者回答；摘要确认后才可导出",
+        "旧病史是背景，不自动变成本次诊断",
+        "邮件与关机后定时发送尚未接入，图中没有自动发送步骤"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "设计合同与实现对应",
+      "items": [
+        "本图是已选架构 A 的逻辑设计，不是 Git HEAD 来源认证",
+        "Node 24 执行工具，SQLite 保存日记和独立运行轨迹",
+        "实现映射与验证结果保存在 AGENTIC-WORKFLOW.md"
+      ]
+    }
+  ]
+}
