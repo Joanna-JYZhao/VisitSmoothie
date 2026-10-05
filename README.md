@@ -4,7 +4,7 @@
 
 > 说不清的，我帮你说清楚；记不住的，我帮你记住。
 
-📄 Pitch deck: [docs/VisitSmoothie_Pitch_Final.pdf](最终版/VisitSmoothie-最终版-main-bb27e78/docs/VisitSmoothie_Pitch_Final.pdf)
+📄 Pitch deck: [docs/VisitSmoothie_Pitch_Final.pdf](final/VisitSmoothie-final-main-bb27e78/docs/VisitSmoothie_Pitch_Final.pdf)
 
 ## The problem
 
@@ -55,7 +55,7 @@ Also included: body map, plain-language confirmation of colloquial terms, red-fl
 Requires Node.js 24 or later.
 
 ```bash
-cd "最终版/VisitSmoothie-最终版-main-bb27e78"
+cd "final/VisitSmoothie-final-main-bb27e78"
 npm install
 cp .env.example .env.local
 npm run dev
@@ -107,14 +107,14 @@ Without a key the app still runs: conversations fall back to built-in rules, and
 
 | 文件夹 | 内容 |
 |---|---|
-| `最终版/VisitSmoothie-最终版-main-bb27e78/` | 最终版代码，和团队仓库 lucasnotfound59/TriMedManagement 的 main（提交 bb27e78）完全一致 |
-| `最终版/说明文档/` | 给 AI 的项目说明、Workflow 简化版流程图 |
-| `以往/01-第一二版-简化版和原始项目-10月2日至3日上午/` | 第一、二版网站，以及当时的协作文件和素材 |
-| `以往/02-宽屏版-美化第二轮-10月3日晚/` | 宽屏 VisitSmoothie 布局，美化第二轮 |
-| `以往/03-青瓷绿界面-队友版-10月3日晚/` | 队友做的青瓷绿界面 |
-| `以往/04-手机版加首页美化-未推送草稿-10月4日/` | 手机版结构，加上没推到 main 的首页美化草稿 |
-| `以往/05-队友最新main-最终版之前-10月4日/` | 最终版之前，队友推到 main 的版本 |
-| `以往/其他/` | 项目介绍 PDF 和早期截图 |
+| `final/VisitSmoothie-final-main-bb27e78/` | 最终版代码，和团队仓库 lucasnotfound59/TriMedManagement 的 main（提交 bb27e78）完全一致 |
+| `final/notes/` | 给 AI 的项目说明、Workflow 简化版流程图 |
+| `previous-versions/01-v1-v2-simplified-original-Oct2-3/` | 第一、二版网站，以及当时的协作文件和素材 |
+| `previous-versions/02-widescreen-polish-round2-Oct3/` | 宽屏 VisitSmoothie 布局，美化第二轮 |
+| `previous-versions/03-celadon-ui-teammate-Oct3/` | 队友做的青瓷绿界面 |
+| `previous-versions/04-mobile-home-polish-unpushed-draft-Oct4/` | 手机版结构，加上没推到 main 的首页美化草稿 |
+| `previous-versions/05-teammate-main-before-final-Oct4/` | 最终版之前，队友推到 main 的版本 |
+| `previous-versions/other/` | 项目介绍 PDF 和早期截图 |
 
 ## 运行前必须填入 API Key
 
