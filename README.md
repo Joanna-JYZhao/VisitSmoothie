@@ -1,4 +1,105 @@
-# VisitSmoothie（医伴）项目整理
+# VisitSmoothie（医伴）
+
+**An agentic outpatient companion: prepare the story before the visit, follow the plan after it.**
+
+> 说不清的，我帮你说清楚；记不住的，我帮你记住。
+
+📄 Pitch deck: [docs/VisitSmoothie_Pitch_Final.pdf](最终版/VisitSmoothie-最终版-main-bb27e78/docs/VisitSmoothie_Pitch_Final.pdf)
+
+## The problem
+
+The visit is short. The information isn't.
+
+- China handled about **10.15 billion** healthcare visits in 2024 (National Health Commission, 2024 Statistical Bulletin).
+- In one large tertiary hospital, patients waited about **40 minutes** for a consultation of about **3 minutes** (JMIR, PMC12396732, 2019–2022 data; one hospital, not a national average).
+- In a survey of **11,959** outpatients, communication with doctors and time with doctors both shaped satisfaction.
+
+Our interviews with our own families showed the same gap from both sides:
+
+- **Before the visit**, the full story is hard to pass on. Symptom progression, medicines, exposure and family history get missed during short history-taking.
+- **After the visit**, the plan is hard to understand. Patients leave with a prescription but still want to know why this drug, for how long, and what to watch for.
+
+## What VisitSmoothie does
+
+Two jobs, one record.
+
+| Stage | What happens |
+|---|---|
+| **Before the doctor** | The patient describes the problem by voice, typing, a body map or a photo. The agent compares the profile, similar past visits and what it already knows, then asks **one missing item at a time**. The result is a patient-reviewed page for the doctor, plus a rule-based urgency and department hint. |
+| **The visit** | **No AI in the room.** The patient shows the page. The doctor decides. |
+| **After the doctor** | The patient records the visit (with the doctor's consent) or photographs the record or prescription. VisitSmoothie builds a **Clinical Plan**: diagnosis, medicines, to-dos, cautions and follow-up. Tap any line to ask about it. |
+| **At home** | Reminders from the lines the patient chose, "better / same / worse" check-ins, and questions answered from the patient's own record. |
+
+Every saved visit becomes memory. At the next visit, the agent starts from the last saved plan, medicines and profile.
+
+Also included: body map, plain-language confirmation of colloquial terms, red-flag alerts, follow-up tracking, visit timeline, long-term tracking, emergency card, bilingual interface (中文 / English) and a first-use tutorial.
+
+## How we measure better care
+
+| Dimension | Question |
+|---|---|
+| Communication and satisfaction | Do patients feel better able to communicate their concerns, and more satisfied with the visit? |
+| Understanding and confidence | Do patients understand their treatment plan and feel confident about what to do next? |
+| Adherence and follow-through | Do patients follow medicines, tests and follow-up plans more consistently? |
+| Patient outcomes | Over time, do patients report better symptom and health outcomes? |
+
+## Safety principles
+
+- The AI organises and reminds. It **does not diagnose**, and it never sets or changes doses.
+- **Red flags are decided by fixed rules**, not by the model, and trigger an immediate "seek care now" alert.
+- The doctor page is generated from what the patient actually said. The model's text is filtered so it cannot invent facts, guess causes or name diseases.
+- All patients in this repository, including the demo patient "Uncle Lin", are **fictional**.
+
+## Try it
+
+Requires Node.js 24 or later.
+
+```bash
+cd "最终版/VisitSmoothie-最终版-main-bb27e78"
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open http://localhost:3000. To see a patient with a full history, open http://localhost:3000/demo/lin (no password needed).
+
+### API keys are not included
+
+This repository contains **no API keys**. Before running, add your own keys to `.env.local`, which is git-ignored and must never be committed:
+
+| Variable | What to put |
+|---|---|
+| `GLM_API_KEY` | Your Zhipu GLM key. Set `GLM_MODEL=glm-5`. |
+| `AI_PROVIDER` and `ANTHROPIC_API_KEY` | Optional. Set `AI_PROVIDER=claude` and your Anthropic key to use Claude instead. |
+| `DATA_ENCRYPTION_KEY` | Leave empty. It is generated on first run. |
+
+Without a key the app still runs: conversations fall back to built-in rules, and photo reading is unavailable.
+
+## How it is built
+
+| Layer | What it does | Built with |
+|---|---|---|
+| Interface | Capture, review, reminders | Next.js 16, React 19, Tailwind CSS 4 |
+| Workflow | Routing, episode state, actions | TypeScript rules |
+| Language | Intake, extraction, explanations | Zhipu GLM or Claude, with rule-based fallback |
+| Storage | Isolated accounts, encrypted records | SQLite, AES-256-GCM |
+
+### Not ready yet
+
+- Reminders only work while the app is open.
+- Voice and photo reading need a configured model key.
+- English-mode safety filters are a first version.
+- No clinical, usage or revenue results yet.
+
+## Team
+
+**Tri Team**: Joanna (product lead), Ronnie, Nancy, Robin and Lucas (engineers).
+
+*Make care make sense.*
+
+---
+
+# 项目整理（中文）
 
 这个分支是整个项目的归档，只用来保存和查阅，不参与开发。正式开发请用 `main` 分支。
 
@@ -6,7 +107,7 @@
 
 | 文件夹 | 内容 |
 |---|---|
-| `最终版/VisitSmoothie-最终版-main-3e417ab/` | 最终版代码，和 `main` 分支的提交 3e417ab 完全一致 |
+| `最终版/VisitSmoothie-最终版-main-bb27e78/` | 最终版代码，和团队仓库 lucasnotfound59/TriMedManagement 的 main（提交 bb27e78）完全一致 |
 | `最终版/说明文档/` | 给 AI 的项目说明、Workflow 简化版流程图 |
 | `以往/01-第一二版-简化版和原始项目-10月2日至3日上午/` | 第一、二版网站，以及当时的协作文件和素材 |
 | `以往/02-宽屏版-美化第二轮-10月3日晚/` | 宽屏 VisitSmoothie 布局，美化第二轮 |
