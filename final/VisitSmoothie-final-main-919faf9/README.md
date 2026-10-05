@@ -9,7 +9,7 @@
 
 **English** · [Read in Chinese](README.zh-CN.md)
 
-[Pitch deck (PDF)](final/VisitSmoothie-final-main-919faf9/docs/VisitSmoothie_Pitch_Final.pdf) · [Source code](final/VisitSmoothie-final-main-919faf9) · [Past versions](previous-versions)
+[Pitch deck (PDF)](docs/VisitSmoothie_Pitch_Final.pdf) · [Developer guide](#developer-guide)
 
 </div>
 
@@ -78,30 +78,11 @@ Every saved visit becomes memory. At the next visit, the agent starts from the l
 
 **Uncle Lin** is a fictional 46-year-old man with hypertension, a shrimp allergy and recurring left-knee pain. His profile holds twelve history entries and ten past visits from November 2025 to October 2026. Open `/demo/lin` to see a patient who has used the app for almost a year, no password needed.
 
-## Repository layout
-
-```
-final/
-  VisitSmoothie-final-main-919faf9/    The final app. Identical to main (commit 919faf9)
-                                       of the team repository lucasnotfound59/TriMedManagement
-  notes/                               Project brief for AI assistants, simplified workflow diagram
-previous-versions/
-  01-v1-v2-simplified-original-Oct2-3/         First and second versions, with collaboration files
-  02-widescreen-polish-round2-Oct3/            Widescreen layout, second design pass
-  03-celadon-ui-teammate-Oct3/                 Celadon theme by a teammate
-  04-mobile-home-polish-unpushed-draft-Oct4/   Mobile layout plus an unreleased home-screen redesign
-  05-teammate-main-before-final-Oct4/          The team main branch just before the final version
-  other/                                       Early project overview and screenshots
-```
-
-Some file names and much of the app content are in Chinese, the app's primary language.
-
 ## Run it
 
 Requires Node.js 24 or later.
 
 ```bash
-cd final/VisitSmoothie-final-main-919faf9
 npm install
 cp .env.example .env.local
 npm run dev
@@ -121,7 +102,6 @@ Open http://localhost:3000, or http://localhost:3000/demo/lin for the demo patie
 
 Without a key the app still runs. Conversations fall back to built-in rules, and photo reading is unavailable.
 
-The versions in `previous-versions/` follow the same steps from their own folders. None of them include `node_modules`, `.next`, `.data` or `.git`.
 
 ## How it is built
 
@@ -138,6 +118,80 @@ The versions in `previous-versions/` follow the same steps from their own folder
 - Voice and photo reading need a configured model key.
 - English-mode safety filters are a first version.
 - No clinical, usage or revenue results yet.
+
+---
+
+## Developer guide
+
+### Pages
+
+| Page | What it does | Path |
+|---|---|---|
+| Welcome | "Start my health journey" or "Have an account? Sign in" | `/welcome` |
+| Sign up | Name, date of birth, sex and education, plus optional conditions, family history and allergies. A check-up report photo can fill them in. Fields can be left empty for demos. | `/onboarding` |
+| Sign in | Name and password | `/login` |
+| Home | To-dos and reminders, plus the question box. The tab bar opens Before, After, Records and Settings. Emergency is at the top. | `/` |
+| Before the doctor | Guided intake, one question at a time, ending with the page for the doctor and a care hint | `/pre` |
+| After the doctor | Record the visit or photograph the record or prescription, then review, explain and save the Clinical Plan | `/post` |
+| Page for the doctor | Large-print summary first, details folded below. Print or copy. | `/doctor/[id]` |
+| Records | Past visits, summaries and follow-up notes | `/report` |
+| Settings | Profile, settings, developer switch and sign out | `/set` |
+
+### Configuration
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `AI_PROVIDER` | Which provider handles chat, extraction and photo reading: `glm` or `claude` | `claude` when `ANTHROPIC_API_KEY` is set, otherwise `glm` |
+| `GLM_API_KEY` | Zhipu GLM key. Used for everything when the provider is `glm`, and always for speech to text | empty |
+| `GLM_MODEL` | Chat and extraction model for `glm` | `glm-5` |
+| `GLM_VISION_MODEL` | Photo reading model for `glm` | `glm-4.6v` |
+| `GLM_ASR_MODEL` | Speech-to-text model | `glm-asr-2512` |
+| `GLM_BASE_URL` | OpenAI-compatible endpoint | `https://open.bigmodel.cn/api/paas/v4` |
+| `ANTHROPIC_API_KEY` | Anthropic key, used when the provider is `claude` | empty |
+| `CLAUDE_MODEL` | Model for `claude` | `claude-opus-5-5` |
+| `DATA_ENCRYPTION_KEY` | Master key for patient data. Generated on first run. If it is lost, existing data cannot be decrypted. | generated |
+
+Keys are read only by the server routes under `/api` and never reach the browser.
+
+### Accounts and storage
+
+- Accounts, profiles and visit records live in a server-side SQLite file, `.data/visitsmoothie.sqlite`, encrypted with AES-256-GCM. The demo patient stays in the browser only.
+- Each patient's row is keyed by account ID. Every read resolves the user from an httpOnly session cookie, and there is no endpoint that takes another user's ID.
+- Passwords are hashed with scrypt. Five failed sign-ins lock the account for 60 seconds. Sessions last seven days and end immediately on sign-out.
+- `.env*` and `.data/` are git-ignored. Back up `.env.local` together with `.data/`.
+- Before running on a public network, add HTTPS, an encrypted volume or a managed database, and a key management service.
+
+### Developer switch
+
+In Settings, tap "Developer" to turn it on or off. It is off by default and remembered only in this browser. While it is on, sign-up and sign-in fields can be left empty.
+
+### Double-click launch on macOS
+
+Double-click the `VisitSmoothie.command` launcher in the project root (its file name starts with a Chinese word meaning "Start"). It finds Node.js 24 or later, installs dependencies if needed, starts the app on a free port between 3000 and 3020, and opens the browser. Press Ctrl+C in its terminal window to stop.
+
+### Checks
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+`npm run test:rules` exercises the no-key rule flow over HTTP. Start a server without `GLM_API_KEY` and `ANTHROPIC_API_KEY`, then run `BASE=http://127.0.0.1:<port> npm run test:rules`.
+
+### Versioning
+
+The current release is in [VERSION](VERSION), in the format `YYYY-MM-DD-HH.mm` (Los Angeles time). Each release has an annotated tag `v<version>`. List them with `git tag --list 'v20*' --sort=-refname`.
+
+### Standalone modules
+
+- [visit-smoothie/](visit-smoothie/README.md): a standalone account and profile prototype on port 4190, with its own database.
+- [patient-dictation/](patient-dictation/README.md): a reusable speech-to-text function and command-line tool.
+
+### Documentation
+
+`docs/` holds the handover notes, plans, feature descriptions, workflow diagrams, screenshots and the pitch deck. Most documents are in Chinese; see the [Chinese README](README.zh-CN.md) for the full developer notes.
 
 ## Team
 

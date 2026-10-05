@@ -1,58 +1,86 @@
+<div align="center">
+
 # VisitSmoothie（医伴）
 
-**An agentic outpatient companion: prepare the story before the visit, follow the plan after it.**
+**一个陪你看门诊的 AI 助手。**
+**看病前，帮你把病情说清楚；看病后，帮你把医嘱照着做。**
 
-> 说不清的，我帮你说清楚；记不住的，我帮你记住。
+*让看病这件事，变得明白。*
 
-📄 Pitch deck: [docs/VisitSmoothie_Pitch_Final.pdf](docs/VisitSmoothie_Pitch_Final.pdf)
+[English](README.md) · **中文**
 
-## The problem
+[汇报 PDF](docs/VisitSmoothie_Pitch_Final.pdf) · [开发说明](#开发说明) · [交接说明](docs/交接说明.md)
 
-The visit is short. The information isn't.
+</div>
 
-- China handled about **10.15 billion** healthcare visits in 2024 (National Health Commission, 2024 Statistical Bulletin).
-- In one large tertiary hospital, patients waited about **40 minutes** for a consultation of about **3 minutes** (JMIR, PMC12396732, 2019–2022 data; one hospital, not a national average).
-- In a survey of **11,959** outpatients, communication with doctors and time with doctors both shaped satisfaction.
+---
 
-Our interviews with our own families showed the same gap from both sides:
+## 要解决的问题
 
-- **Before the visit**, the full story is hard to pass on. Symptom progression, medicines, exposure and family history get missed during short history-taking.
-- **After the visit**, the plan is hard to understand. Patients leave with a prescription but still want to know why this drug, for how long, and what to watch for.
+**看病的时间很短，要说清的信息却很多。**
 
-## What VisitSmoothie does
-
-Two jobs, one record.
-
-| Stage | What happens |
+| | |
 |---|---|
-| **Before the doctor** | The patient describes the problem by voice, typing, a body map or a photo. The agent compares the profile, similar past visits and what it already knows, then asks **one missing item at a time**. The result is a patient-reviewed page for the doctor, plus a rule-based urgency and department hint. |
-| **The visit** | **No AI in the room.** The patient shows the page. The doctor decides. |
-| **After the doctor** | The patient records the visit (with the doctor's consent) or photographs the record or prescription. VisitSmoothie builds a **Clinical Plan**: diagnosis, medicines, to-dos, cautions and follow-up. Tap any line to ask about it. |
-| **At home** | Reminders from the lines the patient chose, "better / same / worse" check-ins, and questions answered from the patient's own record. |
+| **101.5 亿** | 2024 年中国的就诊人次（国家卫生健康委员会，2024 年卫生健康事业发展统计公报） |
+| **约 3 分钟** | 一家大型三甲医院里，病人排队约 40 分钟后，平均问诊时间（JMIR，PMC12396732） |
+| **11,959 名门诊病人** | 参与的调查显示，和医生的沟通、跟医生相处的时间，都会影响满意度 |
 
-Every saved visit becomes memory. At the next visit, the agent starts from the last saved plan, medicines and profile.
+我们访谈了自己的家人，看到了两头的难处：
 
-Also included: body map, plain-language confirmation of colloquial terms, red-flag alerts, follow-up tracking, visit timeline, long-term tracking, emergency card, bilingual interface (中文 / English) and a first-use tutorial.
+- **看病前，病情讲不全。** 问诊时间短，症状怎么变化、吃过什么药、接触过什么、家里人得过什么病，这些很容易漏掉。
+- **看病后，医嘱看不懂。** 拿到了处方，还是想知道为什么开这个药、要吃多久、要注意什么。
 
-## How we measure better care
+## VisitSmoothie 怎么帮忙
 
-| Dimension | Question |
+两件事，一份记录。
+
+| 阶段 | 发生什么 |
 |---|---|
-| Communication and satisfaction | Do patients feel better able to communicate their concerns, and more satisfied with the visit? |
-| Understanding and confidence | Do patients understand their treatment plan and feel confident about what to do next? |
-| Adherence and follow-through | Do patients follow medicines, tests and follow-up plans more consistently? |
-| Patient outcomes | Over time, do patients report better symptom and health outcomes? |
+| **看病前** | 病人用说话、打字、身体图或照片描述哪里不舒服。AI 会对照个人档案、以前类似的就诊和已经知道的信息，**一次只问一个缺的问题**。最后生成一页病人确认过的「给医生看」，附上按规则判断的紧急程度和建议科室。 |
+| **看病时** | **诊室里不用 AI。** 病人把那一页给医生看，由医生决定。 |
+| **看病后** | 经医生同意后录下就诊过程，或者拍下病历、处方。VisitSmoothie 整理出**就诊计划**：诊断、用药、要做的事、注意事项、复诊。点任何一条都可以追问。 |
+| **回家后** | 按病人选的项目提醒，每天问一句「好多了、差不多还是更严重了」，有疑问就根据病人自己的记录来回答。 |
 
-## Safety principles
+每次存下的就诊都会变成记忆。下次看病，AI 会从上一次的就诊计划、用药和档案接着来。
 
-- The AI organises and reminds. It **does not diagnose**, and it never sets or changes doses.
-- **Red flags are decided by fixed rules**, not by the model, and trigger an immediate "seek care now" alert.
-- The doctor page is generated from what the patient actually said. The model's text is filtered so it cannot invent facts, guess causes or name diseases.
-- All patients in this repository, including the demo patient "Uncle Lin", are **fictional**.
+## 功能
 
-## Try it
+- **一问一答的问诊。** 一次只问一个问题，问清部位、性质、持续时间、诱因、伴随症状、用药、病史和轻重。
+- **身体图。** 点哪里疼就选哪里，膝、肩、腰背、腹部还有放大图。
+- **口语确认。** 病人说的口语，先确认再换成医生的说法，病人的原话也会保留。
+- **关联以前的就诊。** 这次和以前某次很像时，AI 会问哪里一样、哪里不一样，但自己不下结论。
+- **给医生看的一页。** 第一屏是大字摘要，细节折叠在下面，可以打印、存成 PDF 或复制文字。
+- **就诊计划。** 拍照或录音就能生成，每一条下面都有解释，还可以接着追问。
+- **提醒和每日追问。** 吃药、复诊、要准备的东西。
+- **问自己的记录。** 比如「上次医生说了什么」，每个回答都注明出处。
+- **应急卡。** 我是谁、有什么病、对什么过敏、紧急联系人、晕倒时怎么办。
+- **长期管理。** 血压、血糖、体重的趋势，以及年度摘要。
+- **中英双语。** 界面可以切换中文和英文。
 
-Requires Node.js 24 or later.
+## 安全原则
+
+- AI 只负责整理和提醒。**它不做诊断**，也不替人定药量、不改药量。
+- **危险信号由固定规则判断**，不靠 AI，一旦出现就立即提示马上就医。
+- 给医生看的那一页，只按病人真实说过的话生成。AI 写的内容都要经过过滤，不能编造、不能猜病因、不能点名疾病。
+- 每个账号的数据单独存放，用 AES-256-GCM 加密。
+- **仓库里所有病人都是虚构的。**
+
+## 怎么衡量效果
+
+| 维度 | 要回答的问题 |
+|---|---|
+| 沟通和满意度 | 病人是不是更能说清自己的情况，对这次看病更满意？ |
+| 理解和信心 | 病人是不是看懂了治疗方案，清楚接下来该做什么？ |
+| 依从和执行 | 病人是不是更能按时吃药、做检查、去复诊？ |
+| 健康结果 | 长期来看，病人的症状和健康状况有没有变好？ |
+
+## 演示病人
+
+**林叔**是一个虚构的病人，46 岁，有高血压，吃虾过敏，左膝反复疼痛。他的档案里有 12 条病史，以及 2025 年 11 月到 2026 年 10 月的 10 次就诊记录。打开 `/demo/lin` 就能看到一个用了快一年的病人是什么样子，不用密码。
+
+## 怎么运行
+
+需要 Node.js 24 或以上。
 
 ```bash
 npm install
@@ -60,51 +88,44 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000. To see a patient with a full history, open http://localhost:3000/demo/lin (no password needed).
+打开 http://localhost:3000 。想直接看演示病人，就打开 http://localhost:3000/demo/lin 。
 
-### API keys are not included
+### 仓库里没有 API Key
 
-This repository contains **no API keys**. Before running, add your own keys to `.env.local`, which is git-ignored and must never be committed:
+**这个仓库里没有任何 API Key。**运行任何一个版本之前，都要把你自己的 Key 填进 `.env.local`。这个文件已经被 git 忽略，永远不要提交它。
 
-| Variable | What to put |
+| 变量 | 填什么 |
 |---|---|
-| `GLM_API_KEY` | Your Zhipu GLM key. Set `GLM_MODEL=glm-5`. |
-| `AI_PROVIDER` and `ANTHROPIC_API_KEY` | Optional. Set `AI_PROVIDER=claude` and your Anthropic key to use Claude instead. |
-| `DATA_ENCRYPTION_KEY` | Leave empty. It is generated on first run. |
+| `GLM_API_KEY` | 你的智谱 GLM Key，同时设置 `GLM_MODEL=glm-5`。 |
+| `AI_PROVIDER`、`ANTHROPIC_API_KEY` | 可选。想改用 Claude，就填 `AI_PROVIDER=claude` 和你的 Anthropic Key。 |
+| `DATA_ENCRYPTION_KEY` | 留空即可，第一次运行时会自动生成。 |
 
-Without a key the app still runs: conversations fall back to built-in rules, and photo reading is unavailable.
+不填 Key 也能打开网站，只是对话会退回内置规则，拍照识别用不了。
 
-## How it is built
 
-| Layer | What it does | Built with |
+## 技术架构
+
+| 层 | 做什么 | 用什么做 |
 |---|---|---|
-| Interface | Capture, review, reminders | Next.js 16, React 19, Tailwind CSS 4 |
-| Workflow | Routing, episode state, actions | TypeScript rules |
-| Language | Intake, extraction, explanations | Zhipu GLM or Claude, with rule-based fallback |
-| Storage | Isolated accounts, encrypted records | SQLite, AES-256-GCM |
+| 界面 | 录入、确认、提醒 | Next.js 16、React 19、Tailwind CSS 4 |
+| 流程 | 分流、病程状态、各种操作 | TypeScript 规则 |
+| 语言 | 问诊、提取信息、解释 | 智谱 GLM 或 Claude，没有 Key 时退回内置规则 |
+| 存储 | 账号隔离、记录加密 | SQLite、AES-256-GCM |
 
-### Not ready yet
+## 还没做完的
 
-- Reminders only work while the app is open.
-- Voice and photo reading need a configured model key.
-- English-mode safety filters are a first version.
-- No clinical, usage or revenue results yet.
+- 提醒只在网页开着时有效。
+- 语音和拍照识别需要配置好模型的 Key。
+- 英文模式下的安全过滤还是第一版。
+- 还没有临床、使用量或收入方面的数据。
 
-## Team
+## 团队
 
-**Tri Team**: Joanna (product lead), Ronnie, Nancy, Robin and Lucas (engineers).
-
-*Make care make sense.*
+**Tri Team**：Joanna（产品负责人），Ronnie、Nancy、Robin、Lucas（工程师）。
 
 ---
 
-# 开发说明（中文）
-
-> 说不清的，我帮你说清楚；记不住的，我帮你记住。
-
-医伴帮患者把病情记下来，看病时把整理好的内容直接给医生看。它只做记录、整理和提醒，不做诊断，不给用药剂量；遇到危险情况直接建议就医。
-
-`main` 是整合入口，包含患者主应用、最新版手机 UI、身体图问诊、Clinical Plan 及逐条追问、AI 提供商切换、新手引导、加密存储，以及独立账号和语音转写模块。来源分支、冲突处理和本次验证见 [docs/MAIN-INTEGRATION.md](docs/MAIN-INTEGRATION.md)。
+# 开发说明
 
 ## 版本控制
 
@@ -170,7 +191,7 @@ git tag --list 'v20*' --sort=-refname
 
 打开 `/demo/lin`，不用密码直接进入。也可以在登录页点「林叔」。
 
-林叔照队友的剧本《虚构患者资料_中英双语》建档：46 岁男，自述高血压但药名剂量待核对，父亲高血压、母亲 2 型糖尿病，吃虾起风团。档案里有 5 月 12 日一次左膝不适（没有明确诊断），以及这次左膝内侧酸痛的问诊、骨科医嘱（原因待查，不加药，不做检查，一周后复诊）和两个单次提醒（复诊前一晚 20:00 准备病历和药盒、复诊当天 8:30 复诊准备）。日期以打开演示的这一天为「看病那天」。
+林叔照队友的《林叔_患者测试数据_更新版》建档：46 岁男，2022 年确诊高血压，现用缬沙坦和氨氯地平；2026 年 10 月 3 日骨科诊断左膝骨关节炎（早期）；父亲高血压、母亲 2 型糖尿病；吃虾起风团；2008 年阑尾切除；吸烟约 20 年。档案里有 12 条病史和 2025 年 11 月到 2026 年 10 月的 10 次就诊记录。日期会整体平移，以打开演示的那一刻对应资料里的 2026-10-04 12:00。
 
 ## 开发者开关
 

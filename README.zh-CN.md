@@ -9,7 +9,7 @@
 
 [English](README.md) · **中文**
 
-[汇报 PDF](final/VisitSmoothie-final-main-bb27e78/docs/VisitSmoothie_Pitch_Final.pdf) · [源代码](final/VisitSmoothie-final-main-bb27e78) · [以往版本](previous-versions)
+[汇报 PDF](final/VisitSmoothie-final-main-919faf9/docs/VisitSmoothie_Pitch_Final.pdf) · [源代码](final/VisitSmoothie-final-main-919faf9) · [以往版本](previous-versions)
 
 </div>
 
@@ -82,8 +82,8 @@
 
 ```
 final/
-  VisitSmoothie-final-main-bb27e78/    最终版应用，和团队仓库 lucasnotfound59/TriMedManagement
-                                       的 main（提交 bb27e78）完全一致
+  VisitSmoothie-final-main-919faf9/    最终版应用，和团队仓库 lucasnotfound59/TriMedManagement
+                                       的 main（提交 919faf9）完全一致
   notes/                               给 AI 助手看的项目说明、Workflow 简化版流程图
 previous-versions/
   01-v1-v2-simplified-original-Oct2-3/         第一、二版，以及当时的协作文件
@@ -99,7 +99,7 @@ previous-versions/
 需要 Node.js 24 或以上。
 
 ```bash
-cd final/VisitSmoothie-final-main-bb27e78
+cd final/VisitSmoothie-final-main-919faf9
 npm install
 cp .env.example .env.local
 npm run dev
